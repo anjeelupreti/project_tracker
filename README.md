@@ -22,11 +22,11 @@ A comprehensive Django-based project management system with user role management
 - **Dashboards**
   - Admin dashboard with comprehensive overview
   - Team lead dashboard for team management
-  - Member dashboard for assigned tasks
+  - Member dashboard for assigned tasks and upcoming deadlines
 
 - **Self-Service**
   - Profile management
-  - Leave request system
+  - Leave request system with approval workflow
   - Theme preferences (light/dark mode)
 
 ## Technology Stack
@@ -37,6 +37,11 @@ A comprehensive Django-based project management system with user role management
 - **Authentication**: django-allauth
 - **History Tracking**: django-simple-history
 - **Forms**: django-crispy-forms with Bootstrap 5
+
+## Demo Screenshots
+
+![Dashboard](screenshots/dashboard.png)
+*Member dashboard showing task overview and upcoming deadlines*
 
 ## Installation
 
@@ -86,6 +91,20 @@ A comprehensive Django-based project management system with user role management
 2. Create departments in the admin interface
 3. Set up initial team leads and assign projects
 
+## Environment Configuration
+
+The project uses python-decouple for environment variable management. Create a `.env` file in the root directory with the following variables:
+
+```
+SECRET_KEY=your_secret_key
+DEBUG=True
+EMAIL_HOST=smtp.example.com
+EMAIL_PORT=587
+EMAIL_HOST_USER=your_email@example.com
+EMAIL_HOST_PASSWORD=your_password
+EMAIL_USE_TLS=True
+```
+
 ## Usage
 
 ### For Admins
@@ -110,6 +129,29 @@ A comprehensive Django-based project management system with user role management
 - Request designations
 - Request leave
 
+## Project Structure
+
+The project is organized into several Django apps:
+
+- **accounts**: User authentication and profile management
+- **core**: Core functionality and landing pages
+- **projects**: Project and task management
+- **dashboard**: Dashboard views for different user roles
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Django and its community for the excellent web framework
+- Bootstrap team for the responsive frontend components
+- All contributors who have helped shape this project 
