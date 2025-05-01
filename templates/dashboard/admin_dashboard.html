@@ -1,0 +1,370 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+<style>
+    /* Add fixed max-width to container to prevent infinite growth */
+    .dashboard-container {
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+    
+    /* Ensure rows don't overflow */
+    .row {
+        margin-right: 0;
+        margin-left: 0;
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 dashboard-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">Admin Dashboard</h1>
+        <div>
+            <a href="{% url 'accounts:notification_create' %}" class="btn btn-outline-primary me-2">
+                <i class="fas fa-bell me-1"></i> Send Notifications
+            </a>
+            <a href="{% url 'projects:project_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-1"></i> New Project
+            </a>
+            <a href="{% url 'projects:department_create' %}" class="btn btn-outline-primary ms-2">
+                <i class="fas fa-plus-circle me-1"></i> New Department
+            </a>
+        </div>
+    </div>
+    
+    <!-- Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card dashboard-card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Total Projects</h6>
+                            <h2 class="mt-2 mb-0">{{ total_projects }}</h2>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'projects:project_list' %}" class="text-white">View all projects <i class="fas fa-arrow-right ms-1"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card dashboard-card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Active Projects</h6>
+                            <h2 class="mt-2 mb-0">{{ active_projects }}</h2>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'projects:project_list' %}?status=IN_PROGRESS" class="text-white">View active projects <i class="fas fa-arrow-right ms-1"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card dashboard-card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Departments</h6>
+                            <h2 class="mt-2 mb-0">{{ total_departments }}</h2>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-building"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'projects:department_list' %}" class="text-white">View all departments <i class="fas fa-arrow-right ms-1"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card dashboard-card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Total Users</h6>
+                            <h2 class="mt-2 mb-0">{{ total_users }}</h2>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'admin:accounts_user_changelist' %}" class="text-white">Manage users <i class="fas fa-arrow-right ms-1"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pending Requests -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card dashboard-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Pending Designation Requests</h5>
+                    <span class="badge bg-danger rounded-pill">{{ pending_designation_requests }}</span>
+                </div>
+                <div class="card-body">
+                    {% if pending_designation_requests > 0 %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Requested Role</th>
+                                        <th>Requested On</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for req in pending_designation_requests_list %}
+                                        <tr>
+                                            <td>{{ req.user.get_full_name }}</td>
+                                            <td>{{ req.requested_role }}</td>
+                                            <td>{{ req.date_requested|date:"M d, Y" }}</td>
+                                            <td>
+                                                <a href="{% url 'accounts:designation_request_detail' req.id %}" class="btn btn-sm btn-primary">Review</a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-3">
+                            <a href="{% url 'accounts:designation_request_list' %}?status=pending" class="btn btn-primary">View All Requests</a>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No pending designation requests at this time.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card dashboard-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Pending Leave Requests</h5>
+                    <span class="badge bg-danger rounded-pill">{{ pending_leave_requests }}</span>
+                </div>
+                <div class="card-body">
+                    {% if pending_leave_requests > 0 %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Dates</th>
+                                        <th>Requested On</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for req in pending_leave_requests_list %}
+                                        <tr>
+                                            <td>{{ req.user.get_full_name }}</td>
+                                            <td>{{ req.start_date|date:"M d" }} - {{ req.end_date|date:"M d, Y" }}</td>
+                                            <td>{{ req.date_requested|date:"M d, Y" }}</td>
+                                            <td>
+                                                <a href="{% url 'accounts:leave_request_review' req.id %}" class="btn btn-sm btn-primary">Review</a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-3">
+                            <a href="{% url 'accounts:leave_request_list' %}?status=pending" class="btn btn-primary">View All Requests</a>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No pending leave requests at this time.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts and Lists -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h5 class="mb-0">Project Status Overview</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="projectStatusChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Activities</h5>
+                </div>
+                <div class="card-body">
+                    <div class="activity-timeline">
+                        {% for activity in recent_activities %}
+                            <div class="activity-item">
+                                <div class="d-flex justify-content-between">
+                                    <strong>{{ activity.user.get_full_name|default:activity.user.email }}</strong>
+                                    <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                                </div>
+                                <div>{{ activity.description }}</div>
+                                {% if activity.project %}
+                                    <small class="text-muted">
+                                        <i class="fas fa-project-diagram me-1"></i>
+                                        <a href="{% url 'projects:project_detail' activity.project.id %}">{{ activity.project.name }}</a>
+                                    </small>
+                                {% endif %}
+                                {% if activity.task %}
+                                    <small class="text-muted ms-2">
+                                        <i class="fas fa-tasks me-1"></i>
+                                        <a href="{% url 'projects:task_detail' activity.task.id %}">{{ activity.task.title }}</a>
+                                    </small>
+                                {% endif %}
+                            </div>
+                        {% empty %}
+                            <p class="text-muted mb-0">No recent activities to display.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Overdue Projects and Tasks -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h5 class="mb-0">Overdue Projects</h5>
+                </div>
+                <div class="card-body">
+                    {% if overdue_projects %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Project</th>
+                                        <th>Department</th>
+                                        <th>End Date</th>
+                                        <th>Lead</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for project in overdue_projects %}
+                                        <tr>
+                                            <td>
+                                                <a href="{% url 'projects:project_detail' project.id %}">{{ project.name }}</a>
+                                            </td>
+                                            <td>{{ project.department.name }}</td>
+                                            <td class="text-danger">{{ project.end_date }}</td>
+                                            <td>{{ project.lead.get_full_name|default:project.lead.email }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No overdue projects.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h5 class="mb-0">Overdue Tasks</h5>
+                </div>
+                <div class="card-body">
+                    {% if overdue_tasks %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Task</th>
+                                        <th>Project</th>
+                                        <th>Due Date</th>
+                                        <th>Assignee</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for task in overdue_tasks %}
+                                        <tr>
+                                            <td>
+                                                <a href="{% url 'projects:task_detail' task.id %}">{{ task.title }}</a>
+                                            </td>
+                                            <td>{{ task.project.name }}</td>
+                                            <td class="text-danger">{{ task.due_date }}</td>
+                                            <td>{{ task.assignee.get_full_name|default:task.assignee.email }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No overdue tasks.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize project status chart
+        const ctx = document.getElementById('projectStatusChart').getContext('2d');
+        const projectStatusChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ project_status_data.labels|safe }},
+                datasets: [{
+                    data: {{ project_status_data.data|safe }},
+                    backgroundColor: [
+                        '#6c757d',  // PLANNED
+                        '#007bff',  // IN_PROGRESS
+                        '#28a745',  // COMPLETED
+                        '#ffc107',  // ON_HOLD
+                        '#dc3545'   // CANCELLED
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %} 

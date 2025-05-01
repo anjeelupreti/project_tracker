@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en" {% if user.is_authenticated and user.theme_preference == 'dark' %}data-bs-theme="dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{% block title %}Project Tracker{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --navbar-height: 60px;
+            --sidebar-width: 280px;
+        }
+        
+        body {
+            min-height: 100vh;
+            overflow-x: hidden;  /* Prevent horizontal scrolling */
+            padding-top: var(--navbar-height); /* Add padding for fixed navbar */
+        }
+        
+        html {
+            overflow-y: scroll;  /* Always show vertical scrollbar to prevent layout shifts */
+        }
+        
+        .container-fluid {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        
+        .row {
+            margin-right: 0;
+            margin-left: 0;
+            width: 100%;
+        }
+        
+        .navbar {
+            height: var(--navbar-height);
+            padding: 0 1rem;
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 0;
+            z-index: 1030;
+        }
+        
+        .navbar-nav .dropdown-menu {
+            position: absolute;
+            right: 0;
+            left: auto;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: var(--navbar-height); /* Start below navbar */
+            bottom: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            z-index: 100;
+            padding: 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+            height: calc(100vh - var(--navbar-height));
+            overflow-y: auto;
+        }
+        
+        .sidebar-sticky {
+            height: 100%;
+            overflow-y: auto;
+            padding-top: 1rem;
+        }
+        
+        .main-content {
+            margin-left: var(--sidebar-width);
+            transition: all 0.3s;
+            min-height: calc(100vh - var(--navbar-height));
+            padding-top: 1.5rem; /* Add padding to prevent content from being hidden */
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-left: -280px;
+            }
+            
+            .sidebar.active {
+                margin-left: 0;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        
+        .sidebar .nav-link {
+            padding: 0.75rem 1rem;
+            margin: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.75);
+        }
+        
+        .sidebar .nav-link:hover {
+            color: rgba(255, 255, 255, 0.9);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar .nav-link.active {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 0.5rem;
+            width: 1.25rem;
+            text-align: center;
+        }
+        
+        .sidebar-heading {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1rem;
+            padding: 1rem 1rem 0.5rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .dashboard-card {
+            border-radius: 0.5rem;
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: all 0.3s;
+            margin-bottom: 1rem;
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        .dashboard-card .card-header {
+            border-bottom: none;
+            background-color: transparent;
+            padding: 1.25rem 1.25rem 0;
+        }
+        
+        .dashboard-card .card-body {
+            padding: 1.25rem;
+        }
+        
+        .activity-timeline .activity-item {
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .activity-timeline .activity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .badge {
+            padding: 0.5em 0.75em;
+        }
+        
+        .bd-placeholder-img {
+            font-size: 1.125rem;
+            text-anchor: middle;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            user-select: none;
+        }
+
+        .nav-item .dropdown-menu {
+            border-radius: 0.5rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        .dropdown-menu .dropdown-item i {
+            width: 1.25rem;
+            text-align: center;
+            margin-right: 0.5rem;
+        }
+
+        .btn-bd-primary {
+            --bs-btn-bg: var(--bs-primary);
+            --bs-btn-color: var(--bs-white);
+            --bs-btn-border-color: var(--bs-primary);
+            --bs-btn-hover-bg: var(--bs-primary-dark);
+            --bs-btn-hover-color: var(--bs-white);
+            --bs-btn-hover-border-color: var(--bs-primary-dark);
+        }
+        
+        /* Fixed max-width container to prevent dashboard infinite growth */
+        .dashboard-container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+    </style>
+    
+    <!-- Additional CSS -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- SVG Definitions for Icons -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
+        <symbol id="check2" viewBox="0 0 16 16">
+            <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+        </symbol>
+        <symbol id="circle-half" viewBox="0 0 16 16">
+            <path d="M8 15A7 7 0 1 0 8 1v14zm0 1A8 8 0 1 1 8 0a8 8 0 0 1 0 16z"/>
+        </symbol>
+        <symbol id="moon-stars-fill" viewBox="0 0 16 16">
+            <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
+            <path d="M10.794 3.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.734 1.734 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162A1.734 1.734 0 0 0 9.31 6.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.734 1.734 0 0 0 1.097-1.097l.387-1.162zM13.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732l-.774-.258a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732L13.863.1z"/>
+        </symbol>
+        <symbol id="sun-fill" viewBox="0 0 16 16">
+            <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+        </symbol>
+    </svg>
+    
+    <!-- Theme Switcher -->
+    <div class="dropdown position-fixed bottom-0 end-0 mb-3 me-3 bd-mode-toggle">
+        <button class="btn btn-bd-primary py-2 dropdown-toggle d-flex align-items-center" id="bd-theme" type="button" aria-expanded="false" data-bs-toggle="dropdown" aria-label="Toggle theme">
+            <svg class="bi my-1 theme-icon-active" width="1em" height="1em"><use href="#moon-stars-fill"></use></svg>
+            <span class="visually-hidden" id="bd-theme-text">Toggle theme</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="bd-theme-text">
+            <li>
+                <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="light" aria-pressed="false">
+                    <svg class="bi me-2 opacity-50 theme-icon" width="1em" height="1em"><use href="#sun-fill"></use></svg>
+                    Light
+                    <svg class="bi ms-auto d-none" width="1em" height="1em"><use href="#check2"></use></svg>
+                </button>
+            </li>
+            <li>
+                <button type="button" class="dropdown-item d-flex align-items-center active" data-bs-theme-value="dark" aria-pressed="true">
+                    <svg class="bi me-2 opacity-50 theme-icon" width="1em" height="1em"><use href="#moon-stars-fill"></use></svg>
+                    Dark
+                    <svg class="bi ms-auto d-none" width="1em" height="1em"><use href="#check2"></use></svg>
+                </button>
+            </li>
+            <li>
+                <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="auto" aria-pressed="false">
+                    <svg class="bi me-2 opacity-50 theme-icon" width="1em" height="1em"><use href="#circle-half"></use></svg>
+                    Auto
+                    <svg class="bi ms-auto d-none" width="1em" height="1em"><use href="#check2"></use></svg>
+                </button>
+            </li>
+        </ul>
+    </div>
+    
+    <!-- Navbar -->
+    <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap shadow">
+        <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6" href="{% url 'core:home' %}">
+            <i class="fas fa-tasks me-2"></i>Project Tracker
+        </a>
+        <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="navbar-nav flex-row ms-auto me-3 align-items-center">
+            {% if user.is_authenticated %}
+                <!-- Notifications Dropdown -->
+                <div class="nav-item text-nowrap dropdown me-3">
+                    <a class="nav-link px-3 position-relative" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-bell"></i>
+                        {% if unread_notification_count > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.5rem;">
+                                {{ unread_notification_count }}
+                                <span class="visually-hidden">unread notifications</span>
+                            </span>
+                        {% endif %}
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end shadow notification-dropdown" aria-labelledby="notificationsDropdown" style="width: 320px; max-height: 400px; overflow-y: auto;">
+                        <div class="d-flex justify-content-between align-items-center p-3">
+                            <h6 class="dropdown-header p-0">Notifications</h6>
+                            <a href="{% url 'accounts:notification_list' %}" class="text-muted text-decoration-none" style="font-size: 0.8rem;">View All</a>
+                        </div>
+                        <div class="dropdown-divider my-0"></div>
+                        
+                        {% with notifications=request.user.notifications.all|slice:":5" %}
+                            {% if notifications %}
+                                {% for notification in notifications %}
+                                    <a href="{% url 'accounts:mark_notification_as_read' notification.id %}" class="dropdown-item d-flex py-2 {% if not notification.is_read %}bg-body-tertiary{% endif %}">
+                                        <div style="flex: 0 0 40px; text-align: center;">
+                                            {% if notification.notification_type == 'INFO' %}
+                                                <i class="fas fa-info-circle text-primary"></i>
+                                            {% elif notification.notification_type == 'WARNING' %}
+                                                <i class="fas fa-exclamation-triangle text-warning"></i>
+                                            {% elif notification.notification_type == 'SUCCESS' %}
+                                                <i class="fas fa-check-circle text-success"></i>
+                                            {% elif notification.notification_type == 'DANGER' %}
+                                                <i class="fas fa-exclamation-circle text-danger"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div class="ms-2">
+                                            <div class="fw-semibold">{{ notification.title }}</div>
+                                            <div class="text-truncate" style="max-width: 240px;">{{ notification.message }}</div>
+                                            <small class="text-muted">{{ notification.created_at|timesince }} ago</small>
+                                        </div>
+                                    </a>
+                                {% endfor %}
+                                <div class="dropdown-divider my-0"></div>
+                                <div class="text-center p-2">
+                                    <a href="{% url 'accounts:notification_list' %}" class="btn btn-sm btn-primary w-100">View All Notifications</a>
+                                </div>
+                            {% else %}
+                                <div class="d-flex flex-column align-items-center p-4">
+                                    <i class="fas fa-bell-slash text-muted mb-3" style="font-size: 2rem;"></i>
+                                    <p class="text-muted text-center mb-0">No notifications yet.</p>
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+                
+                <!-- User Dropdown -->
+                <div class="nav-item text-nowrap dropdown">
+                    <a class="nav-link px-3 dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}" class="rounded-circle me-2" width="32" height="32">
+                        {% else %}
+                            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                <span class="text-white fw-bold">{{ user.get_initials }}</span>
+                            </div>
+                        {% endif %}
+                        <span class="d-none d-sm-inline">{{ user.get_full_name|default:user.email }}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                            <i class="fas fa-user me-2"></i>Profile
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'accounts:settings' %}">
+                            <i class="fas fa-cog me-2"></i>Settings
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'account_logout' %}">
+                            <i class="fas fa-sign-out-alt me-2"></i>Log Out
+                        </a></li>
+                    </ul>
+                </div>
+            {% else %}
+                <div class="nav-item text-nowrap">
+                    <a class="nav-link px-3" href="{% url 'account_login' %}">Log In</a>
+                </div>
+                <div class="nav-item text-nowrap">
+                    <a class="nav-link px-3" href="{% url 'account_signup' %}">Sign Up</a>
+                </div>
+            {% endif %}
+        </div>
+    </header>
+    
+    <div class="container-fluid">
+        <div class="row">
+            {% if user.is_authenticated %}
+                <!-- Sidebar -->
+                <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">
+                    <div class="sidebar-sticky pt-3">
+                        <div class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none ms-3 pt-2">
+                            <span class="fs-5">Navigation</span>
+                        </div>
+                        <hr class="text-white-50">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'admin_dashboard' or request.resolver_match.url_name == 'team_lead_dashboard' or request.resolver_match.url_name == 'member_dashboard' %}active{% endif %}" 
+                                   href="{% url 'core:home' %}">
+                                    <i class="fas fa-home"></i>
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'project_list' in request.resolver_match.url_name %}active{% endif %}" 
+                                   href="{% url 'projects:project_list' %}">
+                                    <i class="fas fa-project-diagram"></i>
+                                    Projects
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'task_list' in request.resolver_match.url_name %}active{% endif %}" 
+                                   href="{% url 'projects:task_list' %}">
+                                    <i class="fas fa-tasks"></i>
+                                    Tasks
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        {% if user.is_team_lead or user.is_admin or user.is_superuser %}
+                            <div class="d-flex align-items-center mt-4 mb-1 ms-3">
+                                <span class="text-white-50 text-uppercase fs-6">Management</span>
+                            </div>
+                            <hr class="text-white-50">
+                            <ul class="nav flex-column">
+                                {% if user.is_admin or user.is_superuser %}
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'projects:department_list' %}">
+                                            <i class="fas fa-building"></i>
+                                            Departments
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'accounts:designation_request_list' %}">
+                                            <i class="fas fa-user-tag"></i>
+                                            Role Requests
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'accounts:leave_request_list' %}">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            Leave Requests
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'admin:index' %}">
+                                            <i class="fas fa-cogs"></i>
+                                            Admin Site
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        {% endif %}
+                        
+                        <div class="d-flex align-items-center mt-4 mb-1 ms-3">
+                            <span class="text-white-50 text-uppercase fs-6">Personal</span>
+                        </div>
+                        <hr class="text-white-50">
+                        <ul class="nav flex-column mb-2">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'accounts:leave_request_create' %}">
+                                    <i class="fas fa-calendar-plus"></i>
+                                    Request Leave
+                                </a>
+                            </li>
+                            
+                            {% if not user.is_approved or user.role == 'MEMBER' %}
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'accounts:designation_request_create' %}">
+                                        <i class="fas fa-user-plus"></i>
+                                        Request Role
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </nav>
+            {% endif %}
+            
+            <!-- Main Content -->
+            <main class="{% if user.is_authenticated %}col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content{% else %}col-12{% endif %}">
+                {% if messages %}
+                    <div class="mt-3">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Theme Toggling -->
+    <script>
+        (() => {
+            'use strict'
+            
+            const getStoredTheme = () => localStorage.getItem('theme')
+            const setStoredTheme = theme => localStorage.setItem('theme', theme)
+
+            const getPreferredTheme = () => {
+                const storedTheme = getStoredTheme()
+                if (storedTheme) {
+                    return storedTheme
+                }
+
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+            }
+
+            const setTheme = theme => {
+                if (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.setAttribute('data-bs-theme', 'dark')
+                } else {
+                    document.documentElement.setAttribute('data-bs-theme', theme)
+                }
+            }
+
+            setTheme(getPreferredTheme())
+
+            const showActiveTheme = theme => {
+                const activeThemeIcon = document.querySelector('.theme-icon-active use')
+                const btnToActive = document.querySelector(`[data-bs-theme-value="${theme}"]`)
+                const svgUseForActive = btnToActive.querySelector('svg use').getAttribute('href')
+
+                document.querySelectorAll('[data-bs-theme-value]').forEach(element => {
+                    element.classList.remove('active')
+                    element.setAttribute('aria-pressed', 'false')
+                })
+
+                btnToActive.classList.add('active')
+                btnToActive.setAttribute('aria-pressed', 'true')
+                activeThemeIcon.setAttribute('href', svgUseForActive)
+            }
+
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                if (getStoredTheme() !== 'light' || getStoredTheme() !== 'dark') {
+                    setTheme(getPreferredTheme())
+                }
+            })
+
+            window.addEventListener('DOMContentLoaded', () => {
+                showActiveTheme(getPreferredTheme())
+
+                document.querySelectorAll('[data-bs-theme-value]')
+                    .forEach(toggle => {
+                        toggle.addEventListener('click', () => {
+                            const theme = toggle.getAttribute('data-bs-theme-value')
+                            setStoredTheme(theme)
+                            setTheme(theme)
+                            showActiveTheme(theme)
+                        })
+                    })
+            })
+        })()
+    </script>
+    
+    <!-- Additional JS -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 

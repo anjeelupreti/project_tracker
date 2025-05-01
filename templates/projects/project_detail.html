@@ -1,0 +1,284 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ project.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .task-card {
+        transition: all 0.3s ease;
+        border: none;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+    
+    .task-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .task-header {
+        border-bottom: none;
+        padding: 1rem 1.25rem 0.5rem;
+    }
+    
+    .task-footer {
+        border-top: none;
+        background-color: transparent;
+        padding: 0.5rem 1.25rem 1rem;
+    }
+    
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+    }
+    
+    .tab-content {
+        padding: 1.5rem;
+        background-color: var(--bs-body-bg);
+        border: 1px solid rgba(0, 0, 0, 0.125);
+        border-top: none;
+        border-radius: 0 0 0.375rem 0.375rem;
+    }
+    
+    .nav-tabs .nav-link.active {
+        font-weight: 500;
+        border-width: 2px 1px 0 1px;
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0.6rem;
+        width: 2px;
+        background-color: var(--bs-primary);
+        opacity: 0.2;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-bottom: 1.5rem;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -2rem;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: var(--bs-primary);
+        border: 2px solid var(--bs-body-bg);
+    }
+    
+    .timeline-item:last-child {
+        padding-bottom: 0;
+    }
+    
+    .timeline-item:last-child::before {
+        content: '';
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        {{ project.name }}
+        <span class="badge 
+            {% if project.status == 'PLANNED' %}bg-secondary
+            {% elif project.status == 'IN_PROGRESS' %}bg-primary
+            {% elif project.status == 'COMPLETED' %}bg-success
+            {% elif project.status == 'ON_HOLD' %}bg-warning
+            {% elif project.status == 'CANCELLED' %}bg-danger
+            {% endif %} ms-2">
+            {{ project.get_status_display }}
+        </span>
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        {% if user == project.lead or user.is_admin or user.is_superuser %}
+            <a href="{% url 'projects:project_update' project.id %}" class="btn btn-sm btn-outline-primary me-2">
+                <i class="fas fa-edit me-1"></i> Edit Project
+            </a>
+        {% endif %}
+        <a href="{% url 'projects:project_task_create' project.id %}" class="btn btn-sm btn-primary">
+            <i class="fas fa-plus-circle me-1"></i> New Task
+        </a>
+    </div>
+</div>
+
+<!-- Project Details -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="mb-4">
+                    <h5 class="card-title mb-3">Description</h5>
+                    <p class="card-text">{{ project.description }}</p>
+                </div>
+                
+                <div class="mb-4">
+                    <h5 class="card-title mb-3">Progress</h5>
+                    <div class="progress mb-2">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ project.progress }}%;" 
+                             aria-valuenow="{{ project.progress }}" aria-valuemin="0" aria-valuemax="100">
+                            {{ project.progress }}%
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted">Start Date: {{ project.start_date|date:"F d, Y" }}</small>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <small class="text-muted">End Date: {{ project.end_date|date:"F d, Y" }}</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <h5 class="card-title mb-2">Department</h5>
+                            <p class="card-text">
+                                <i class="fas fa-building me-2 text-primary"></i>
+                                <a href="{% url 'projects:department_detail' project.department.id %}" class="text-decoration-none">
+                                    {{ project.department.name }}
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <h5 class="card-title mb-2">Project Lead</h5>
+                            <p class="card-text">
+                                <i class="fas fa-user-tie me-2 text-primary"></i>
+                                {{ project.lead.get_full_name|default:project.lead.email }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Project Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-3 text-center" style="width: 40px;">
+                        <i class="fas fa-tasks fs-4 text-primary"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">Tasks</h6>
+                        <p class="mb-0">{{ project.tasks.count }} total</p>
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-3 text-center" style="width: 40px;">
+                        <i class="fas fa-users fs-4 text-primary"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">Team Members</h6>
+                        <p class="mb-0">{{ members|length }} members</p>
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-3 text-center" style="width: 40px;">
+                        <i class="fas fa-check-circle fs-4 text-success"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">Completed Tasks</h6>
+                        <p class="mb-0">{{ completed_tasks|length }} ({{ project.progress }}%)</p>
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-3 text-center" style="width: 40px;">
+                        <i class="fas fa-clock fs-4 text-warning"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">In Progress</h6>
+                        <p class="mb-0">{{ in_progress_tasks|length }} tasks</p>
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-center">
+                    <div class="me-3 text-center" style="width: 40px;">
+                        <i class="fas fa-exclamation-triangle fs-4 text-danger"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">Blocked</h6>
+                        <p class="mb-0">{{ blocked_tasks|length }} tasks</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Project Content Tabs -->
+<ul class="nav nav-tabs" id="projectTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tasks-tab" data-bs-toggle="tab" data-bs-target="#tasks" type="button" role="tab" aria-controls="tasks" aria-selected="true">
+            <i class="fas fa-tasks me-1"></i> Tasks
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="team-tab" data-bs-toggle="tab" data-bs-target="#team" type="button" role="tab" aria-controls="team" aria-selected="false">
+            <i class="fas fa-users me-1"></i> Team
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="updates-tab" data-bs-toggle="tab" data-bs-target="#updates" type="button" role="tab" aria-controls="updates" aria-selected="false">
+            <i class="fas fa-history me-1"></i> Updates
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="attachments-tab" data-bs-toggle="tab" data-bs-target="#attachments" type="button" role="tab" aria-controls="attachments" aria-selected="false">
+            <i class="fas fa-paperclip me-1"></i> Attachments
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="activities-tab" data-bs-toggle="tab" data-bs-target="#activities" type="button" role="tab" aria-controls="activities" aria-selected="false">
+            <i class="fas fa-stream me-1"></i> Activities
+        </button>
+    </li>
+</ul>
+<div class="tab-content" id="projectTabsContent">
+    <!-- Tasks Tab -->
+    <div class="tab-pane fade show active" id="tasks" role="tabpanel" aria-labelledby="tasks-tab">
+        <p>Project Tasks (basic version - will be expanded)</p>
+    </div>
+    
+    <!-- Team Tab -->
+    <div class="tab-pane fade" id="team" role="tabpanel" aria-labelledby="team-tab">
+        <p>Team Members (basic version - will be expanded)</p>
+    </div>
+    
+    <!-- Updates Tab -->
+    <div class="tab-pane fade" id="updates" role="tabpanel" aria-labelledby="updates-tab">
+        <p>Project Updates (basic version - will be expanded)</p>
+    </div>
+    
+    <!-- Attachments Tab -->
+    <div class="tab-pane fade" id="attachments" role="tabpanel" aria-labelledby="attachments-tab">
+        <p>Project Attachments (basic version - will be expanded)</p>
+    </div>
+    
+    <!-- Activities Tab -->
+    <div class="tab-pane fade" id="activities" role="tabpanel" aria-labelledby="activities-tab">
+        <p>Recent Activities (basic version - will be expanded)</p>
+    </div>
+</div>
+{% endblock %} 

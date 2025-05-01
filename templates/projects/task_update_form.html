@@ -1,0 +1,46 @@
+{% extends 'base/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Add Task Update{% endblock %}
+
+{% block extra_css %}
+<style>
+  .form-card {
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">Add Task Update</h1>
+  <div class="btn-toolbar mb-2 mb-md-0">
+    <a href="{% url 'projects:task_detail' task.id %}" class="btn btn-sm btn-outline-secondary">
+      <i class="fas fa-arrow-left me-1"></i> Back to Task
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-8 mx-auto">
+    <div class="card form-card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Task: {{ task.title }}</h5>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          {{ form|crispy }}
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <a href="{% url 'projects:task_detail' task.id %}" class="btn btn-outline-secondary me-2">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-plus-circle me-1"></i> Add Update
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

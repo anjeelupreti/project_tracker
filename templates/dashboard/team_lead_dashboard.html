@@ -1,0 +1,516 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Team Lead Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+<style>
+    .stats-card {
+        border-radius: 0.75rem;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+    }
+    
+    .activity-timeline .activity-item {
+        position: relative;
+        padding-bottom: 1.5rem;
+        padding-left: 1.5rem;
+    }
+    
+    .activity-timeline .activity-item:before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--bs-primary);
+        margin-left: -6px;
+    }
+    
+    .activity-timeline .activity-item:after {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 12px;
+        bottom: 0;
+        width: 2px;
+        background: rgba(var(--bs-primary-rgb), 0.25);
+        margin-left: -1px;
+    }
+    
+    .activity-timeline .activity-item:last-child:after {
+        display: none;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.075);
+    }
+    
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+    }
+    
+    .badge {
+        padding: 0.5em 0.75em;
+        font-weight: 500;
+    }
+    
+    .badge-rounded-pill {
+        border-radius: 50rem;
+    }
+    
+    /* Add fixed max-width to container to prevent infinite growth */
+    .dashboard-container {
+        max-width: 1600px;
+        margin: 0 auto;
+        overflow-x: hidden;
+    }
+    
+    /* Ensure rows don't overflow and have proper spacing */
+    .row {
+        margin-right: 0;
+        margin-left: 0;
+        width: 100%;
+        margin-bottom: 1.5rem;
+    }
+    
+    /* Ensure content doesn't overflow */
+    .card {
+        overflow: hidden;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 dashboard-container">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Team Lead Dashboard</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{% url 'projects:project_create' %}" class="btn btn-sm btn-primary d-flex align-items-center">
+                    <i class="fas fa-plus-circle me-1"></i> New Project
+                </a>
+                <a href="{% url 'projects:task_create' %}" class="btn btn-sm btn-outline-secondary d-flex align-items-center">
+                    <i class="fas fa-plus-circle me-1"></i> New Task
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0 text-white-50">Led Projects</h6>
+                            <h2 class="mt-2 mb-0 display-6">{{ led_projects_count }}</h2>
+                        </div>
+                        <div class="icon fs-1 opacity-75">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <a href="{% url 'projects:project_list' %}?lead={{ request.user.id }}" class="text-white d-flex align-items-center text-decoration-none">
+                            View all projects <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0 text-white-50">Team Members</h6>
+                            <h2 class="mt-2 mb-0 display-6">{{ team_members_count }}</h2>
+                        </div>
+                        <div class="icon fs-1 opacity-75">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <a href="#team-members" class="text-white d-flex align-items-center text-decoration-none">
+                            View team performance <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0 text-white-50">Tasks In Progress</h6>
+                            <h2 class="mt-2 mb-0 display-6">{{ tasks_in_progress }}</h2>
+                        </div>
+                        <div class="icon fs-1 opacity-75">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <a href="#tasks-overview" class="text-white d-flex align-items-center text-decoration-none">
+                            View all tasks <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card bg-warning text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0 text-white-50">Pending Leaves</h6>
+                            <h2 class="mt-2 mb-0 display-6">{{ pending_leave_requests.count }}</h2>
+                        </div>
+                        <div class="icon fs-1 opacity-75">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <a href="{% url 'accounts:leave_request_list' %}?status=pending" class="text-white d-flex align-items-center text-decoration-none">
+                            Review requests <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tasks Overview -->
+    <div class="row g-4 mb-4" id="tasks-overview">
+        <div class="col-md-6">
+            <div class="card dashboard-card h-100">
+                <div class="card-header bg-body-tertiary">
+                    <h5 class="mb-0">Tasks Overview</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="tasksOverviewChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card dashboard-card h-100">
+                <div class="card-header bg-body-tertiary">
+                    <h5 class="mb-0">Upcoming Deadlines</h5>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_deadlines %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Project</th>
+                                    <th>Due Date</th>
+                                    <th>Assignee</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in upcoming_deadlines %}
+                                <tr>
+                                    <td><a href="{% url 'projects:task_detail' task.id %}" class="text-decoration-none">{{ task.title }}</a></td>
+                                    <td>{{ task.project.name }}</td>
+                                    <td>{{ task.due_date|date:"M d, Y" }}</td>
+                                    <td>{{ task.assignee.get_full_name|default:task.assignee.email }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <div class="mb-3">
+                            <i class="fas fa-calendar-check fs-1 text-muted"></i>
+                        </div>
+                        <p class="text-muted mb-0">No upcoming deadlines in the next 7 days.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects and Team Members -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-12">
+            <div class="card dashboard-card">
+                <div class="card-header bg-body-tertiary">
+                    <h5 class="mb-0">My Led Projects</h5>
+                </div>
+                <div class="card-body">
+                    {% if led_projects %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Project</th>
+                                    <th>Status</th>
+                                    <th>Progress</th>
+                                    <th>Team</th>
+                                    <th>Deadline</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for project in led_projects %}
+                                <tr>
+                                    <td><a href="{% url 'projects:project_detail' project.id %}" class="text-decoration-none">{{ project.name }}</a></td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if project.status == 'PLANNED' %}bg-secondary
+                                            {% elif project.status == 'IN_PROGRESS' %}bg-primary
+                                            {% elif project.status == 'COMPLETED' %}bg-success
+                                            {% elif project.status == 'ON_HOLD' %}bg-warning
+                                            {% elif project.status == 'CANCELLED' %}bg-danger
+                                            {% endif %} badge-rounded-pill">
+                                            {{ project.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td style="width: 15%;">
+                                        <div class="progress">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ project.completion_percentage|default:0 }}%">
+                                                {{ project.completion_percentage|default:0 }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% for member in project.members.all|slice:":3" %}
+                                            <span class="badge bg-light text-dark">{{ member.get_full_name|default:member.email }}</span>
+                                        {% endfor %}
+                                        {% if project.members.all|length > 3 %}
+                                            <span class="badge bg-light text-dark">+{{ project.members.all|length|add:"-3" }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ project.end_date|date:"M d, Y" }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'projects:project_detail' project.id %}" class="btn btn-outline-primary">View</a>
+                                            <a href="{% url 'projects:project_update' project.id %}" class="btn btn-outline-secondary">Edit</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <div class="mb-3">
+                            <i class="fas fa-folder-open fs-1 text-muted"></i>
+                        </div>
+                        <p class="text-muted mb-0">You are not leading any projects at the moment.</p>
+                        <div class="mt-3">
+                            <a href="{% url 'projects:project_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-1"></i> Create New Project
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Performance and Leave Requests -->
+    <div class="row g-4 mb-4" id="team-members">
+        <div class="col-md-7">
+            <div class="card dashboard-card h-100">
+                <div class="card-header bg-body-tertiary">
+                    <h5 class="mb-0">Team Performance</h5>
+                </div>
+                <div class="card-body">
+                    {% if team_members_performance %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Team Member</th>
+                                    <th>Completed</th>
+                                    <th>Total</th>
+                                    <th>Completion Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for member in team_members_performance %}
+                                <tr>
+                                    <td>{{ member.user_name }}</td>
+                                    <td>{{ member.completed_tasks }}</td>
+                                    <td>{{ member.total_tasks }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress flex-grow-1 me-2" style="height: 6px;">
+                                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ member.completion_rate }}%"></div>
+                                            </div>
+                                            <span>{{ member.completion_rate|floatformat:0 }}%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <div class="mb-3">
+                            <i class="fas fa-users fs-1 text-muted"></i>
+                        </div>
+                        <p class="text-muted mb-0">No team members data available.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-5">
+            <div class="card dashboard-card h-100">
+                <div class="card-header bg-body-tertiary">
+                    <h5 class="mb-0">Pending Leave Requests</h5>
+                </div>
+                <div class="card-body">
+                    {% if pending_leave_requests %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Team Member</th>
+                                    <th>Type</th>
+                                    <th>Dates</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in pending_leave_requests %}
+                                <tr>
+                                    <td>{{ request.user.get_full_name|default:request.user.email }}</td>
+                                    <td>
+                                        <span class="badge bg-primary-subtle border border-primary-subtle text-primary-emphasis rounded-pill">
+                                            {{ request.get_leave_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ request.start_date|date:"M d" }} - {{ request.end_date|date:"M d" }}</td>
+                                    <td>
+                                        <a href="{% url 'accounts:leave_request_review' request.id %}" class="btn btn-sm btn-outline-primary">Review</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <div class="mb-3">
+                            <i class="fas fa-calendar-check fs-1 text-success"></i>
+                        </div>
+                        <p class="text-muted mb-0">No pending leave requests from your team members.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activities -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-12">
+            <div class="card dashboard-card">
+                <div class="card-header bg-body-tertiary">
+                    <h5 class="mb-0">Recent Activities</h5>
+                </div>
+                <div class="card-body">
+                    <div class="activity-timeline ps-3">
+                        {% for activity in recent_activities %}
+                        <div class="activity-item">
+                            <div class="d-flex justify-content-between">
+                                <strong>{{ activity.user.get_full_name|default:activity.user.email }}</strong>
+                                <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                            </div>
+                            <div>{{ activity.description }}</div>
+                            <div class="mt-1">
+                                {% if activity.project %}
+                                <span class="badge bg-primary-subtle border border-primary-subtle text-primary-emphasis rounded-pill">
+                                    <i class="fas fa-project-diagram me-1"></i>
+                                    <a href="{% url 'projects:project_detail' activity.project.id %}" class="text-decoration-none text-primary-emphasis">{{ activity.project.name }}</a>
+                                </span>
+                                {% endif %}
+                                {% if activity.task %}
+                                <span class="badge bg-info-subtle border border-info-subtle text-info-emphasis rounded-pill ms-2">
+                                    <i class="fas fa-tasks me-1"></i>
+                                    <a href="{% url 'projects:task_detail' activity.task.id %}" class="text-decoration-none text-info-emphasis">{{ activity.task.title }}</a>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-4">
+                            <div class="mb-3">
+                                <i class="fas fa-stream fs-1 text-muted"></i>
+                            </div>
+                            <p class="text-muted mb-0">No recent activities to display.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Task status chart
+    const taskStatusCtx = document.getElementById('tasksOverviewChart').getContext('2d');
+    const taskStatusChart = new Chart(taskStatusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['To Do', 'In Progress', 'Review', 'Completed', 'Blocked'],
+            datasets: [{
+                data: [
+                    {{ tasks_todo }}, 
+                    {{ tasks_in_progress }}, 
+                    {{ tasks_review }}, 
+                    {{ tasks_completed }}, 
+                    {{ tasks_blocked }}
+                ],
+                backgroundColor: [
+                    '#6c757d',  // To Do - secondary
+                    '#0d6efd',  // In Progress - primary
+                    '#0dcaf0',  // Review - info
+                    '#198754',  // Completed - success
+                    '#dc3545'   // Blocked - danger
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 

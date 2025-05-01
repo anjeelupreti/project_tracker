@@ -1,0 +1,285 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ department.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .member-card, .project-card {
+    transition: all 0.3s ease;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  }
+  
+  .member-card:hover, .project-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .progress {
+    height: 8px;
+    border-radius: 4px;
+  }
+  
+  .member-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #0d6efd;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 500;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">{{ department.name }}</h1>
+  <div class="btn-toolbar mb-2 mb-md-0">
+    {% if user.is_admin or user.is_superuser %}
+      <a href="{% url 'projects:department_update' department.id %}" class="btn btn-sm btn-outline-primary me-2">
+        <i class="fas fa-edit me-1"></i> Edit Department
+      </a>
+    {% endif %}
+    <a href="{% url 'projects:department_list' %}" class="btn btn-sm btn-outline-secondary">
+      <i class="fas fa-arrow-left me-1"></i> Back to Departments
+    </a>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-md-8">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="mb-4">
+          <h5 class="card-title mb-3">About</h5>
+          <p class="card-text">{{ department.description }}</p>
+        </div>
+        
+        <div class="mb-3">
+          <h5 class="card-title mb-2">Department Head</h5>
+          {% if department.head %}
+            <div class="d-flex align-items-center">
+              <div class="member-avatar me-2">
+                {% if department.head.profile_picture %}
+                  <img src="{{ department.head.profile_picture.url }}" alt="{{ department.head.get_full_name }}" class="img-fluid">
+                {% else %}
+                  {{ department.head.get_initials }}
+                {% endif %}
+              </div>
+              <div>
+                <p class="mb-0 fw-medium">{{ department.head.get_full_name|default:department.head.email }}</p>
+                <small class="text-muted">{{ department.head.email }}</small>
+              </div>
+            </div>
+          {% else %}
+            <p class="text-muted fst-italic">No department head assigned</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Department Statistics</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-3">
+          <div class="me-3 text-center" style="width: 40px;">
+            <i class="fas fa-users fs-4 text-primary"></i>
+          </div>
+          <div>
+            <h6 class="mb-0">Members</h6>
+            <p class="mb-0">{{ department.members.count }} total</p>
+          </div>
+        </div>
+        
+        <div class="d-flex align-items-center mb-3">
+          <div class="me-3 text-center" style="width: 40px;">
+            <i class="fas fa-project-diagram fs-4 text-primary"></i>
+          </div>
+          <div>
+            <h6 class="mb-0">Projects</h6>
+            <p class="mb-0">{{ department.projects.count }} total</p>
+          </div>
+        </div>
+        
+        <div class="d-flex align-items-center mb-3">
+          <div class="me-3 text-center" style="width: 40px;">
+            <i class="fas fa-spinner fs-4 text-warning"></i>
+          </div>
+          <div>
+            <h6 class="mb-0">In Progress</h6>
+            <p class="mb-0">
+              {{ in_progress_projects }} project{{ in_progress_projects|pluralize }}
+            </p>
+          </div>
+        </div>
+        
+        <div class="d-flex align-items-center">
+          <div class="me-3 text-center" style="width: 40px;">
+            <i class="fas fa-check-circle fs-4 text-success"></i>
+          </div>
+          <div>
+            <h6 class="mb-0">Completed</h6>
+            <p class="mb-0">
+              {{ completed_projects }} project{{ completed_projects|pluralize }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Members Section -->
+<div class="mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="h4 mb-0">Team Members</h3>
+  </div>
+  
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for member in members %}
+      <div class="col">
+        <div class="card member-card h-100">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-3">
+              <div class="member-avatar me-3">
+                {% if member.profile_picture %}
+                  <img src="{{ member.profile_picture.url }}" alt="{{ member.get_full_name }}" class="img-fluid">
+                {% else %}
+                  {{ member.get_initials }}
+                {% endif %}
+              </div>
+              <div>
+                <h5 class="card-title mb-0">{{ member.get_full_name|default:member.email }}</h5>
+                <p class="card-text text-muted">{{ member.email }}</p>
+              </div>
+            </div>
+            
+            <div>
+              <p class="card-text mb-1">
+                <strong>Role:</strong> 
+                {% if member.is_admin %}
+                  Administrator
+                {% elif member.is_team_lead %}
+                  Team Lead
+                {% else %}
+                  Team Member
+                {% endif %}
+              </p>
+              <p class="card-text mb-1">
+                <strong>Joined:</strong> {{ member.date_joined|date:"M d, Y" }}
+              </p>
+              <p class="card-text">
+                <strong>Projects:</strong> {{ member.projects.count }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i> No members in this department yet.
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Projects Section -->
+<div>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="h4 mb-0">Department Projects</h3>
+    {% if user.is_team_lead or user.is_admin or user.is_superuser %}
+      <a href="{% url 'projects:project_create' %}" class="btn btn-sm btn-primary">
+        <i class="fas fa-plus-circle me-1"></i> New Project
+      </a>
+    {% endif %}
+  </div>
+  
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for project in projects %}
+      <div class="col">
+        <div class="card project-card h-100">
+          <div class="card-header d-flex justify-content-between align-items-center bg-body-tertiary">
+            <h5 class="card-title mb-0">
+              <a href="{% url 'projects:project_detail' project.id %}" class="text-decoration-none">{{ project.name }}</a>
+            </h5>
+            <span class="badge 
+              {% if project.status == 'PLANNED' %}bg-secondary
+              {% elif project.status == 'IN_PROGRESS' %}bg-primary
+              {% elif project.status == 'COMPLETED' %}bg-success
+              {% elif project.status == 'ON_HOLD' %}bg-warning
+              {% elif project.status == 'CANCELLED' %}bg-danger
+              {% endif %}">
+              {{ project.get_status_display }}
+            </span>
+          </div>
+          <div class="card-body">
+            <p class="card-text mb-2">{{ project.description|truncatechars:150 }}</p>
+            
+            <div class="mb-3">
+              <small class="text-muted">Progress</small>
+              <div class="progress mt-1">
+                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ project.progress }}%;" 
+                     aria-valuenow="{{ project.progress }}" aria-valuemin="0" aria-valuemax="100">
+                </div>
+              </div>
+              <div class="d-flex justify-content-between mt-1">
+                <small class="text-muted">{{ project.progress }}%</small>
+                <small class="text-muted">
+                  <i class="fas fa-calendar-alt me-1"></i> {{ project.end_date|date:"M d, Y" }}
+                </small>
+              </div>
+            </div>
+            
+            <div class="d-flex align-items-center">
+              <div style="flex: 0 0 30px;">
+                <i class="fas fa-user-tie text-primary"></i>
+              </div>
+              <div class="text-truncate">{{ project.lead.get_full_name|default:project.lead.email }}</div>
+            </div>
+            
+            <div class="d-flex align-items-center mt-2">
+              <div style="flex: 0 0 30px;">
+                <i class="fas fa-users text-primary"></i>
+              </div>
+              <div class="text-truncate">{{ project.members.count }} team members</div>
+            </div>
+          </div>
+          <div class="card-footer bg-body-tertiary">
+            <div class="d-flex justify-content-between align-items-center">
+              <small class="text-muted">
+                <i class="fas fa-tasks me-1"></i> {{ project.tasks.count }} tasks
+              </small>
+              <a href="{% url 'projects:project_detail' project.id %}" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-eye me-1"></i> View
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i> No projects in this department yet.
+          {% if user.is_team_lead or user.is_admin or user.is_superuser %}
+            <div class="mt-3">
+              <a href="{% url 'projects:project_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-1"></i> Create Project
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,96 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Review Leave Request{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="mb-0">Review Leave Request</h4>
+        </div>
+        <div class="card-body">
+          <div class="mb-4">
+            <h5>Request Details</h5>
+            <div class="row">
+              <div class="col-md-6">
+                <p><strong>Requested By:</strong> {{ leave_request.user.get_full_name }}</p>
+                <p><strong>Leave Type:</strong> {{ leave_request.get_leave_type_display }}</p>
+                <p><strong>Duration:</strong> {{ leave_request.end_date|timeuntil:leave_request.start_date }}</p>
+              </div>
+              <div class="col-md-6">
+                <p><strong>Start Date:</strong> {{ leave_request.start_date|date:"M d, Y" }}</p>
+                <p><strong>End Date:</strong> {{ leave_request.end_date|date:"M d, Y" }}</p>
+                <p><strong>Status:</strong> 
+                  <span class="badge {% if leave_request.status == 'pending' %}bg-warning
+                    {% elif leave_request.status == 'approved' %}bg-success
+                    {% elif leave_request.status == 'rejected' %}bg-danger{% endif %}">
+                    {{ leave_request.get_status_display }}
+                  </span>
+                </p>
+              </div>
+            </div>
+            
+            <div class="mt-3">
+              <h6>Reason for Leave:</h6>
+              <div class="card bg-light">
+                <div class="card-body">
+                  {{ leave_request.reason }}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {% if leave_request.status == 'pending' %}
+            <div class="mt-4">
+              <h5>Your Decision</h5>
+              <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label for="status" class="form-label">Decision</label>
+                  <select class="form-select" id="status" name="status">
+                    <option value="">Select a decision</option>
+                    <option value="approved">Approve</option>
+                    <option value="rejected">Reject</option>
+                  </select>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="review_comments" class="form-label">Comments</label>
+                  <textarea class="form-control" id="review_comments" name="review_comments" rows="3" placeholder="Optional comments about your decision"></textarea>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                  <a href="{% url 'accounts:leave_request_list' %}" class="btn btn-secondary">Back to List</a>
+                  <button type="submit" class="btn btn-primary">Submit Decision</button>
+                </div>
+              </form>
+            </div>
+          {% else %}
+            <div class="mt-4">
+              <h5>Decision</h5>
+              <div class="card bg-light">
+                <div class="card-body">
+                  <p><strong>Decision:</strong> {{ leave_request.get_status_display }}</p>
+                  <p><strong>Reviewed By:</strong> {{ leave_request.reviewed_by.get_full_name }}</p>
+                  <p><strong>Review Date:</strong> {{ leave_request.review_date|date:"M d, Y" }}</p>
+                  {% if leave_request.review_comments %}
+                    <p><strong>Comments:</strong> {{ leave_request.review_comments }}</p>
+                  {% endif %}
+                </div>
+              </div>
+              
+              <div class="d-flex justify-content-end mt-4">
+                <a href="{% url 'accounts:leave_request_list' %}" class="btn btn-secondary">Back to List</a>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

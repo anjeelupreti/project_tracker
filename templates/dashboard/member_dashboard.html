@@ -1,0 +1,507 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Member Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+<style>
+    .stats-card {
+        border-radius: 0.75rem;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+    }
+    
+    .activity-timeline .activity-item {
+        position: relative;
+        padding-bottom: 1.5rem;
+        padding-left: 1.5rem;
+    }
+    
+    .activity-timeline .activity-item:before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--bs-primary);
+        margin-left: -6px;
+    }
+    
+    .activity-timeline .activity-item:after {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 12px;
+        bottom: 0;
+        width: 2px;
+        background: rgba(var(--bs-primary-rgb), 0.25);
+        margin-left: -1px;
+    }
+    
+    .activity-timeline .activity-item:last-child:after {
+        display: none;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.075);
+    }
+    
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+    }
+    
+    .badge {
+        padding: 0.5em 0.75em;
+        font-weight: 500;
+    }
+    
+    .badge-rounded-pill {
+        border-radius: 50rem;
+    }
+    
+    /* Add fixed max-width to container to prevent infinite growth */
+    .dashboard-container {
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+    
+    /* Ensure rows don't overflow */
+    .row {
+        margin-right: 0;
+        margin-left: 0;
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 dashboard-container">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">My Dashboard</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{% url 'projects:task_list' %}?assignee={{ request.user.id }}" class="btn btn-sm btn-outline-primary d-flex align-items-center">
+                <i class="fas fa-tasks me-1"></i> My Tasks
+            </a>
+        </div>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0 text-white-50">My Projects</h6>
+                            <h2 class="mt-2 mb-0 display-6">{{ projects_count }}</h2>
+                        </div>
+                        <div class="icon fs-1 opacity-75">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <a href="{% url 'projects:project_list' %}?member={{ request.user.id }}" class="text-white d-flex align-items-center text-decoration-none">
+                            View all projects <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0 text-white-50">Tasks Assigned</h6>
+                            <h2 class="mt-2 mb-0 display-6">{{ assigned_tasks_count }}</h2>
+                        </div>
+                        <div class="icon fs-1 opacity-75">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <a href="{% url 'projects:task_list' %}?assignee={{ request.user.id }}" class="text-white d-flex align-items-center text-decoration-none">
+                            View all tasks <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0 text-white-50">Completion Rate</h6>
+                            <h2 class="mt-2 mb-0 display-6">{{ completion_rate|floatformat:0 }}%</h2>
+                        </div>
+                        <div class="icon fs-1 opacity-75">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <a href="#tasks-chart" class="text-white d-flex align-items-center text-decoration-none">
+                            View your progress <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card bg-warning text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0 text-white-50">Upcoming Deadlines</h6>
+                            <h2 class="mt-2 mb-0 display-6">{{ upcoming_deadlines.count }}</h2>
+                        </div>
+                        <div class="icon fs-1 opacity-75">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <a href="#deadlines" class="text-white d-flex align-items-center text-decoration-none">
+                            View deadlines <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tasks Overview -->
+    <div class="row g-4 mb-4" id="tasks-chart">
+        <div class="col-md-6">
+            <div class="card dashboard-card h-100">
+                <div class="card-header bg-body-tertiary">
+                    <h5 class="mb-0">My Tasks Overview</h5>
+                </div>
+                <!-- <div class="card-body">
+                    <canvas id="tasksOverviewChart" height="250"></canvas>
+                </div> -->
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card dashboard-card h-100">
+                <div class="card-header bg-body-tertiary d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">My Projects</h5>
+                    {% if projects_count > 0 %}
+                    <a href="{% url 'projects:project_list' %}?member={{ request.user.id }}" class="btn btn-sm btn-outline-primary">View All</a>
+                    {% endif %}
+                </div>
+                <!-- <div class="card-body">
+                    {% if projects %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Project</th>
+                                    <th>Status</th>
+                                    <th>Lead</th>
+                                    <th>Deadline</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for project in projects %}
+                                <tr>
+                                    <td><a href="{% url 'projects:project_detail' project.id %}" class="text-decoration-none">{{ project.name }}</a></td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if project.status == 'PLANNED' %}bg-secondary
+                                            {% elif project.status == 'IN_PROGRESS' %}bg-primary
+                                            {% elif project.status == 'COMPLETED' %}bg-success
+                                            {% elif project.status == 'ON_HOLD' %}bg-warning
+                                            {% elif project.status == 'CANCELLED' %}bg-danger
+                                            {% endif %} badge-rounded-pill">
+                                            {{ project.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ project.lead.get_full_name|default:project.lead.email }}</td>
+                                    <td>{{ project.end_date|date:"M d, Y" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <div class="mb-3">
+                            <i class="fas fa-folder-open fs-1 text-muted"></i>
+                        </div>
+                        <p class="text-muted mb-0">You are not assigned to any projects at the moment.</p>
+                    </div>
+                    {% endif %}
+                </div> -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Deadlines and Active Tasks -->
+    <div class="row g-4 mb-4" id="deadlines">
+        <div class="col-md-6">
+            <div class="card dashboard-card h-100">
+                <div class="card-header bg-body-tertiary">
+                    <h5 class="mb-0">Upcoming Deadlines</h5>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_deadlines %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Project</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in upcoming_deadlines %}
+                                <tr>
+                                    <td><a href="{% url 'projects:task_detail' task.id %}" class="text-decoration-none">{{ task.title }}</a></td>
+                                    <td>{{ task.project.name }}</td>
+                                    <td>{{ task.due_date|date:"M d, Y" }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if task.status == 'TODO' %}bg-secondary
+                                            {% elif task.status == 'IN_PROGRESS' %}bg-primary
+                                            {% elif task.status == 'REVIEW' %}bg-info
+                                            {% elif task.status == 'COMPLETED' %}bg-success
+                                            {% elif task.status == 'BLOCKED' %}bg-danger
+                                            {% endif %} badge-rounded-pill">
+                                            {{ task.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <div class="mb-3">
+                            <i class="fas fa-calendar-check fs-1 text-muted"></i>
+                        </div>
+                        <p class="text-muted mb-0">No upcoming deadlines in the next 7 days.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card dashboard-card h-100">
+                <div class="card-header bg-body-tertiary">
+                    <h5 class="mb-0">Overdue Tasks</h5>
+                </div>
+                <div class="card-body">
+                    {% if overdue_tasks %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Project</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in overdue_tasks %}
+                                <tr>
+                                    <td><a href="{% url 'projects:task_detail' task.id %}" class="text-decoration-none">{{ task.title }}</a></td>
+                                    <td>{{ task.project.name }}</td>
+                                    <td class="text-danger">{{ task.due_date|date:"M d, Y" }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if task.status == 'TODO' %}bg-secondary
+                                            {% elif task.status == 'IN_PROGRESS' %}bg-primary
+                                            {% elif task.status == 'REVIEW' %}bg-info
+                                            {% elif task.status == 'COMPLETED' %}bg-success
+                                            {% elif task.status == 'BLOCKED' %}bg-danger
+                                            {% endif %} badge-rounded-pill">
+                                            {{ task.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <div class="mb-3">
+                            <i class="fas fa-check-double fs-1 text-success"></i>
+                        </div>
+                        <p class="text-muted mb-0">No overdue tasks. Great job keeping up with deadlines!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity and Leave Requests -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-7">
+            <div class="card dashboard-card h-100">
+                <div class="card-header bg-body-tertiary">
+                    <h5 class="mb-0">Recent Activities</h5>
+                </div>
+                <div class="card-body">
+                    <div class="activity-timeline ps-3">
+                        {% for activity in recent_activities %}
+                            <div class="activity-item">
+                                <div class="d-flex justify-content-between">
+                                    <strong>{{ activity.user.get_full_name|default:activity.user.email }}</strong>
+                                    <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                                </div>
+                                <div>{{ activity.description }}</div>
+                                <div class="mt-1">
+                                    {% if activity.project %}
+                                        <span class="badge bg-primary-subtle border border-primary-subtle text-primary-emphasis rounded-pill">
+                                            <i class="fas fa-project-diagram me-1"></i>
+                                            <a href="{% url 'projects:project_detail' activity.project.id %}" class="text-decoration-none text-primary-emphasis">{{ activity.project.name }}</a>
+                                        </span>
+                                    {% endif %}
+                                    {% if activity.task %}
+                                        <span class="badge bg-info-subtle border border-info-subtle text-info-emphasis rounded-pill ms-2">
+                                            <i class="fas fa-tasks me-1"></i>
+                                            <a href="{% url 'projects:task_detail' activity.task.id %}" class="text-decoration-none text-info-emphasis">{{ activity.task.title }}</a>
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="text-center py-4">
+                                <div class="mb-3">
+                                    <i class="fas fa-stream fs-1 text-muted"></i>
+                                </div>
+                                <p class="text-muted mb-0">No recent activities to display.</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-5">
+            <div class="card dashboard-card h-100">
+                <div class="card-header bg-body-tertiary d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Leave Requests</h5>
+                    <a href="{% url 'accounts:leave_request_create' %}" class="btn btn-sm btn-primary rounded-pill">
+                        <i class="fas fa-plus-circle me-1"></i> New Request
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if leave_requests %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Dates</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for request in leave_requests %}
+                                        <tr>
+                                            <td>
+                                                <span class="badge bg-primary-subtle border border-primary-subtle text-primary-emphasis rounded-pill">
+                                                    {{ request.get_leave_type_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {{ request.start_date|date:"M d" }} - {{ request.end_date|date:"M d" }}
+                                            </td>
+                                            <td>
+                                                <span class="badge 
+                                                    {% if request.status == 'PENDING' %}bg-warning-subtle border border-warning-subtle text-warning-emphasis
+                                                    {% elif request.status == 'APPROVED' %}bg-success-subtle border border-success-subtle text-success-emphasis
+                                                    {% elif request.status == 'REJECTED' %}bg-danger-subtle border border-danger-subtle text-danger-emphasis
+                                                    {% endif %} rounded-pill">
+                                                    {{ request.get_status_display }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            <div class="text-center mt-3">
+                                <a href="{% url 'accounts:leave_request_list' %}" class="btn btn-outline-primary btn-sm">View All Requests</a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <div class="mb-3">
+                                <i class="fas fa-calendar-alt fs-1 text-muted"></i>
+                            </div>
+                            <p class="text-muted mb-0">No leave requests found.</p>
+                            <div class="mt-3">
+                                <a href="{% url 'accounts:leave_request_create' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus-circle me-1"></i> Create Leave Request
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Task status chart
+    const taskStatusCtx = document.getElementById('tasksOverviewChart').getContext('2d');
+    const taskStatusChart = new Chart(taskStatusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['To Do', 'In Progress', 'Review', 'Completed', 'Blocked'],
+            datasets: [{
+                data: [
+                    {{ tasks_todo }}, 
+                    {{ tasks_in_progress }}, 
+                    {{ tasks_review }}, 
+                    {{ tasks_completed }}, 
+                    {{ tasks_blocked }}
+                ],
+                backgroundColor: [
+                    '#6c757d',  // To Do - secondary
+                    '#0d6efd',  // In Progress - primary
+                    '#0dcaf0',  // Review - info
+                    '#198754',  // Completed - success
+                    '#dc3545'   // Blocked - danger
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 

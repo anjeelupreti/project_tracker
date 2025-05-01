@@ -1,0 +1,225 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}User Profile{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body text-center">
+          {% if user.profile_picture %}
+            <img src="{{ user.profile_picture.url }}" class="rounded-circle img-fluid profile-image mb-3" alt="Profile Picture" style="max-width: 150px;">
+          {% else %}
+            <div class="profile-avatar">
+              {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+            </div>
+          {% endif %}
+          <h3 class="mb-1">{{ profile_user.get_full_name }}</h3>
+          <p class="text-muted mb-1">{{ profile_user.designation }}</p>
+          <p class="text-muted mb-1">{{ profile_user.get_role_display }}</p>
+          {% if profile_user.department %}
+            <p class="text-muted mb-3">{{ profile_user.department.name }}</p>
+          {% endif %}
+          {% if profile_user == request.user %}
+            <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary">Edit Profile</a>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- Contact Info -->
+      <div class="card mt-3">
+        <div class="card-body">
+          <h5 class="card-title">Contact Information</h5>
+          <div class="mb-2">
+            <i class="fas fa-envelope me-2"></i> {{ profile_user.email }}
+          </div>
+          {% if profile_user.phone_number %}
+          <div class="mb-2">
+            <i class="fas fa-phone me-2"></i> {{ profile_user.phone_number }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-8">
+      <!-- Bio -->
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Biography</h5>
+          <p>{{ profile_user.bio|default:"No biography provided." }}</p>
+        </div>
+      </div>
+      
+      <!-- Leave Requests -->
+      {% if profile_user == request.user %}
+      <div class="card mt-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0">My Leave Requests</h5>
+          <a href="{% url 'accounts:leave_request_create' %}" class="btn btn-sm btn-primary">
+            <i class="fas fa-plus-circle me-1"></i> New Request
+          </a>
+        </div>
+        <div class="card-body">
+          {% if leave_requests %}
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Status</th>
+                    <th>Requested On</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for request in leave_requests %}
+                  <tr>
+                    <td>{{ request.start_date|date:"M d, Y" }}</td>
+                    <td>{{ request.end_date|date:"M d, Y" }}</td>
+                    <td>
+                      <span class="badge {% if request.status == 'pending' %}bg-warning
+                        {% elif request.status == 'approved' %}bg-success
+                        {% elif request.status == 'rejected' %}bg-danger
+                        {% endif %}">
+                        {{ request.get_status_display }}
+                      </span>
+                    </td>
+                    <td>{{ request.date_requested|date:"M d, Y" }}</td>
+                    <td>
+                      {% if request.status == 'pending' %}
+                        <a href="{% url 'accounts:cancel_leave_request' request.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to cancel this request?')">Cancel</a>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-muted">No leave requests found.</p>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- Designation Requests -->
+      <div class="card mt-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0">My Designation Requests</h5>
+          <a href="{% url 'accounts:designation_request_create' %}" class="btn btn-sm btn-primary">
+            <i class="fas fa-plus-circle me-1"></i> New Request
+          </a>
+        </div>
+        <div class="card-body">
+          {% if designation_requests %}
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Requested Role</th>
+                    <th>Designation</th>
+                    <th>Status</th>
+                    <th>Requested On</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for request in designation_requests %}
+                  <tr>
+                    <td>{{ request.get_requested_role_display }}</td>
+                    <td>{{ request.requested_designation }}</td>
+                    <td>
+                      <span class="badge {% if request.status == 'pending' %}bg-warning
+                        {% elif request.status == 'approved' %}bg-success
+                        {% elif request.status == 'rejected' %}bg-danger
+                        {% endif %}">
+                        {{ request.get_status_display }}
+                      </span>
+                    </td>
+                    <td>{{ request.date_requested|date:"M d, Y" }}</td>
+                    <td>
+                      {% if request.status == 'pending' %}
+                        <a href="{% url 'accounts:cancel_designation_request' request.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to cancel this request?')">Cancel</a>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-muted">No designation requests found.</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+      
+      <!-- Recent Activity -->
+      <div class="card mt-3">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Recent Activity</h5>
+        </div>
+        <div class="card-body">
+          {% if recent_activities %}
+            <div class="activity-timeline">
+              {% for activity in recent_activities %}
+                <div class="activity-item">
+                  <div class="d-flex justify-content-between">
+                    <strong>{{ activity.action_type }}</strong>
+                    <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                  </div>
+                  <div>{{ activity.description }}</div>
+                  {% if activity.project %}
+                    <small class="text-muted">
+                      <i class="fas fa-project-diagram me-1"></i>
+                      <a href="{% url 'projects:project_detail' activity.project.id %}">{{ activity.project.name }}</a>
+                    </small>
+                  {% endif %}
+                  {% if activity.task %}
+                    <small class="text-muted ms-2">
+                      <i class="fas fa-tasks me-1"></i>
+                      <a href="{% url 'projects:task_detail' activity.task.id %}">{{ activity.task.title }}</a>
+                    </small>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted">No recent activity.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .profile-avatar {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    margin: 0 auto 1rem auto;
+  }
+  
+  .activity-timeline .activity-item {
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  .activity-timeline .activity-item:last-child {
+    border-bottom: none;
+  }
+</style>
+{% endblock %} 

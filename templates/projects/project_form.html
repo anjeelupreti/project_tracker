@@ -1,0 +1,109 @@
+{% extends 'base/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+  {% if form.instance.id %}Edit Project: {{ form.instance.name }}{% else %}Create New Project{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .help-text {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+  }
+  
+  .form-card {
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">
+    {% if form.instance.id %}
+      Edit Project: {{ form.instance.name }}
+    {% else %}
+      Create New Project
+    {% endif %}
+  </h1>
+  <div class="btn-toolbar mb-2 mb-md-0">
+    {% if form.instance.id %}
+      <a href="{% url 'projects:project_detail' form.instance.id %}" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i> Back to Project
+      </a>
+    {% else %}
+      <a href="{% url 'projects:project_list' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i> Back to Projects
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-10 col-lg-8 mx-auto">
+    <div class="card form-card">
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          
+          <div class="row">
+            <div class="col-md-12 mb-3">
+              {{ form.name|as_crispy_field }}
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-12 mb-3">
+              {{ form.description|as_crispy_field }}
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              {{ form.department|as_crispy_field }}
+            </div>
+            <div class="col-md-6 mb-3">
+              {{ form.lead|as_crispy_field }}
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              {{ form.start_date|as_crispy_field }}
+            </div>
+            <div class="col-md-6 mb-3">
+              {{ form.end_date|as_crispy_field }}
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              {{ form.status|as_crispy_field }}
+            </div>
+            <div class="col-md-6 mb-3">
+              {{ form.priority|as_crispy_field }}
+            </div>
+          </div>
+          
+          {% if form.instance.id %}
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-1"></i> Update Project
+              </button>
+            </div>
+          {% else %}
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-1"></i> Create Project
+              </button>
+            </div>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,240 @@
+/* 
+Project Tracker Custom Styling 
+*/
+
+/* Dashboard cards */
+.dashboard-card {
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+    height: 100%;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-card .card-header {
+    background-color: transparent;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    font-weight: 600;
+}
+
+.dashboard-card .card-body {
+    padding: 1.5rem;
+}
+
+.dashboard-card .icon {
+    font-size: 2.5rem;
+    opacity: 0.8;
+}
+
+/* Task board */
+.task-board {
+    display: flex;
+    overflow-x: auto;
+    gap: 1rem;
+    padding-bottom: 1rem;
+}
+
+.task-column {
+    min-width: 300px;
+    width: 300px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    padding: 1rem;
+}
+
+.task-column-header {
+    font-weight: 600;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.task-item {
+    background-color: white;
+    border-radius: 5px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.task-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.task-item .assignee {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.task-item .due-date {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.task-item.overdue .due-date {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+/* Status colors */
+.status-planned {
+    color: #6c757d;
+}
+
+.status-in-progress {
+    color: #007bff;
+}
+
+.status-review {
+    color: #6f42c1;
+}
+
+.status-completed {
+    color: #28a745;
+}
+
+.status-on-hold {
+    color: #fd7e14;
+}
+
+.status-cancelled {
+    color: #dc3545;
+}
+
+.status-blocked {
+    color: #dc3545;
+}
+
+.status-todo {
+    color: #6c757d;
+}
+
+/* Badge styles */
+.badge-status {
+    padding: 0.5em 0.8em;
+    font-weight: 500;
+}
+
+/* Profile styles */
+.profile-header {
+    background: linear-gradient(135deg, #007bff, #6610f2);
+    color: white;
+    padding: 3rem 0 2rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid white;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.profile-nav {
+    margin-bottom: 2rem;
+}
+
+.profile-nav .nav-link {
+    color: #495057;
+    font-weight: 500;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.25rem;
+}
+
+.profile-nav .nav-link.active {
+    color: #007bff;
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.activity-timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.activity-timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0.75rem;
+    width: 2px;
+    background-color: #dee2e6;
+}
+
+.activity-item {
+    position: relative;
+    padding-bottom: 1.5rem;
+}
+
+.activity-item::before {
+    content: '';
+    position: absolute;
+    top: 0.25rem;
+    left: -1.25rem;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: #007bff;
+}
+
+.activity-item:last-child {
+    padding-bottom: 0;
+}
+
+/* Gantt chart styles */
+.gantt-chart {
+    overflow-x: auto;
+}
+
+.gantt-row {
+    height: 40px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.gantt-bar {
+    height: 30px;
+    background-color: #007bff;
+    border-radius: 3px;
+    margin-top: 5px;
+    position: relative;
+}
+
+.gantt-bar-label {
+    color: white;
+    padding: 0 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 0.5rem;
+    right: 0.5rem;
+    text-align: left;
+    font-size: 0.875rem;
+}
+
+/* Progress bars */
+.progress {
+    height: 10px;
+    border-radius: 5px;
+}
+
+.progress-sm {
+    height: 5px;
+}
+
+.progress-lg {
+    height: 15px;
+} 

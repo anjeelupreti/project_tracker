@@ -1,0 +1,61 @@
+{% extends 'base/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Create Leave Request{% endblock %}
+
+{% block extra_css %}
+<style>
+  .form-card {
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">Submit Leave Request</h1>
+  <div class="btn-toolbar mb-2 mb-md-0">
+    <a href="{% url 'accounts:leave_request_list' %}" class="btn btn-sm btn-outline-secondary">
+      <i class="fas fa-arrow-left me-1"></i> Back to Leave Requests
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-8 mx-auto">
+    <div class="card form-card">
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          {{ form|crispy }}
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-paper-plane me-1"></i> Submit Request
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Add date validation to ensure end date is not before start date
+    const startDateField = document.getElementById('id_start_date');
+    const endDateField = document.getElementById('id_end_date');
+    
+    if (startDateField && endDateField) {
+      startDateField.addEventListener('change', function() {
+        endDateField.min = startDateField.value;
+        if (endDateField.value && new Date(endDateField.value) < new Date(startDateField.value)) {
+          endDateField.value = startDateField.value;
+        }
+      });
+    }
+  });
+</script>
+{% endblock %} 

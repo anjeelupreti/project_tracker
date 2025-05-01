@@ -1,0 +1,260 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Tasks{% endblock %}
+
+{% block extra_css %}
+<style>
+    .task-card {
+        transition: all 0.3s ease;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+    
+    .task-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .task-status-badge {
+        font-weight: 500;
+        padding: 0.5em 0.75em;
+    }
+    
+    .priority-indicator {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 6px;
+    }
+    
+    .overdue {
+        color: #dc3545;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Tasks</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'projects:task_create' %}" class="btn btn-sm btn-primary">
+            <i class="fas fa-plus-circle me-1"></i> New Task
+        </a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select name="status" id="status" class="form-select form-select-sm">
+                            <option value="">All Statuses</option>
+                            <option value="TODO" {% if request.GET.status == 'TODO' %}selected{% endif %}>To Do</option>
+                            <option value="IN_PROGRESS" {% if request.GET.status == 'IN_PROGRESS' %}selected{% endif %}>In Progress</option>
+                            <option value="REVIEW" {% if request.GET.status == 'REVIEW' %}selected{% endif %}>Review</option>
+                            <option value="COMPLETED" {% if request.GET.status == 'COMPLETED' %}selected{% endif %}>Completed</option>
+                            <option value="BLOCKED" {% if request.GET.status == 'BLOCKED' %}selected{% endif %}>Blocked</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="project" class="form-label">Project</label>
+                        <select name="project" id="project" class="form-select form-select-sm">
+                            <option value="">All Projects</option>
+                            {% for project in projects %}
+                                <option value="{{ project.id }}" {% if request.GET.project == project.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ project.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="assignee" class="form-label">Assignee</label>
+                        <select name="assignee" id="assignee" class="form-select form-select-sm">
+                            <option value="">All Assignees</option>
+                            <option value="{{ request.user.id }}" {% if request.GET.assignee == request.user.id|stringformat:"s" %}selected{% endif %}>Me</option>
+                            <option value="unassigned" {% if request.GET.assignee == 'unassigned' %}selected{% endif %}>Unassigned</option>
+                            {% for user in users %}
+                                {% if user.id != request.user.id %}
+                                    <option value="{{ user.id }}" {% if request.GET.assignee == user.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ user.get_full_name|default:user.email }}
+                                    </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary btn-sm me-2">
+                            <i class="fas fa-filter me-1"></i> Filter
+                        </button>
+                        <a href="{% url 'projects:task_list' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-times me-1"></i> Clear
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tasks List -->
+<div class="row">
+    <div class="col-md-12">
+        {% if tasks %}
+            {% for task in tasks %}
+                <div class="card task-card mb-3">
+                    <div class="card-body p-3">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h5 class="card-title mb-1">
+                                    <span class="priority-indicator" 
+                                          style="background-color: 
+                                            {% if task.priority == 'LOW' %}#6c757d
+                                            {% elif task.priority == 'MEDIUM' %}#0d6efd
+                                            {% elif task.priority == 'HIGH' %}#ffc107
+                                            {% elif task.priority == 'URGENT' %}#dc3545
+                                            {% endif %};">
+                                    </span>
+                                    <a href="{% url 'projects:task_detail' task.id %}" class="text-decoration-none">{{ task.title }}</a>
+                                </h5>
+                                <p class="card-text text-muted mb-2">
+                                    <small>
+                                        <a href="{% url 'projects:project_detail' task.project.id %}" class="text-decoration-none">
+                                            <i class="fas fa-project-diagram me-1"></i>{{ task.project.name }}
+                                        </a>
+                                    </small>
+                                </p>
+                                <p class="card-text mb-2">{{ task.description|truncatechars:150 }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-end align-items-center">
+                                    <div class="me-3 text-end">
+                                        <div class="mb-2">
+                                            <span class="task-status-badge badge 
+                                                {% if task.status == 'TODO' %}bg-secondary
+                                                {% elif task.status == 'IN_PROGRESS' %}bg-primary
+                                                {% elif task.status == 'REVIEW' %}bg-info
+                                                {% elif task.status == 'COMPLETED' %}bg-success
+                                                {% elif task.status == 'BLOCKED' %}bg-danger
+                                                {% endif %}">
+                                                {{ task.get_status_display }}
+                                            </span>
+                                        </div>
+                                        <div class="mb-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar-alt me-1"></i>
+                                                {% if task.due_date %}
+                                                    {% if task.is_overdue %}
+                                                        <span class="overdue">{{ task.due_date|date:"M d, Y" }} (Overdue)</span>
+                                                    {% else %}
+                                                        {{ task.due_date|date:"M d, Y" }}
+                                                    {% endif %}
+                                                {% else %}
+                                                    No due date
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">
+                                                <i class="fas fa-user me-1"></i>
+                                                {% if task.assignee %}
+                                                    {{ task.assignee.get_full_name|default:task.assignee.email }}
+                                                {% else %}
+                                                    <span class="fst-italic">Unassigned</span>
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <a href="{% url 'projects:task_detail' task.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="First">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-label="First">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for i in paginator.page_range %}
+                        {% if page_obj.number == i %}
+                            <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                        {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Last">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-label="Last">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle me-2"></i>
+                No tasks found matching your criteria.
+                <div class="mt-3">
+                    <a href="{% url 'projects:task_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-1"></i> Create Task
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,211 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Welcome - Project Tracker{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #007bff, #6610f2);
+        color: white;
+        padding: 6rem 0;
+        margin-top: -1.5rem;
+    }
+    
+    .feature-icon {
+        font-size: 2.5rem;
+        color: #007bff;
+        margin-bottom: 1rem;
+    }
+    
+    .feature-card {
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s, box-shadow 0.3s;
+        height: 100%;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .testimonial {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .testimonial-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 1rem;
+    }
+    
+    .cta-section {
+        background: linear-gradient(135deg, #6610f2, #007bff);
+        color: white;
+        padding: 4rem 0;
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">Project Tracking Made Simple</h1>
+                    <p class="lead mb-4">A comprehensive project management solution for teams of all sizes. Track progress, manage tasks, and collaborate effortlessly.</p>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                        <a href="{% url 'account_signup' %}" class="btn btn-light btn-lg px-4 me-md-2">Get Started</a>
+                        <a href="{% url 'core:about' %}" class="btn btn-outline-light btn-lg px-4">Learn More</a>
+                    </div>
+                </div>
+                <div class="col-lg-6 d-none d-lg-block">
+                    <img src="https://placehold.co/600x400/007bff/white?text=Project+Tracker" alt="Project Management" class="img-fluid rounded shadow">
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Features Section -->
+    <section class="py-5 my-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold">Powerful Features</h2>
+                <p class="lead text-muted">Everything you need to manage your projects efficiently</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <h3>Task Management</h3>
+                        <p class="text-muted">Create, assign, and track tasks with ease. Set priorities, deadlines, and monitor progress.</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h3>Team Collaboration</h3>
+                        <p class="text-muted">Collaborate seamlessly with your team. Assign team members to projects and tasks.</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3>Progress Tracking</h3>
+                        <p class="text-muted">Track project progress with visual indicators and detailed analytics.</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <h3>Deadline Management</h3>
+                        <p class="text-muted">Never miss a deadline again. Set due dates and get timely notifications.</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <h3>Detailed Reporting</h3>
+                        <p class="text-muted">Generate comprehensive reports to track team performance and project status.</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3>Role-Based Access</h3>
+                        <p class="text-muted">Control access to projects and features based on user roles and permissions.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- How It Works Section -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold">How It Works</h2>
+                <p class="lead text-muted">Simple steps to streamline your project management</p>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="text-center">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
+                            <h3 class="mb-0">1</h3>
+                        </div>
+                        <h4>Sign Up</h4>
+                        <p class="text-muted">Create your account and verify your email address</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="text-center">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
+                            <h3 class="mb-0">2</h3>
+                        </div>
+                        <h4>Create Projects</h4>
+                        <p class="text-muted">Set up your projects with detailed information</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="text-center">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
+                            <h3 class="mb-0">3</h3>
+                        </div>
+                        <h4>Assign Tasks</h4>
+                        <p class="text-muted">Break down projects into manageable tasks</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="text-center">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
+                            <h3 class="mb-0">4</h3>
+                        </div>
+                        <h4>Track Progress</h4>
+                        <p class="text-muted">Monitor progress and keep everything on schedule</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Call to Action -->
+    <section class="py-5 my-5">
+        <div class="container">
+            <div class="cta-section text-center">
+                <h2 class="display-5 fw-bold mb-4">Ready to Get Started?</h2>
+                <p class="lead mb-4">Join thousands of teams who have improved their project management with our platform.</p>
+                <a href="{% url 'account_signup' %}" class="btn btn-light btn-lg px-5">Sign Up for Free</a>
+            </div>
+        </div>
+    </section>
+{% endblock %} 

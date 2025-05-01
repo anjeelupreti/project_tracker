@@ -1,0 +1,55 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Edit Profile{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="mb-0">Edit Profile</h4>
+        </div>
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="row">
+              <div class="col-md-6">
+                {{ form.first_name|as_crispy_field }}
+              </div>
+              <div class="col-md-6">
+                {{ form.last_name|as_crispy_field }}
+              </div>
+            </div>
+            
+            {{ form.email|as_crispy_field }}
+            {{ form.username|as_crispy_field }}
+            
+            <div class="form-group mb-3">
+              <label for="{{ form.profile_picture.id_for_label }}">Profile Picture</label>
+              {% if user.profile_picture %}
+                <div class="mb-2">
+                  <img src="{{ user.profile_picture.url }}" alt="Current profile picture" style="max-width: 100px; border-radius: 50%;">
+                  <p class="text-muted small">Current profile picture</p>
+                </div>
+              {% endif %}
+              {{ form.profile_picture }}
+            </div>
+            
+            {{ form.bio|as_crispy_field }}
+            {{ form.phone_number|as_crispy_field }}
+            
+            <div class="d-flex justify-content-between mt-4">
+              <a href="{% url 'accounts:profile' %}" class="btn btn-secondary">Cancel</a>
+              <button type="submit" class="btn btn-primary">Update Profile</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

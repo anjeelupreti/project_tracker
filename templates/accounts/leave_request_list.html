@@ -1,0 +1,104 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Leave Requests{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h4 class="mb-0">Leave Requests</h4>
+      <a href="{% url 'accounts:leave_request_create' %}" class="btn btn-primary">New Request</a>
+    </div>
+    <div class="card-body">
+      <!-- Filter section -->
+      <div class="mb-4">
+        <form method="get" class="row g-3 align-items-end">
+          <div class="col-md-3">
+            <label for="status" class="form-label">Status</label>
+            <select name="status" id="status" class="form-select">
+              <option value="">All Statuses</option>
+              <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+              <option value="approved" {% if request.GET.status == 'approved' %}selected{% endif %}>Approved</option>
+              <option value="rejected" {% if request.GET.status == 'rejected' %}selected{% endif %}>Rejected</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="leave_type" class="form-label">Leave Type</label>
+            <select name="leave_type" id="leave_type" class="form-select">
+              <option value="">All Types</option>
+              <option value="annual" {% if request.GET.leave_type == 'annual' %}selected{% endif %}>Annual Leave</option>
+              <option value="sick" {% if request.GET.leave_type == 'sick' %}selected{% endif %}>Sick Leave</option>
+              <option value="personal" {% if request.GET.leave_type == 'personal' %}selected{% endif %}>Personal Leave</option>
+              <option value="other" {% if request.GET.leave_type == 'other' %}selected{% endif %}>Other</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <button type="submit" class="btn btn-secondary">Filter</button>
+            <a href="{% url 'accounts:leave_request_list' %}" class="btn btn-outline-secondary">Clear</a>
+          </div>
+        </form>
+      </div>
+      
+      {% if leave_requests %}
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>ID</th>
+                {% if request.user.is_admin or request.user.is_team_lead %}
+                <th>User</th>
+                {% endif %}
+                <th>Type</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Status</th>
+                <th>Requested On</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for leave_request in leave_requests %}
+                <tr>
+                  <td>{{ leave_request.id }}</td>
+                  {% if request.user.is_admin or request.user.is_team_lead %}
+                  <td>{{ leave_request.user.get_full_name }}</td>
+                  {% endif %}
+                  <td>{{ leave_request.get_leave_type_display }}</td>
+                  <td>{{ leave_request.start_date|date:"M d, Y" }}</td>
+                  <td>{{ leave_request.end_date|date:"M d, Y" }}</td>
+                  <td>
+                    <span class="badge {% if leave_request.status == 'pending' %}bg-warning{% elif leave_request.status == 'approved' %}bg-success{% elif leave_request.status == 'rejected' %}bg-danger{% endif %}">
+                      {{ leave_request.get_status_display }}
+                    </span>
+                  </td>
+                  <td>{{ leave_request.date_requested|date:"M d, Y" }}</td>
+                  <td>
+                    {% if leave_request.status == 'pending' and request.user.is_admin %}
+                      <a href="{% url 'accounts:leave_request_review' leave_request.id %}" class="btn btn-sm btn-primary">Review</a>
+                    {% elif leave_request.status == 'pending' and leave_request.user == request.user %}
+                      <a href="{% url 'accounts:cancel_leave_request' leave_request.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to cancel this request?')">Cancel</a>
+                    {% else %}
+                      <a href="{% url 'accounts:leave_request_review' leave_request.id %}" class="btn btn-sm btn-info">View</a>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        
+        {% include 'core/pagination.html' with page_obj=page_obj %}
+        
+      {% else %}
+        <div class="alert alert-info">
+          No leave requests found matching your criteria. 
+          {% if not request.GET.status and not request.GET.leave_type %}
+          <a href="{% url 'accounts:leave_request_create' %}" class="alert-link">Create one</a>.
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %} 

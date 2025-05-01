@@ -1,0 +1,253 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Projects{% endblock %}
+
+{% block extra_css %}
+<style>
+    .project-card {
+        transition: all 0.3s ease;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        height: 100%;
+    }
+    
+    .project-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+    }
+    
+    .project-status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 6px;
+    }
+    
+    .badge {
+        font-weight: 500;
+        padding: 0.5em 0.75em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Projects</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        {% if user.is_team_lead or user.is_admin or user.is_superuser %}
+        <a href="{% url 'projects:project_create' %}" class="btn btn-sm btn-primary">
+            <i class="fas fa-plus-circle me-1"></i> New Project
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="status" class="form-label">Status</label>
+                        <select name="status" id="status" class="form-select form-select-sm">
+                            <option value="">All Statuses</option>
+                            <option value="PLANNED" {% if request.GET.status == 'PLANNED' %}selected{% endif %}>Planned</option>
+                            <option value="IN_PROGRESS" {% if request.GET.status == 'IN_PROGRESS' %}selected{% endif %}>In Progress</option>
+                            <option value="COMPLETED" {% if request.GET.status == 'COMPLETED' %}selected{% endif %}>Completed</option>
+                            <option value="ON_HOLD" {% if request.GET.status == 'ON_HOLD' %}selected{% endif %}>On Hold</option>
+                            <option value="CANCELLED" {% if request.GET.status == 'CANCELLED' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="department" class="form-label">Department</label>
+                        <select name="department" id="department" class="form-select form-select-sm">
+                            <option value="">All Departments</option>
+                            {% for department in departments %}
+                                <option value="{{ department.id }}" {% if request.GET.department == department.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ department.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary btn-sm me-2">
+                            <i class="fas fa-filter me-1"></i> Filter
+                        </button>
+                        <a href="{% url 'projects:project_list' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-times me-1"></i> Clear
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Projects Grid -->
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for project in projects %}
+        <div class="col">
+            <div class="card project-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center bg-body-tertiary">
+                    <h5 class="card-title mb-0">
+                        <span class="project-status-indicator" 
+                              style="background-color: 
+                                {% if project.status == 'PLANNED' %}#6c757d
+                                {% elif project.status == 'IN_PROGRESS' %}#0d6efd
+                                {% elif project.status == 'COMPLETED' %}#198754
+                                {% elif project.status == 'ON_HOLD' %}#ffc107
+                                {% elif project.status == 'CANCELLED' %}#dc3545
+                                {% endif %};">
+                        </span>
+                        <a href="{% url 'projects:project_detail' project.id %}" class="text-decoration-none">{{ project.name }}</a>
+                    </h5>
+                    <span class="badge 
+                        {% if project.status == 'PLANNED' %}bg-secondary
+                        {% elif project.status == 'IN_PROGRESS' %}bg-primary
+                        {% elif project.status == 'COMPLETED' %}bg-success
+                        {% elif project.status == 'ON_HOLD' %}bg-warning
+                        {% elif project.status == 'CANCELLED' %}bg-danger
+                        {% endif %}">
+                        {{ project.get_status_display }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <p class="card-text mb-2">{{ project.description|truncatechars:150 }}</p>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted">Progress</small>
+                        <div class="progress mt-1">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ project.progress }}%;" 
+                                 aria-valuenow="{{ project.progress }}" aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <small class="text-muted">{{ project.progress }}%</small>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar-alt me-1"></i> {{ project.end_date|date:"M d, Y" }}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center">
+                        <div style="flex: 0 0 30px;">
+                            <i class="fas fa-building text-primary"></i>
+                        </div>
+                        <div class="text-truncate">{{ project.department.name }}</div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center mt-2">
+                        <div style="flex: 0 0 30px;">
+                            <i class="fas fa-user-tie text-primary"></i>
+                        </div>
+                        <div class="text-truncate">{{ project.lead.get_full_name|default:project.lead.email }}</div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center mt-2">
+                        <div style="flex: 0 0 30px;">
+                            <i class="fas fa-users text-primary"></i>
+                        </div>
+                        <div class="text-truncate">{{ project.members.count }} team members</div>
+                    </div>
+                </div>
+                <div class="card-footer bg-body-tertiary">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="fas fa-tasks me-1"></i> {{ project.tasks.count }} tasks
+                        </small>
+                        <a href="{% url 'projects:project_detail' project.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i> View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle me-2"></i>
+                No projects found.
+                {% if user.is_team_lead or user.is_admin or user.is_superuser %}
+                    <div class="mt-3">
+                        <a href="{% url 'projects:project_create' %}" class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-1"></i> Create Project
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="First">
+                    <span aria-hidden="true">&laquo;&laquo;</span>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <a class="page-link" href="#" aria-label="First">
+                    <span aria-hidden="true">&laquo;&laquo;</span>
+                </a>
+            </li>
+            <li class="page-item disabled">
+                <a class="page-link" href="#" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+        {% endif %}
+
+        {% for i in paginator.page_range %}
+            {% if page_obj.number == i %}
+                <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+            {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Last">
+                    <span aria-hidden="true">&raquo;&raquo;</span>
+                </a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <a class="page-link" href="#" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+            <li class="page-item disabled">
+                <a class="page-link" href="#" aria-label="Last">
+                    <span aria-hidden="true">&raquo;&raquo;</span>
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %} 

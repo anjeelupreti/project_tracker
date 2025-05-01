@@ -1,0 +1,884 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.generic import (
+    ListView, DetailView, CreateView, UpdateView, DeleteView,
+    TemplateView, View
+)
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin, PermissionRequiredMixin
+from django.urls import reverse, reverse_lazy
+from django.contrib import messages
+from django.utils import timezone
+from django.db.models import Q
+from django.http import JsonResponse, HttpResponseRedirect
+
+from .models import (
+    Department, Project, ProjectMembership, Task, 
+    TaskComment, TaskAttachment, ActivityLog, ProjectAttachment, ProjectUpdate, TaskUpdate, ChatMessage
+)
+from .forms import (
+    DepartmentForm, ProjectForm, TaskForm, TaskAssignForm, 
+    TaskCommentForm, TaskAttachmentForm, ProjectAttachmentForm, ProjectUpdateForm, TaskUpdateForm, ChatMessageForm
+)
+from accounts.models import User
+
+class DepartmentListView(LoginRequiredMixin, ListView):
+    """
+    View for listing all departments
+    """
+    model = Department
+    template_name = 'projects/department_list.html'
+    context_object_name = 'departments'
+
+class DepartmentDetailView(LoginRequiredMixin, DetailView):
+    """
+    View for displaying department details
+    """
+    model = Department
+    template_name = 'projects/department_detail.html'
+    context_object_name = 'department'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        department = self.get_object()
+        
+        context['projects'] = department.projects.all()
+        context['members'] = department.members.all()
+        
+        return context
+
+class DepartmentCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    """
+    View for creating a new department (admin only)
+    """
+    model = Department
+    fields = ['name', 'description', 'head']
+    template_name = 'projects/department_form.html'
+    
+    def test_func(self):
+        return self.request.user.is_admin or self.request.user.is_superuser
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        
+        # Log activity
+        ActivityLog.objects.create(
+            user=self.request.user,
+            category=ActivityLog.Category.SYSTEM,
+            action_type=ActivityLog.ActionType.CREATE,
+            description=f"Created department: {form.instance.name}"
+        )
+        
+        messages.success(self.request, f"Department '{form.instance.name}' has been created.")
+        return response
+
+class DepartmentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """
+    View for updating a department (admin only)
+    """
+    model = Department
+    fields = ['name', 'description', 'head']
+    template_name = 'projects/department_form.html'
+    
+    def test_func(self):
+        return self.request.user.is_admin or self.request.user.is_superuser
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        
+        # Log activity
+        ActivityLog.objects.create(
+            user=self.request.user,
+            category=ActivityLog.Category.SYSTEM,
+            action_type=ActivityLog.ActionType.UPDATE,
+            description=f"Updated department: {form.instance.name}"
+        )
+        
+        messages.success(self.request, f"Department '{form.instance.name}' has been updated.")
+        return response
+
+class ProjectListView(LoginRequiredMixin, ListView):
+    """
+    View for listing all projects
+    """
+    model = Project
+    template_name = 'projects/project_list.html'
+    context_object_name = 'projects'
+    paginate_by = 10
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Filter by status if provided in GET parameters
+        status = self.request.GET.get('status', '')
+        if status:
+            queryset = queryset.filter(status=status)
+            
+        # Filter by department if provided in GET parameters
+        department_id = self.request.GET.get('department', '')
+        if department_id:
+            queryset = queryset.filter(department_id=department_id)
+            
+        # If user is not admin, show only projects they are involved in
+        user = self.request.user
+        if not (user.is_admin or user.is_superuser):
+            queryset = queryset.filter(
+                Q(lead=user) | Q(members=user)
+            ).distinct()
+            
+        return queryset.select_related('department', 'lead')
+
+class ProjectDetailView(LoginRequiredMixin, DetailView):
+    """
+    View for displaying project details
+    """
+    model = Project
+    template_name = 'projects/project_detail.html'
+    context_object_name = 'project'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = self.get_object()
+        
+        # Get tasks grouped by status
+        context['todo_tasks'] = project.tasks.filter(status=Task.Status.TODO).order_by('due_date')
+        context['in_progress_tasks'] = project.tasks.filter(status=Task.Status.IN_PROGRESS).order_by('due_date')
+        context['review_tasks'] = project.tasks.filter(status=Task.Status.REVIEW).order_by('due_date')
+        context['completed_tasks'] = project.tasks.filter(status=Task.Status.COMPLETED).order_by('-completed_at')[:5]
+        context['blocked_tasks'] = project.tasks.filter(status=Task.Status.BLOCKED).order_by('due_date')
+        
+        # Get project members
+        context['members'] = project.members.all()
+        
+        # Get recent activities
+        context['activities'] = ActivityLog.objects.filter(
+            Q(project=project) | Q(task__project=project)
+        ).select_related('user', 'task').order_by('-timestamp')[:10]
+        
+        # Get project attachments
+        context['attachments'] = project.attachments.all().order_by('-uploaded_at')
+        
+        # Add attachment form
+        context['attachment_form'] = ProjectAttachmentForm()
+        
+        # Get project updates
+        context['updates'] = project.updates.all().select_related('author').order_by('-created_at')[:5]
+        
+        # Add update form
+        context['update_form'] = ProjectUpdateForm()
+        
+        # Get unread chat messages count
+        context['unread_chat_count'] = ChatMessage.objects.filter(
+            project=project, 
+            is_read=False
+        ).exclude(sender=self.request.user).count()
+        
+        return context
+
+class ProjectCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    """
+    View for creating a new project (admin or team lead only)
+    """
+    model = Project
+    form_class = ProjectForm
+    template_name = 'projects/project_form.html'
+    
+    def test_func(self):
+        return self.request.user.is_admin or self.request.user.is_team_lead or self.request.user.is_superuser
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+    
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        
+        response = super().form_valid(form)
+        
+        # Add creator as a member if not already the lead
+        if form.instance.lead != self.request.user:
+            ProjectMembership.objects.create(
+                project=form.instance,
+                user=self.request.user,
+                added_by=self.request.user,
+                role="Creator"
+            )
+        
+        # Log activity
+        ActivityLog.objects.create(
+            user=self.request.user,
+            category=ActivityLog.Category.PROJECT,
+            action_type=ActivityLog.ActionType.CREATE,
+            description=f"Created project: {form.instance.name}",
+            project=form.instance
+        )
+        
+        messages.success(self.request, f"Project '{form.instance.name}' has been created.")
+        return response
+
+class ProjectUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """
+    View for updating a project (admin, project lead only)
+    """
+    model = Project
+    form_class = ProjectForm
+    template_name = 'projects/project_form.html'
+    
+    def test_func(self):
+        project = self.get_object()
+        user = self.request.user
+        return user.is_admin or user.is_superuser or project.lead == user
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        
+        # Log activity
+        ActivityLog.objects.create(
+            user=self.request.user,
+            category=ActivityLog.Category.PROJECT,
+            action_type=ActivityLog.ActionType.UPDATE,
+            description=f"Updated project: {form.instance.name}",
+            project=form.instance
+        )
+        
+        messages.success(self.request, f"Project '{form.instance.name}' has been updated.")
+        return response
+
+class ProjectMembershipCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    View for adding members to a project
+    """
+    def test_func(self):
+        project_id = self.kwargs.get('project_id')
+        project = get_object_or_404(Project, id=project_id)
+        user = self.request.user
+        return user.is_admin or user.is_superuser or project.lead == user
+    
+    def post(self, request, *args, **kwargs):
+        project_id = self.kwargs.get('project_id')
+        user_id = request.POST.get('user_id')
+        role = request.POST.get('role', '')
+        
+        project = get_object_or_404(Project, id=project_id)
+        user = get_object_or_404(User, id=user_id)
+        
+        # Check if user is already a member
+        if ProjectMembership.objects.filter(project=project, user=user).exists():
+            messages.warning(request, f"{user.get_full_name() or user.email} is already a member of this project.")
+            return redirect('projects:project_detail', pk=project_id)
+        
+        # Add user to project
+        membership = ProjectMembership.objects.create(
+            project=project,
+            user=user,
+            role=role,
+            added_by=request.user
+        )
+        
+        # Log activity
+        ActivityLog.objects.create(
+            user=request.user,
+            category=ActivityLog.Category.TEAM,
+            action_type=ActivityLog.ActionType.ASSIGN,
+            description=f"Added {user.get_full_name() or user.email} to project: {project.name} as {role}",
+            project=project,
+            related_user=user
+        )
+        
+        messages.success(request, f"{user.get_full_name() or user.email} has been added to the project.")
+        return redirect('projects:project_detail', pk=project_id)
+
+class ProjectMembershipDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    View for removing members from a project
+    """
+    def test_func(self):
+        project_id = self.kwargs.get('project_id')
+        project = get_object_or_404(Project, id=project_id)
+        user = self.request.user
+        return user.is_admin or user.is_superuser or project.lead == user
+    
+    def post(self, request, *args, **kwargs):
+        project_id = self.kwargs.get('project_id')
+        user_id = self.kwargs.get('user_id')
+        
+        project = get_object_or_404(Project, id=project_id)
+        user = get_object_or_404(User, id=user_id)
+        
+        # Don't allow removing the project lead
+        if project.lead == user:
+            messages.error(request, "Cannot remove the project lead from the project.")
+            return redirect('projects:project_detail', pk=project_id)
+        
+        # Remove user from project
+        membership = get_object_or_404(ProjectMembership, project=project, user=user)
+        membership.delete()
+        
+        # Log activity
+        ActivityLog.objects.create(
+            user=request.user,
+            category=ActivityLog.Category.TEAM,
+            action_type=ActivityLog.ActionType.DELETE,
+            description=f"Removed {user.get_full_name() or user.email} from project: {project.name}",
+            project=project,
+            related_user=user
+        )
+        
+        messages.success(request, f"{user.get_full_name() or user.email} has been removed from the project.")
+        return redirect('projects:project_detail', pk=project_id)
+
+class TaskListView(LoginRequiredMixin, ListView):
+    """
+    View for listing all tasks
+    """
+    model = Task
+    template_name = 'projects/task_list.html'
+    context_object_name = 'tasks'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Filter by status if provided
+        status = self.request.GET.get('status', '')
+        if status:
+            queryset = queryset.filter(status=status)
+            
+        # Filter by project if provided
+        project_id = self.request.GET.get('project', '')
+        if project_id:
+            queryset = queryset.filter(project_id=project_id)
+            
+        # Filter by assignee if provided
+        assignee_id = self.request.GET.get('assignee', '')
+        if assignee_id:
+            queryset = queryset.filter(assignee_id=assignee_id)
+            
+        # If user is not admin, show only relevant tasks
+        user = self.request.user
+        if not (user.is_admin or user.is_superuser):
+            if user.is_team_lead:
+                # Team leads see tasks from their projects
+                led_projects = Project.objects.filter(lead=user)
+                queryset = queryset.filter(project__in=led_projects)
+            else:
+                # Regular members see only their assigned tasks
+                queryset = queryset.filter(assignee=user)
+                
+        return queryset.select_related('project', 'assignee', 'created_by')
+
+class TaskDetailView(LoginRequiredMixin, DetailView):
+    """
+    View for displaying task details
+    """
+    model = Task
+    template_name = 'projects/task_detail.html'
+    context_object_name = 'task'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        task = self.get_object()
+        
+        # Get comments and attachments
+        context['comments'] = task.comments.all().order_by('-created_at')
+        context['attachments'] = task.attachments.all().order_by('-uploaded_at')
+        
+        # Add comment form
+        context['comment_form'] = TaskCommentForm()
+        
+        # Add attachment form
+        context['attachment_form'] = TaskAttachmentForm()
+        
+        # Get task updates
+        context['updates'] = task.updates.all().select_related('author').order_by('-created_at')
+        
+        # Add update form
+        context['update_form'] = TaskUpdateForm()
+        
+        # Activities related to this task
+        context['activities'] = ActivityLog.objects.filter(
+            task=task
+        ).select_related('user').order_by('-timestamp')[:10]
+        
+        return context
+
+class TaskCreateView(LoginRequiredMixin, CreateView):
+    """
+    View for creating a new task
+    """
+    model = Task
+    form_class = TaskForm
+    template_name = 'projects/task_form.html'
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        
+        # Pre-select project if provided in URL
+        project_id = self.kwargs.get('project_id')
+        if project_id:
+            kwargs['initial'] = {'project': project_id}
+            
+        return kwargs
+    
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        
+        # Set default assignee to current user if not specified
+        if not form.instance.assignee:
+            form.instance.assignee = self.request.user
+            
+        response = super().form_valid(form)
+        
+        # Log activity
+        ActivityLog.objects.create(
+            user=self.request.user,
+            category=ActivityLog.Category.TASK,
+            action_type=ActivityLog.ActionType.CREATE,
+            description=f"Created task: {form.instance.title}",
+            project=form.instance.project,
+            task=form.instance
+        )
+        
+        messages.success(self.request, f"Task '{form.instance.title}' has been created.")
+        return response
+
+class TaskUpdateView(LoginRequiredMixin, UpdateView):
+    """
+    View for updating a task
+    """
+    model = Task
+    form_class = TaskForm
+    template_name = 'projects/task_form.html'
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+    
+    def form_valid(self, form):
+        old_status = self.get_object().status
+        old_assignee = self.get_object().assignee
+        
+        response = super().form_valid(form)
+        
+        # Check if status changed to completed
+        if form.instance.status == Task.Status.COMPLETED and old_status != Task.Status.COMPLETED:
+            form.instance.completed_at = timezone.now()
+            form.instance.save(update_fields=['completed_at'])
+            
+            # Log completion
+            ActivityLog.objects.create(
+                user=self.request.user,
+                category=ActivityLog.Category.TASK,
+                action_type=ActivityLog.ActionType.COMPLETE,
+                description=f"Completed task: {form.instance.title}",
+                project=form.instance.project,
+                task=form.instance
+            )
+        # Check if status changed (but not to completed)
+        elif form.instance.status != old_status:
+            # Log status change
+            ActivityLog.objects.create(
+                user=self.request.user,
+                category=ActivityLog.Category.TASK,
+                action_type=ActivityLog.ActionType.STATUS_CHANGE,
+                description=f"Changed task status from {old_status} to {form.instance.status}: {form.instance.title}",
+                project=form.instance.project,
+                task=form.instance
+            )
+            
+        # Check if assignee changed
+        if form.instance.assignee and form.instance.assignee != old_assignee:
+            # Log assignee change
+            ActivityLog.objects.create(
+                user=self.request.user,
+                category=ActivityLog.Category.TASK,
+                action_type=ActivityLog.ActionType.ASSIGN,
+                description=f"Assigned task to {form.instance.assignee.get_full_name() or form.instance.assignee.email}: {form.instance.title}",
+                project=form.instance.project,
+                task=form.instance,
+                related_user=form.instance.assignee
+            )
+        
+        messages.success(self.request, f"Task '{form.instance.title}' has been updated.")
+        return response
+
+class TaskCommentCreateView(LoginRequiredMixin, CreateView):
+    """
+    View for adding a comment to a task
+    """
+    model = TaskComment
+    form_class = TaskCommentForm
+    
+    def form_valid(self, form):
+        task = get_object_or_404(Task, pk=self.kwargs['task_id'])
+        form.instance.task = task
+        form.instance.author = self.request.user
+        
+        response = super().form_valid(form)
+        
+        # Log activity
+        ActivityLog.objects.create(
+            user=self.request.user,
+            category=ActivityLog.Category.TASK,
+            action_type=ActivityLog.ActionType.COMMENT,
+            description=f"Commented on task: {task.title}",
+            project=task.project,
+            task=task
+        )
+        
+        messages.success(self.request, "Your comment has been added.")
+        return response
+    
+    def get_success_url(self):
+        return reverse('projects:task_detail', kwargs={'pk': self.kwargs['task_id']})
+
+class TaskAttachmentCreateView(LoginRequiredMixin, CreateView):
+    """
+    View for adding an attachment to a task
+    """
+    model = TaskAttachment
+    form_class = TaskAttachmentForm
+    
+    def form_valid(self, form):
+        task = get_object_or_404(Task, pk=self.kwargs['task_id'])
+        form.instance.task = task
+        form.instance.uploaded_by = self.request.user
+        
+        # Set filename if not provided
+        if not form.instance.filename:
+            form.instance.filename = form.instance.file.name
+        
+        response = super().form_valid(form)
+        
+        # Log activity
+        ActivityLog.objects.create(
+            user=self.request.user,
+            category=ActivityLog.Category.TASK,
+            action_type=ActivityLog.ActionType.UPDATE,
+            description=f"Added attachment to task: {task.title}",
+            project=task.project,
+            task=task
+        )
+        
+        messages.success(self.request, "Your attachment has been added.")
+        return response
+    
+    def get_success_url(self):
+        return reverse('projects:task_detail', kwargs={'pk': self.kwargs['task_id']})
+
+class TaskStatusUpdateView(LoginRequiredMixin, View):
+    """
+    View for quickly updating task status via AJAX
+    """
+    def post(self, request, *args, **kwargs):
+        task_id = request.POST.get('task_id')
+        new_status = request.POST.get('status')
+        
+        task = get_object_or_404(Task, id=task_id)
+        old_status = task.status
+        
+        # Check if status is valid
+        if new_status not in [choice[0] for choice in Task.Status.choices]:
+            return JsonResponse({'error': 'Invalid status'}, status=400)
+            
+        # Update the status
+        task.status = new_status
+        
+        # If completing the task, set completed_at
+        if new_status == Task.Status.COMPLETED and old_status != Task.Status.COMPLETED:
+            task.completed_at = timezone.now()
+            
+        task.save()
+        
+        # Log the status change
+        if new_status == Task.Status.COMPLETED:
+            action_type = ActivityLog.ActionType.COMPLETE
+            description = f"Completed task: {task.title}"
+        else:
+            action_type = ActivityLog.ActionType.STATUS_CHANGE
+            description = f"Changed task status from {old_status} to {new_status}: {task.title}"
+            
+        ActivityLog.objects.create(
+            user=request.user,
+            category=ActivityLog.Category.TASK,
+            action_type=action_type,
+            description=description,
+            project=task.project,
+            task=task
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'status': task.get_status_display(),
+            'task_id': task.id
+        })
+
+class TaskAssignView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """
+    View for assigning a task to a user
+    """
+    model = Task
+    form_class = TaskAssignForm
+    template_name = 'projects/task_assign.html'
+    
+    def test_func(self):
+        task = self.get_object()
+        user = self.request.user
+        return (user.is_admin or user.is_superuser or 
+                task.project.lead == user or 
+                task.created_by == user)
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['project'] = self.get_object().project
+        return kwargs
+    
+    def form_valid(self, form):
+        old_assignee = self.get_object().assignee
+        response = super().form_valid(form)
+        
+        # Log the assignment if it changed
+        if form.instance.assignee != old_assignee:
+            ActivityLog.objects.create(
+                user=self.request.user,
+                category=ActivityLog.Category.TASK,
+                action_type=ActivityLog.ActionType.ASSIGN,
+                description=f"Assigned task to {form.instance.assignee.get_full_name() or form.instance.assignee.email}: {form.instance.title}",
+                project=form.instance.project,
+                task=form.instance,
+                related_user=form.instance.assignee
+            )
+            
+            messages.success(self.request, f"Task has been assigned to {form.instance.assignee.get_full_name() or form.instance.assignee.email}.")
+        
+        return response
+
+class ProjectAttachmentCreateView(LoginRequiredMixin, CreateView):
+    """
+    View for adding an attachment to a project
+    """
+    model = ProjectAttachment
+    form_class = ProjectAttachmentForm
+    
+    def form_valid(self, form):
+        project = get_object_or_404(Project, pk=self.kwargs['project_id'])
+        form.instance.project = project
+        form.instance.uploaded_by = self.request.user
+        
+        # Set filename if not provided
+        if not form.instance.filename:
+            form.instance.filename = form.instance.file.name
+        
+        response = super().form_valid(form)
+        
+        # Log activity
+        ActivityLog.objects.create(
+            user=self.request.user,
+            category=ActivityLog.Category.PROJECT,
+            action_type=ActivityLog.ActionType.UPDATE,
+            description=f"Added attachment to project: {project.name}",
+            project=project
+        )
+        
+        messages.success(self.request, "Your attachment has been added to the project.")
+        return response
+    
+    def get_success_url(self):
+        return reverse('projects:project_detail', kwargs={'pk': self.kwargs['project_id']})
+
+class ProjectUpdateCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    """
+    View for creating a project update
+    """
+    model = ProjectUpdate
+    form_class = ProjectUpdateForm
+    template_name = 'projects/project_update_form.html'
+    
+    def test_func(self):
+        project = get_object_or_404(Project, pk=self.kwargs['project_id'])
+        user = self.request.user
+        return (user.is_admin or user.is_superuser or 
+                project.lead == user or 
+                project.members.filter(id=user.id).exists())
+    
+    def form_valid(self, form):
+        project = get_object_or_404(Project, pk=self.kwargs['project_id'])
+        form.instance.project = project
+        form.instance.author = self.request.user
+        
+        response = super().form_valid(form)
+        
+        # Log activity
+        ActivityLog.objects.create(
+            user=self.request.user,
+            category=ActivityLog.Category.PROJECT,
+            action_type=ActivityLog.ActionType.UPDATE,
+            description=f"Posted {form.instance.get_update_type_display().lower()} on project: {project.name}",
+            project=project
+        )
+        
+        messages.success(self.request, "Your project update has been posted.")
+        return response
+    
+    def get_success_url(self):
+        return reverse('projects:project_detail', kwargs={'pk': self.kwargs['project_id']})
+
+class ProjectUpdateListView(LoginRequiredMixin, ListView):
+    """
+    View for listing all updates for a project
+    """
+    model = ProjectUpdate
+    template_name = 'projects/project_update_list.html'
+    context_object_name = 'updates'
+    paginate_by = 15
+    
+    def get_queryset(self):
+        project_id = self.kwargs.get('project_id')
+        return ProjectUpdate.objects.filter(project_id=project_id).select_related('author').order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['project'] = get_object_or_404(Project, pk=self.kwargs['project_id'])
+        return context
+
+class TaskUpdateCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    """
+    View for creating a task update
+    """
+    model = TaskUpdate
+    form_class = TaskUpdateForm
+    template_name = 'projects/task_update_form.html'
+    
+    def test_func(self):
+        task = get_object_or_404(Task, pk=self.kwargs['task_id'])
+        user = self.request.user
+        return (user.is_admin or user.is_superuser or 
+                task.project.lead == user or 
+                task.assignee == user)
+    
+    def form_valid(self, form):
+        task = get_object_or_404(Task, pk=self.kwargs['task_id'])
+        form.instance.task = task
+        form.instance.author = self.request.user
+        
+        response = super().form_valid(form)
+        
+        # Update task actual hours if hours were reported
+        if form.instance.hours_spent:
+            task.actual_hours += form.instance.hours_spent
+            task.save(update_fields=['actual_hours'])
+        
+        # Log activity
+        ActivityLog.objects.create(
+            user=self.request.user,
+            category=ActivityLog.Category.TASK,
+            action_type=ActivityLog.ActionType.UPDATE,
+            description=f"Posted progress update on task: {task.title}",
+            project=task.project,
+            task=task
+        )
+        
+        messages.success(self.request, "Your task update has been posted.")
+        return response
+    
+    def get_success_url(self):
+        return reverse('projects:task_detail', kwargs={'pk': self.kwargs['task_id']})
+
+class TaskUpdateListView(LoginRequiredMixin, ListView):
+    """
+    View for listing all updates for a task
+    """
+    model = TaskUpdate
+    template_name = 'projects/task_update_list.html'
+    context_object_name = 'updates'
+    paginate_by = 15
+    
+    def get_queryset(self):
+        task_id = self.kwargs.get('task_id')
+        return TaskUpdate.objects.filter(task_id=task_id).select_related('author').order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['task'] = get_object_or_404(Task, pk=self.kwargs['task_id'])
+        return context
+
+class ProjectChatView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """
+    View for project chat functionality
+    """
+    model = ChatMessage
+    template_name = 'projects/project_chat.html'
+    context_object_name = 'messages'
+    paginate_by = 50
+    
+    def test_func(self):
+        project = get_object_or_404(Project, pk=self.kwargs['project_id'])
+        user = self.request.user
+        return (user.is_admin or user.is_superuser or 
+                project.lead == user or 
+                project.members.filter(id=user.id).exists())
+    
+    def get_queryset(self):
+        project_id = self.kwargs.get('project_id')
+        return ChatMessage.objects.filter(project_id=project_id).select_related('sender').order_by('-timestamp')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = get_object_or_404(Project, pk=self.kwargs['project_id'])
+        context['project'] = project
+        context['chat_form'] = ChatMessageForm()
+        
+        # Mark messages as read
+        unread_messages = self.get_queryset().filter(is_read=False).exclude(sender=self.request.user)
+        for message in unread_messages:
+            message.read_by.add(self.request.user)
+            if message.read_by.count() == project.members.count():
+                message.is_read = True
+                message.save()
+        
+        return context
+
+class ChatMessageCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    """
+    View for creating chat messages
+    """
+    model = ChatMessage
+    form_class = ChatMessageForm
+    http_method_names = ['post']
+    
+    def test_func(self):
+        project = get_object_or_404(Project, pk=self.kwargs['project_id'])
+        user = self.request.user
+        return (user.is_admin or user.is_superuser or 
+                project.lead == user or 
+                project.members.filter(id=user.id).exists())
+    
+    def form_valid(self, form):
+        project = get_object_or_404(Project, pk=self.kwargs['project_id'])
+        form.instance.project = project
+        form.instance.sender = self.request.user
+        
+        response = super().form_valid(form)
+        
+        # No need to log chats in activity log to avoid clutter
+        # But we could add it if needed
+        
+        # If using AJAX
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'status': 'success',
+                'message': form.instance.message,
+                'sender': self.request.user.get_full_name() or self.request.user.email,
+                'timestamp': form.instance.timestamp.strftime('%Y-%m-%d %H:%M')
+            })
+            
+        return response
+    
+    def get_success_url(self):
+        return reverse('projects:project_chat', kwargs={'project_id': self.kwargs['project_id']})
