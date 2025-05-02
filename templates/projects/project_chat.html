@@ -1,0 +1,315 @@
+{% extends 'base/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Project Chat - {{ project.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .message-sender-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #0d6efd;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  
+  /* Chat message styles */
+  .chat-messages {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .message {
+    max-width: 80%;
+    margin-bottom: 1.5rem;
+  }
+  
+  .message-left {
+    align-self: flex-start;
+  }
+  
+  .message-right {
+    align-self: flex-end;
+  }
+  
+  .message-body {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 0.5rem;
+    padding: 1rem;
+  }
+  
+  .message-right .message-body {
+    background-color: #e7f3ff;
+    border-color: #cce5ff;
+  }
+  
+  .chat-container {
+    height: calc(100vh - 300px);
+    min-height: 400px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .members-list {
+    height: calc(100vh - 300px);
+    overflow-y: auto;
+    border-right: 1px solid #e9ecef;
+  }
+  
+  .member-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid #f1f1f1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .member-item:hover, .member-item.active {
+    background-color: rgba(13, 110, 253, 0.1);
+  }
+  
+  .attachment-thumbnail {
+    max-width: 200px;
+    max-height: 150px;
+    border-radius: 0.375rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+      <i class="fas fa-comments me-2"></i> Project Chat
+      <span class="fs-5 text-muted">{{ project.name }}</span>
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+      <a href="{% url 'projects:project_detail' project.id %}" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i> Back to Project
+      </a>
+    </div>
+  </div>
+  
+  <div class="row">
+    <!-- Members List -->
+    <div class="col-md-3 mb-4">
+      <div class="card h-100">
+        <div class="card-header bg-body-tertiary">
+          <h5 class="mb-0"><i class="fas fa-users me-2"></i> Members</h5>
+          <span class="badge bg-primary mt-1">{{ project.members.count }} members</span>
+        </div>
+        <div class="card-body p-0">
+          <div class="members-list">
+            {% for member in project.members.all %}
+              <div class="member-item d-flex align-items-center" data-member-id="{{ member.id }}">
+                <div class="message-sender-avatar me-2">
+                  {% if member.profile_picture %}
+                    <img src="{{ member.profile_picture.url }}" alt="{{ member.get_full_name }}" class="img-fluid">
+                  {% else %}
+                    {{ member.get_initials|default:"U" }}
+                  {% endif %}
+                </div>
+                <div>
+                  <h6 class="mb-0">{{ member.get_full_name|default:member.email }}</h6>
+                  <small class="text-muted">{{ member.get_role_display }}</small>
+                  {% if member == project.lead %}
+                    <span class="badge bg-primary ms-1">Lead</span>
+                  {% endif %}
+                </div>
+              </div>
+            {% empty %}
+              <div class="text-center py-5">
+                <p class="text-muted">No members in this project.</p>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Chat Container -->
+    <div class="col-md-9">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Messages</h5>
+          <span class="badge bg-primary">{{ messages|length }} messages</span>
+        </div>
+        
+        <div class="card-body p-0">
+          <div class="chat-container p-3">
+            <div class="chat-messages">
+              {% for message in messages %}
+                <div class="message {% if message.sender == request.user %}message-right{% else %}message-left{% endif %}">
+                  <div class="message-header d-flex align-items-center mb-1">
+                    <div class="message-sender-avatar me-2">
+                      {% if message.sender.profile_picture %}
+                        <img src="{{ message.sender.profile_picture.url }}" alt="{{ message.sender.get_full_name }}" class="img-fluid">
+                      {% else %}
+                        {{ message.sender.get_initials|default:"U" }}
+                      {% endif %}
+                    </div>
+                    <div>
+                      <h6 class="mb-0">{{ message.sender.get_full_name|default:message.sender.email }}</h6>
+                      <small class="text-muted">{{ message.timestamp|date:"F d, Y g:i A" }}</small>
+                    </div>
+                  </div>
+                  <div class="message-body">
+                    {{ message.message }}
+                    {% if message.attachment %}
+                      <div class="mt-2 pt-2 border-top">
+                        {% if message.attachment.url|lower|slice:"-4:" in '.jpg,.png,.gif,.bmp,.svg,.webp,.jpeg' %}
+                          <a href="{{ message.attachment.url }}" target="_blank">
+                            <img src="{{ message.attachment.url }}" alt="Attachment" class="attachment-thumbnail d-block mb-2">
+                          </a>
+                        {% endif %}
+                        <a href="{{ message.attachment.url }}" class="btn btn-sm btn-outline-primary" download>
+                          <i class="fas fa-download me-1"></i> 
+                          {% if message.attachment_name %}
+                            {{ message.attachment_name }}
+                          {% else %}
+                            Download Attachment
+                          {% endif %}
+                        </a>
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+              {% empty %}
+                <div class="text-center py-5">
+                  <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                  <h5>No messages yet</h5>
+                  <p class="text-muted">Start the conversation by sending a message below.</p>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        
+        <div class="card-footer bg-body-tertiary">
+          <form method="post" action="{% url 'projects:project_chat_send' project.id %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-2">
+              <textarea name="message" class="form-control" rows="2" placeholder="Type your message..." required></textarea>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="input-group" style="max-width: 400px;">
+                <input type="file" name="attachment" class="form-control form-control-sm" id="chatAttachment">
+                <input type="hidden" name="attachment_name" id="attachmentName">
+              </div>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane me-1"></i> Send
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Pagination -->
+      {% if is_paginated %}
+        <nav aria-label="Page navigation" class="mt-4">
+          <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="First">
+                  <span aria-hidden="true">&laquo;&laquo;</span>
+                </a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                  <span aria-hidden="true">&laquo;</span>
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled">
+                <a class="page-link" href="#" aria-label="First">
+                  <span aria-hidden="true">&laquo;&laquo;</span>
+                </a>
+              </li>
+              <li class="page-item disabled">
+                <a class="page-link" href="#" aria-label="Previous">
+                  <span aria-hidden="true">&laquo;</span>
+                </a>
+              </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+              {% if page_obj.number == num %}
+                <li class="page-item active">
+                  <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                </li>
+              {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                </li>
+              {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                  <span aria-hidden="true">&raquo;</span>
+                </a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Last">
+                  <span aria-hidden="true">&raquo;&raquo;</span>
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled">
+                <a class="page-link" href="#" aria-label="Next">
+                  <span aria-hidden="true">&raquo;</span>
+                </a>
+              </li>
+              <li class="page-item disabled">
+                <a class="page-link" href="#" aria-label="Last">
+                  <span aria-hidden="true">&raquo;&raquo;</span>
+                </a>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Get the file input and file name hidden field
+    const fileInput = document.getElementById('chatAttachment');
+    const fileNameField = document.getElementById('attachmentName');
+    
+    // Update filename when file is selected
+    fileInput.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        fileNameField.value = this.files[0].name;
+      }
+    });
+    
+    // Member selection functionality
+    const memberItems = document.querySelectorAll('.member-item');
+    memberItems.forEach(item => {
+      item.addEventListener('click', function() {
+        const memberId = this.dataset.memberId;
+        const memberName = this.querySelector('h6').textContent;
+        
+        // Toggle active class
+        memberItems.forEach(m => m.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Append @username to message box
+        const messageTextarea = document.querySelector('textarea[name="message"]');
+        messageTextarea.value += `@${memberName} `;
+        messageTextarea.focus();
+      });
+    });
+  });
+</script>
+{% endblock %} 

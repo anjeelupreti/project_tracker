@@ -1,0 +1,273 @@
+{% extends 'base/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}User Management{% endblock %}
+
+{% block extra_css %}
+<style>
+  .user-card {
+    transition: all 0.3s ease;
+    border-radius: 0.5rem;
+  }
+  
+  .user-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #0d6efd;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  
+  .filter-section {
+    background-color: var(--bs-light);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">User Management</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+      <a href="{% url 'accounts:user_create' %}" class="btn btn-sm btn-primary">
+        <i class="fas fa-user-plus me-1"></i> New User
+      </a>
+    </div>
+  </div>
+  
+  <!-- Filter Section -->
+  <div class="filter-section">
+    <form method="get" id="filterForm">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="input-group">
+            <input type="text" class="form-control" id="search" name="search" placeholder="Search users..." value="{{ request.GET.search|default:'' }}">
+            <button class="btn btn-outline-secondary" type="submit">
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div class="col-md-2">
+          <select class="form-select" id="role" name="role" onchange="document.getElementById('filterForm').submit()">
+            <option value="">All Roles</option>
+            {% for role_value, role_label in roles %}
+              <option value="{{ role_value }}" {% if request.GET.role == role_value %}selected{% endif %}>{{ role_label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div class="col-md-2">
+          <select class="form-select" id="department" name="department" onchange="document.getElementById('filterForm').submit()">
+            <option value="">All Departments</option>
+            {% for department in departments %}
+              <option value="{{ department.id }}" {% if request.GET.department == department.id|stringformat:"i" %}selected{% endif %}>{{ department.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div class="col-md-2">
+          <select class="form-select" id="status" name="status" onchange="document.getElementById('filterForm').submit()">
+            <option value="">All Status</option>
+            <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+            <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
+            <option value="not_approved" {% if request.GET.status == 'not_approved' %}selected{% endif %}>Not Approved</option>
+          </select>
+        </div>
+        
+        <div class="col-md-2">
+          <a href="{% url 'accounts:user_list' %}" class="btn btn-outline-secondary w-100">Reset Filters</a>
+        </div>
+      </div>
+    </form>
+  </div>
+  
+  <!-- Users List -->
+  <div class="card">
+    <div class="card-header bg-body-tertiary">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Users ({{ page_obj.paginator.count }})</h5>
+      </div>
+    </div>
+    <div class="card-body">
+      {% if users %}
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th scope="col">User</th>
+                <th scope="col">Role</th>
+                <th scope="col">Department</th>
+                <th scope="col">Status</th>
+                <th scope="col">Joined</th>
+                <th scope="col" class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for user in users %}
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="user-avatar me-3">
+                        {% if user.profile_picture %}
+                          <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}" class="img-fluid">
+                        {% else %}
+                          {{ user.get_initials|default:"U" }}
+                        {% endif %}
+                      </div>
+                      <div>
+                        <div class="fw-medium">{{ user.get_full_name|default:user.username }}</div>
+                        <div class="small text-muted">{{ user.email }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge {% if user.role == 'ADMIN' %}bg-danger{% elif user.role == 'TEAM_LEAD' %}bg-primary{% elif user.role == 'SUPERUSER' %}bg-dark{% else %}bg-secondary{% endif %}">
+                      {{ user.get_role_display }}
+                    </span>
+                  </td>
+                  <td>
+                    {% if user.department %}
+                      {{ user.department.name }}
+                    {% else %}
+                      <span class="text-muted fst-italic">Not assigned</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if user.is_active %}
+                      {% if user.is_approved %}
+                        <span class="badge bg-success">Active</span>
+                      {% else %}
+                        <span class="badge bg-warning text-dark">Not Approved</span>
+                      {% endif %}
+                    {% else %}
+                      <span class="badge bg-danger">Inactive</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {{ user.date_joined|date:"M d, Y" }}
+                  </td>
+                  <td class="text-end">
+                    <div class="dropdown">
+                      <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Actions
+                      </button>
+                      <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                          <a class="dropdown-item" href="{% url 'accounts:user_profile' user.id %}">
+                            <i class="fas fa-user-circle me-2"></i> View Profile
+                          </a>
+                        </li>
+                        <li>
+                          <a class="dropdown-item" href="{% url 'accounts:user_update' user.id %}">
+                            <i class="fas fa-user-edit me-2"></i> Edit User
+                          </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                          <a class="dropdown-item text-danger" href="{% url 'accounts:user_delete' user.id %}">
+                            <i class="fas fa-user-times me-2"></i> Delete User
+                          </a>
+                        </li>
+                      </ul>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if is_paginated %}
+          <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+              {% if page_obj.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="First">
+                    <span aria-hidden="true">&laquo;&laquo;</span>
+                  </a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                  </a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <a class="page-link" href="#" aria-label="First">
+                    <span aria-hidden="true">&laquo;&laquo;</span>
+                  </a>
+                </li>
+                <li class="page-item disabled">
+                  <a class="page-link" href="#" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                  </a>
+                </li>
+              {% endif %}
+              
+              {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                  <li class="page-item active">
+                    <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                  </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+              
+              {% if page_obj.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                  </a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Last">
+                    <span aria-hidden="true">&raquo;&raquo;</span>
+                  </a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <a class="page-link" href="#" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                  </a>
+                </li>
+                <li class="page-item disabled">
+                  <a class="page-link" href="#" aria-label="Last">
+                    <span aria-hidden="true">&raquo;&raquo;</span>
+                  </a>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+      {% else %}
+        <div class="text-center py-5">
+          <i class="fas fa-users fa-4x text-muted mb-3"></i>
+          <h5>No users found</h5>
+          <p class="text-muted">Try adjusting your search or filter criteria</p>
+          <a href="{% url 'accounts:user_create' %}" class="btn btn-primary mt-3">
+            <i class="fas fa-user-plus me-1"></i> Create New User
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %} 
