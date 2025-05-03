@@ -2,258 +2,186 @@
 {% load static %}
 {% load i18n %}
 {% load account %}
+{% load crispy_forms_tags %}
 
-{% block title %}{% trans "Confirm Email Address" %}{% endblock %}
+{% block title %}{% trans "Confirm Email" %}{% endblock %}
 
 {% block extra_css %}
 <style>
-    .auth-wrapper {
-        min-height: calc(100vh - 100px);
-        display: flex;
-        align-items: center;
-    }
-    
-    .auth-card {
-        border: none;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    }
-    
-    .auth-card .card-header {
-        background: linear-gradient(45deg, var(--bs-primary), var(--bs-primary-text));
-        border-radius: 15px 15px 0 0;
-        padding: 2rem;
-    }
-    
-    .auth-card .card-header h3 {
-        font-weight: 600;
-        margin: 0;
-    }
-    
-    .auth-card .card-body {
-        padding: 2rem;
-    }
-    
-    .auth-brand {
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-    
-    .auth-brand i {
-        font-size: 3rem;
-        color: var(--bs-primary);
-        margin-bottom: 1rem;
-    }
-    
-    .auth-brand h4 {
-        color: var(--bs-gray-800);
-        font-weight: 600;
-    }
-    
-    .status-icon {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 2rem;
-    }
-    
-    .status-icon.success {
-        background: var(--bs-success-bg-subtle);
-    }
-    
-    .status-icon.error {
-        background: var(--bs-danger-bg-subtle);
-    }
-    
-    .status-icon i {
-        font-size: 2.5rem;
-    }
-    
-    .status-icon.success i {
-        color: var(--bs-success);
-    }
-    
-    .status-icon.error i {
-        color: var(--bs-danger);
-    }
-    
-    .auth-message {
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-    
-    .auth-message p {
-        color: var(--bs-gray-700);
-        margin-bottom: 1rem;
-    }
-    
-    .btn-confirm {
-        padding: 0.75rem;
-        font-weight: 500;
-        border-radius: 8px;
-        background: linear-gradient(45deg, var(--bs-success), var(--bs-success-text));
-        border: none;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-confirm:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(var(--bs-success-rgb), 0.4);
-    }
-    
-    .btn-back {
-        padding: 0.75rem;
-        font-weight: 500;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-back:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(var(--bs-primary-rgb), 0.4);
-    }
+  .auth-container {
+    min-height: calc(100vh - var(--navbar-height));
+    background: linear-gradient(135deg, #4158D0, #C850C0, #FFCC70);
+    background-size: 300% 300%;
+    animation: gradient-animation 15s ease infinite;
+    padding: 2rem 1rem;
+  }
+  
+  @keyframes gradient-animation {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  .auth-card {
+    border: none;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(0);
+    transition: all 0.3s ease;
+  }
+  
+  .auth-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  }
+  
+  .auth-header {
+    background: linear-gradient(to right, #00B4DB, #0083B0);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .auth-header::before {
+    content: '';
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    top: -150px;
+    right: -150px;
+  }
+  
+  .auth-header::after {
+    content: '';
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    bottom: -100px;
+    left: -100px;
+  }
+  
+  .auth-header h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: white;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .auth-header p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1rem;
+    margin-bottom: 0;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .auth-body {
+    padding: 2.5rem;
+  }
+  
+  .auth-btn {
+    padding: 0.8rem 1rem;
+    font-weight: 600;
+    font-size: 1rem;
+    border-radius: 0.5rem;
+    background: linear-gradient(to right, #00B4DB, #0083B0);
+    border: none;
+    color: white;
+    transition: all 0.3s ease;
+  }
+  
+  .auth-btn:hover {
+    background: linear-gradient(to right, #00A1C4, #00729C);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 180, 219, 0.3);
+  }
+  
+  .auth-footer {
+    background-color: rgba(0, 0, 0, 0.03);
+    padding: 1.5rem;
+    text-align: center;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+  }
+  
+  .info-box {
+    background-color: rgba(0, 180, 219, 0.1);
+    border-left: 4px solid #00B4DB;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .email-icon {
+    display: block;
+    margin: 0 auto 2rem;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: rgba(0, 180, 219, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: #00B4DB;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<<<<<<< HEAD
-<div class="auth-wrapper">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6">
-                <div class="auth-brand">
-                    <i class="fas fa-tasks"></i>
-                    <h4>Project Tracker</h4>
-                </div>
-                
-                <div class="card auth-card">
-                    <div class="card-header text-white text-center">
-                        <h3>{% trans "Confirm Email Address" %}</h3>
-                        <p class="mb-0">Please verify your email to continue</p>
-                    </div>
-                    <div class="card-body">
-                        {% if confirmation %}
-                            {% user_display confirmation.email_address.user as user_display %}
-                            
-                            <div class="status-icon success">
-                                <i class="fas fa-envelope-open-text"></i>
-                            </div>
-                            
-                            <div class="auth-message">
-                                <p>
-                                    {% trans "Please confirm that" %} <strong>{{ confirmation.email_address.email }}</strong> {% trans "is an email address for user" %} {{ user_display }}.
-                                </p>
-                                
-                                <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
-                                    {% csrf_token %}
-                                    <div class="d-grid gap-2">
-                                        <button class="btn btn-success btn-confirm" type="submit">
-                                            <i class="fas fa-check-circle me-2"></i>{% trans "Confirm Email" %}
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                            
-                        {% else %}
-                            <div class="status-icon error">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </div>
-                            
-                            <div class="auth-message">
-                                {% url 'account_email' as email_url %}
-                                <p>
-                                    {% trans "This email confirmation link has expired or is invalid. Please request a new confirmation email by clicking the button below." %}
-                                </p>
-                                
-                                <div class="d-grid gap-2">
-                                    <a href="{{ email_url }}" class="btn btn-primary">
-                                        <i class="fas fa-paper-plane me-2"></i>{% trans "Request New Confirmation" %}
-                                    </a>
-                                </div>
-                            </div>
-                            
-                            <div class="text-center mt-4">
-                                <a href="{% url 'account_login' %}" class="btn btn-outline-primary btn-back">
-                                    <i class="fas fa-arrow-left me-2"></i>{% trans "Back to Login" %}
-                                </a>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <div class="text-center mt-4">
-                    <p class="text-muted">
-                        {% trans "Need help? Contact our support team." %}
-                    </p>
-                </div>
-            </div>
-        </div>
-=======
-<div class="container mt-5">
-  <div class="row justify-content-center">
-    <div class="col-md-6">
-      <div class="card shadow-lg border-0 rounded-lg">
-        <div class="card-header bg-gradient-warning text-white text-center py-4">
-          <h3 class="mb-0 fw-bold">{% trans "Confirm Email" %}</h3>
-          <p class="mb-0 text-white-50">Verify your email address to continue</p>
-        </div>
-        <div class="card-body p-4">
-          {% if confirmation %}
-            {% user_display confirmation.email_address.user as user_display %}
-            
-            <div class="text-center mb-4">
-              <div class="mb-3">
-                <i class="fas fa-envelope-open-text fs-1 text-warning"></i>
+<div class="auth-container d-flex align-items-center justify-content-center">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-10 col-lg-8 col-xl-6">
+        <div class="auth-card">
+          <div class="auth-header">
+            <h3>{% trans "Confirm Email" %}</h3>
+            <p>{% trans "Verify your email address" %}</p>
+          </div>
+          <div class="auth-body">
+            <div class="text-center">
+              <div class="email-icon">
+                <i class="fas fa-envelope"></i>
               </div>
-              <p class="mb-3">
+            </div>
+            
+            {% user_display email_address.user as user_display %}
+            
+            <div class="info-box">
+              <h5 class="mb-3">{% trans "Almost there!" %}</h5>
+              <p class="mb-0">
                 {% blocktrans with confirmation.email_address.email as email %}
-                  Please confirm that <strong class="text-primary">{{ email }}</strong> is the email address for user <strong>{{ user_display }}</strong>.
+                  Please confirm that <strong>{{ email }}</strong> is your email address to complete the registration.
                 {% endblocktrans %}
               </p>
             </div>
             
             <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
               {% csrf_token %}
-              <div class="d-grid gap-2">
-                <button class="btn btn-warning text-white py-2 fw-bold" type="submit">
-                  <i class="fas fa-check-circle me-2"></i>{% trans "Confirm Email Address" %}
-                </button>
-              </div>
+              <button class="btn auth-btn w-100" type="submit">
+                {% trans "Confirm Email Address" %}
+              </button>
             </form>
-            
-          {% else %}
-            {% url 'account_email' as email_url %}
-            
-            <div class="text-center mb-4">
-              <div class="mb-3">
-                <i class="fas fa-exclamation-triangle fs-1 text-danger"></i>
-              </div>
-              <div class="alert alert-danger">
-                {% blocktrans %}
-                  This email confirmation link has expired or is invalid. Please 
-                  <a href="{{ email_url }}" class="alert-link">request a new confirmation email</a>.
-                {% endblocktrans %}
-              </div>
-            </div>
-            
-            <div class="text-center mt-4">
-              <a href="{% url 'account_login' %}" class="btn btn-primary">
-                <i class="fas fa-sign-in-alt me-2"></i>{% trans "Back to Sign In" %}
-              </a>
-            </div>
-          {% endif %}
-        </div>
-        <div class="card-footer bg-light py-3 text-center">
-          <div class="small">
-            <i class="fas fa-shield-alt me-1"></i>
-            Email verification helps protect your account security
+          </div>
+          <div class="auth-footer">
+            <p>
+              {% blocktrans %}
+                If you did not request this confirmation, you can safely ignore this email.
+              {% endblocktrans %}
+            </p>
           </div>
         </div>
       </div>
->>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
     </div>
+  </div>
 </div>
 {% endblock %} 

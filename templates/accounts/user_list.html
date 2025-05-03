@@ -1,175 +1,9 @@
 {% extends 'base/base.html' %}
-<<<<<<< HEAD
 {% load static %}
-=======
->>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
 {% load crispy_forms_tags %}
 
 {% block title %}User Management{% endblock %}
 
-<<<<<<< HEAD
-{% block content %}
-<div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3">User Management</h1>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
-            <i class="fas fa-user-plus me-2"></i>Add New User
-        </button>
-    </div>
-
-    <!-- Users Table -->
-    <div class="card">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Department</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user in users %}
-                        <tr>
-                            <td>{{ user.get_full_name|default:user.email }}</td>
-                            <td>{{ user.email }}</td>
-                            <td>
-                                <span class="badge {% if user.role == 'ADMIN' %}bg-danger
-                                    {% elif user.role == 'TEAM_LEAD' %}bg-success
-                                    {% else %}bg-primary{% endif %}">
-                                    {{ user.get_role_display }}
-                                </span>
-                            </td>
-                            <td>{{ user.department.name|default:"N/A" }}</td>
-                            <td>
-                                <span class="badge {% if user.is_active %}bg-success{% else %}bg-danger{% endif %}">
-                                    {{ user.is_active|yesno:"Active,Inactive" }}
-                                </span>
-                            </td>
-                            <td>
-                                <div class="d-flex gap-1">
-                                    <a href="{% url 'accounts:user_edit' user.id %}" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-sm btn-outline-{{ user.is_active|yesno:'danger,success' }} toggle-status-btn" 
-                                            data-user-id="{{ user.id }}" 
-                                            data-action="{{ user.is_active|yesno:'deactivate,activate' }}">
-                                        <i class="fas fa-{{ user.is_active|yesno:'user-slash,user-check' }}"></i>
-                                    </button>
-                                    {% if not user.is_superuser %}
-                                    <button type="button" class="btn btn-sm btn-outline-info resend-welcome-btn" 
-                                            data-user-id="{{ user.id }}" 
-                                            data-email="{{ user.email }}">
-                                        <i class="fas fa-envelope"></i>
-                                    </button>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Add User Modal -->
-<div class="modal fade" id="addUserModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Add New User</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="post" action="{% url 'accounts:user_create' %}">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email Address</label>
-                        <input type="email" class="form-control" id="email" name="email" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="first_name" class="form-label">First Name</label>
-                        <input type="text" class="form-control" id="first_name" name="first_name">
-                    </div>
-                    <div class="mb-3">
-                        <label for="last_name" class="form-label">Last Name</label>
-                        <input type="text" class="form-control" id="last_name" name="last_name">
-                    </div>
-                    <div class="mb-3">
-                        <label for="role" class="form-label">Role</label>
-                        <select class="form-select" id="role" name="role" required>
-                            <option value="MEMBER">Member</option>
-                            <option value="TEAM_LEAD">Team Lead</option>
-                            <option value="ADMIN">Admin</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="department" class="form-label">Department</label>
-                        <select class="form-select" id="department" name="department">
-                            <option value="">Select Department</option>
-                            {% for dept in departments %}
-                            <option value="{{ dept.id }}">{{ dept.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add User</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-{% block extra_js %}
-<script>
-function resendWelcomeEmail(userId) {
-    if (confirm('Are you sure you want to resend the welcome email?')) {
-        fetch(`/accounts/users/${userId}/resend-welcome/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showToast('Success', 'Welcome email has been resent.', 'success');
-            } else {
-                showToast('Error', data.error || 'Failed to resend welcome email.', 'error');
-            }
-        });
-    }
-}
-
-function toggleUserStatus(userId) {
-    if (confirm('Are you sure you want to change this user\'s status?')) {
-        fetch(`/accounts/users/${userId}/toggle-status/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                showToast('Error', data.error || 'Failed to update user status.', 'error');
-            }
-        });
-    }
-}
-</script>
-{% endblock %}
-=======
 {% block extra_css %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
@@ -316,674 +150,184 @@ function toggleUserStatus(userId) {
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid px-4">
-  <div class="d-flex flex-wrap justify-content-between align-items-center pt-3 pb-2 mb-4">
-    <div>
-      <h1 class="h2 mb-0">User Management</h1>
-      <p class="text-muted mb-0">Manage users, roles, and permissions</p>
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">User Management</h1>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+            <i class="fas fa-user-plus me-2"></i>Add New User
+        </button>
     </div>
-    <div class="d-flex gap-2">
-      <button type="button" class="btn btn-primary d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#notificationModal">
-        <i class="fas fa-bell me-2"></i> Send Notification
-      </button>
-      <a href="{% url 'accounts:user_create' %}" class="btn btn-outline-primary d-flex align-items-center">
-        <i class="fas fa-user-plus me-2"></i> Add User
-      </a>
-    </div>
-  </div>
-  
-  <!-- User Stats -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="stats-card">
-        <div class="card-body d-flex align-items-center">
-          <div class="stats-icon bg-primary me-3">
-            <i class="fas fa-users"></i>
-          </div>
-          <div>
-            <p class="stats-value">{{ total_users }}</p>
-            <p class="stats-label">Total Users</p>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="stats-card">
-        <div class="card-body d-flex align-items-center">
-          <div class="stats-icon bg-success me-3">
-            <i class="fas fa-user-check"></i>
-          </div>
-          <div>
-            <p class="stats-value">{{ active_users }}</p>
-            <p class="stats-label">Active Users</p>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="stats-card">
-        <div class="card-body d-flex align-items-center">
-          <div class="stats-icon bg-warning me-3">
-            <i class="fas fa-user-clock"></i>
-          </div>
-          <div>
-            <p class="stats-value">{{ pending_users }}</p>
-            <p class="stats-label">Pending Approval</p>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="stats-card">
-        <div class="card-body d-flex align-items-center">
-          <div class="stats-icon bg-info me-3">
-            <i class="fas fa-user-tag"></i>
-          </div>
-          <div>
-            <p class="stats-value">{{ admin_users }}</p>
-            <p class="stats-label">Admins</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Filter Section -->
-  <div class="filter-section mb-4">
-    <form method="get" id="filterForm">
-      <div class="row g-3">
-        <div class="col-md-4">
-          <div class="input-group">
-            <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
-            <input type="text" class="form-control" id="search" name="search" placeholder="Search by name, email, or department..." value="{{ request.GET.search|default:'' }}">
-            <button class="btn btn-primary" type="submit">Search</button>
-          </div>
-        </div>
-        
-        <div class="col-md-2">
-          <select class="form-select" id="role" name="role" onchange="document.getElementById('filterForm').submit()">
-            <option value="">All Roles</option>
-            {% for role_value, role_label in roles %}
-              <option value="{{ role_value }}" {% if request.GET.role == role_value %}selected{% endif %}>{{ role_label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        
-        <div class="col-md-2">
-          <select class="form-select" id="department" name="department" onchange="document.getElementById('filterForm').submit()">
-            <option value="">All Departments</option>
-            {% for department in departments %}
-              <option value="{{ department.id }}" {% if request.GET.department == department.id|stringformat:"i" %}selected{% endif %}>{{ department.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        
-        <div class="col-md-2">
-          <select class="form-select" id="status" name="status" onchange="document.getElementById('filterForm').submit()">
-            <option value="">All Status</option>
-            <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
-            <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
-            <option value="not_approved" {% if request.GET.status == 'not_approved' %}selected{% endif %}>Not Approved</option>
-          </select>
-        </div>
-        
-        <div class="col-md-2">
-          <div class="d-flex gap-2">
-            <a href="{% url 'accounts:user_list' %}" class="btn btn-outline-secondary flex-grow-1">
-              <i class="fas fa-sync-alt me-1"></i> Reset
-            </a>
-            <button type="button" class="btn btn-outline-primary" id="toggleAdvanced">
-              <i class="fas fa-sliders-h"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Advanced Filters (Hidden by Default) -->
-      <div class="advanced-filters mt-3" id="advancedFilters">
-        <div class="row g-3">
-          <div class="col-md-3">
-            <label for="joined_after" class="form-label">Joined After</label>
-            <input type="date" class="form-control" id="joined_after" name="joined_after" value="{{ request.GET.joined_after|default:'' }}">
-          </div>
-          <div class="col-md-3">
-            <label for="joined_before" class="form-label">Joined Before</label>
-            <input type="date" class="form-control" id="joined_before" name="joined_before" value="{{ request.GET.joined_before|default:'' }}">
-          </div>
-          <div class="col-md-3">
-            <label for="sort_by" class="form-label">Sort By</label>
-            <select class="form-select" id="sort_by" name="sort_by">
-              <option value="name" {% if request.GET.sort_by == 'name' %}selected{% endif %}>Name</option>
-              <option value="role" {% if request.GET.sort_by == 'role' %}selected{% endif %}>Role</option>
-              <option value="department" {% if request.GET.sort_by == 'department' %}selected{% endif %}>Department</option>
-              <option value="date_joined" {% if request.GET.sort_by == 'date_joined' or not request.GET.sort_by %}selected{% endif %}>Date Joined</option>
-              <option value="status" {% if request.GET.sort_by == 'status' %}selected{% endif %}>Status</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label for="order" class="form-label">Order</label>
-            <select class="form-select" id="order" name="order">
-              <option value="asc" {% if request.GET.order == 'asc' %}selected{% endif %}>Ascending</option>
-              <option value="desc" {% if request.GET.order == 'desc' or not request.GET.order %}selected{% endif %}>Descending</option>
-            </select>
-          </div>
-          <div class="col-12 text-end">
-            <button type="submit" class="btn btn-primary px-4">Apply Filters</button>
-          </div>
-        </div>
-      </div>
-    </form>
-  </div>
-  
-  <!-- Users List -->
-  <div class="card user-card">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center p-3">
-      <div class="d-flex align-items-center">
-        <h5 class="mb-0">Users</h5>
-        <span class="badge bg-primary rounded-pill ms-2">{{ page_obj.paginator.count }}</span>
-      </div>
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="selectAllUsers">
-        <label class="form-check-label" for="selectAllUsers">Select All</label>
-      </div>
-    </div>
-    <div class="card-body p-0">
-      {% if users %}
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-              <tr>
-                <th scope="col" width="40px">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="headerCheckbox">
-                  </div>
-                </th>
-                <th scope="col">User</th>
-                <th scope="col">Role</th>
-                <th scope="col">Department</th>
-                <th scope="col">Status</th>
-                <th scope="col">Joined</th>
-                <th scope="col" class="text-end">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for user in users %}
-                <tr>
-                  <td>
-                    <div class="form-check">
-                      <input class="form-check-input user-checkbox" type="checkbox" value="{{ user.id }}" id="user_{{ user.id }}">
-                    </div>
-                  </td>
-                  <td>
-                    <div class="d-flex align-items-center">
-                      <div class="user-avatar me-3" style="background-color: {% cycle '#4361ee' '#3a0ca3' '#7209b7' '#f72585' '#4cc9f0' '#4895ef' '#560bad' %};">
-                        {% if user.profile_picture %}
-                          <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}" class="img-fluid">
-                        {% else %}
-                          {{ user.get_initials|default:"U" }}
-                        {% endif %}
-                      </div>
-                      <div>
-                        <div class="fw-medium">{{ user.get_full_name|default:user.username }}</div>
-                        <div class="small text-muted">{{ user.email }}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="badge badge-role {% if user.role == 'ADMIN' %}bg-danger-subtle text-danger{% elif user.role == 'TEAM_LEAD' %}bg-primary-subtle text-primary{% elif user.role == 'SUPERUSER' %}bg-dark-subtle text-dark{% else %}bg-secondary-subtle text-secondary{% endif %}">
-                      {{ user.get_role_display }}
-                    </span>
-                  </td>
-                  <td>
-                    {% if user.department %}
-                      {{ user.department.name }}
-                    {% else %}
-                      <span class="text-muted fst-italic">Not assigned</span>
-                    {% endif %}
-                  </td>
-                  <td>
-                    {% if user.is_active %}
-                      {% if user.is_approved %}
-                        <span class="badge bg-success-subtle text-success">Active</span>
-                      {% else %}
-                        <span class="badge bg-warning-subtle text-warning">Not Approved</span>
-                      {% endif %}
-                    {% else %}
-                      <span class="badge bg-danger-subtle text-danger">Inactive</span>
-                    {% endif %}
-                  </td>
-                  <td>
-                    {{ user.date_joined|date:"M d, Y" }}
-                  </td>
-                  <td class="text-end">
-                    <div class="d-flex justify-content-end">
-                      <a href="{% url 'accounts:user_profile' user.id %}" class="action-button" data-bs-toggle="tooltip" title="View Profile">
-                        <i class="fas fa-user"></i>
-                      </a>
-                      <a href="{% url 'accounts:user_update' user.id %}" class="action-button" data-bs-toggle="tooltip" title="Edit User">
-                        <i class="fas fa-edit"></i>
-                      </a>
-                      <button type="button" class="action-button notify-user-btn" data-bs-toggle="tooltip" title="Send Notification" data-user-id="{{ user.id }}" data-user-name="{{ user.get_full_name|default:user.username }}">
-                        <i class="fas fa-bell"></i>
-                      </button>
-                      <a href="{% url 'accounts:user_delete' user.id %}" class="action-button text-danger" data-bs-toggle="tooltip" title="Delete User">
-                        <i class="fas fa-trash"></i>
-                      </a>
-                    </div>
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        
-        <!-- Bulk Actions -->
-        <div class="bg-light p-3 d-flex justify-content-between align-items-center">
-          <div class="d-flex align-items-center">
-            <span class="me-2">Bulk Actions:</span>
-            <div class="btn-group">
-              <button type="button" class="btn btn-sm btn-outline-primary" id="bulkNotify" disabled>
-                <i class="fas fa-bell me-1"></i> Notify
-              </button>
-              <button type="button" class="btn btn-sm btn-outline-success" id="bulkApprove" disabled>
-                <i class="fas fa-check-circle me-1"></i> Approve
-              </button>
-              <button type="button" class="btn btn-sm btn-outline-warning" id="bulkDeactivate" disabled>
-                <i class="fas fa-ban me-1"></i> Deactivate
-              </button>
-              <button type="button" class="btn btn-sm btn-outline-danger" id="bulkDelete" disabled>
-                <i class="fas fa-trash me-1"></i> Delete
-              </button>
+
+    <!-- Users Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Department</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.get_full_name|default:user.email }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                <span class="badge {% if user.role == 'ADMIN' %}bg-danger
+                                    {% elif user.role == 'TEAM_LEAD' %}bg-success
+                                    {% else %}bg-primary{% endif %}">
+                                    {{ user.get_role_display }}
+                                </span>
+                            </td>
+                            <td>{{ user.department.name|default:"N/A" }}</td>
+                            <td>
+                                <span class="badge {% if user.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ user.is_active|yesno:"Active,Inactive" }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <a href="{% url 'accounts:user_edit' user.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-{{ user.is_active|yesno:'danger,success' }} toggle-status-btn" 
+                                            data-user-id="{{ user.id }}" 
+                                            data-action="{{ user.is_active|yesno:'deactivate,activate' }}">
+                                        <i class="fas fa-{{ user.is_active|yesno:'user-slash,user-check' }}"></i>
+                                    </button>
+                                    {% if not user.is_superuser %}
+                                    <button type="button" class="btn btn-sm btn-outline-info resend-welcome-btn" 
+                                            data-user-id="{{ user.id }}" 
+                                            data-email="{{ user.email }}">
+                                        <i class="fas fa-envelope"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-          </div>
-          
-          <!-- Pagination -->
-          {% if is_paginated %}
-            <nav aria-label="Page navigation">
-              <ul class="pagination justify-content-center mb-0">
-                {% if page_obj.has_previous %}
-                  <li class="page-item">
-                    <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="First">
-                      <span aria-hidden="true">&laquo;&laquo;</span>
-                    </a>
-                  </li>
-                  <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
-                      <span aria-hidden="true">&laquo;</span>
-                    </a>
-                  </li>
-                {% else %}
-                  <li class="page-item disabled">
-                    <a class="page-link" href="#" aria-label="First">
-                      <span aria-hidden="true">&laquo;&laquo;</span>
-                    </a>
-                  </li>
-                  <li class="page-item disabled">
-                    <a class="page-link" href="#" aria-label="Previous">
-                      <span aria-hidden="true">&laquo;</span>
-                    </a>
-                  </li>
-                {% endif %}
-                
-                {% for num in page_obj.paginator.page_range %}
-                  {% if page_obj.number == num %}
-                    <li class="page-item active">
-                      <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
-                    </li>
-                  {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                    <li class="page-item">
-                      <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
-                    </li>
-                  {% endif %}
-                {% endfor %}
-                
-                {% if page_obj.has_next %}
-                  <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
-                      <span aria-hidden="true">&raquo;</span>
-                    </a>
-                  </li>
-                  <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Last">
-                      <span aria-hidden="true">&raquo;&raquo;</span>
-                    </a>
-                  </li>
-                {% else %}
-                  <li class="page-item disabled">
-                    <a class="page-link" href="#" aria-label="Next">
-                      <span aria-hidden="true">&raquo;</span>
-                    </a>
-                  </li>
-                  <li class="page-item disabled">
-                    <a class="page-link" href="#" aria-label="Last">
-                      <span aria-hidden="true">&raquo;&raquo;</span>
-                    </a>
-                  </li>
-                {% endif %}
-              </ul>
-            </nav>
-          {% endif %}
         </div>
-      {% else %}
-        <div class="text-center py-5">
-          <div class="mb-3">
-            <i class="fas fa-users-slash fa-4x text-muted"></i>
-          </div>
-          <h5>No users found</h5>
-          <p class="text-muted">Try adjusting your search or filter criteria</p>
-          <a href="{% url 'accounts:user_create' %}" class="btn btn-primary mt-2">
-            <i class="fas fa-user-plus me-2"></i> Add New User
-          </a>
-        </div>
-      {% endif %}
     </div>
-  </div>
 </div>
 
-<!-- Notification Modal -->
-<div class="modal fade notification-modal" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title" id="notificationModalLabel"><i class="fas fa-bell me-2"></i> Send Notification</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form id="notificationForm" action="{% url 'accounts:notification_create' %}" method="post">
-          {% csrf_token %}
-          
-          <div class="mb-3">
-            <label for="notification_recipients" class="form-label">Recipients</label>
-            <select class="form-select select2" id="notification_recipients" name="recipients[]" multiple>
-              <option value="all">All Users</option>
-              <optgroup label="Departments">
-                {% for department in departments %}
-                  <option value="department_{{ department.id }}">{{ department.name }}</option>
-                {% endfor %}
-              </optgroup>
-              <optgroup label="Roles">
-                {% for role_value, role_label in roles %}
-                  <option value="role_{{ role_value }}">{{ role_label }}</option>
-                {% endfor %}
-              </optgroup>
-              <optgroup label="Individual Users">
-                {% for user in all_users %}
-                  <option value="user_{{ user.id }}">{{ user.get_full_name|default:user.email }}</option>
-                {% endfor %}
-              </optgroup>
-            </select>
-            <div class="form-text" id="recipientsHelp">Selected: <span id="selectedCount">0</span> recipients</div>
-          </div>
-          
-          <div class="mb-3">
-            <label for="notification_title" class="form-label">Title</label>
-            <input type="text" class="form-control" id="notification_title" name="title" required>
-          </div>
-          
-          <div class="mb-3">
-            <label for="notification_type" class="form-label">Notification Type</label>
-            <select class="form-select" id="notification_type" name="notification_type">
-              <option value="INFO" selected>Information</option>
-              <option value="WARNING">Warning</option>
-              <option value="SUCCESS">Success</option>
-              <option value="DANGER">Danger</option>
-            </select>
-          </div>
-          
-          <div class="mb-3">
-            <label for="notification_message" class="form-label">Message</label>
-            <textarea class="form-control" id="notification_message" name="message" rows="4" required></textarea>
-          </div>
-          
-          <div class="mb-3">
-            <label for="notification_link" class="form-label">Link (Optional)</label>
-            <input type="text" class="form-control" id="notification_link" name="link" placeholder="e.g., /projects/5/">
-            <div class="form-text">Add a link to direct users to a specific page when they click the notification.</div>
-          </div>
-          
-          <div class="form-check mb-3">
-            <input class="form-check-input" type="checkbox" id="send_email" name="send_email">
-            <label class="form-check-label" for="send_email">
-              Also send as email
-            </label>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" id="sendNotificationBtn">
-          <i class="fas fa-paper-plane me-2"></i> Send Notification
-        </button>
-      </div>
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'accounts:user_create' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="first_name" class="form-label">First Name</label>
+                        <input type="text" class="form-control" id="first_name" name="first_name">
+                    </div>
+                    <div class="mb-3">
+                        <label for="last_name" class="form-label">Last Name</label>
+                        <input type="text" class="form-control" id="last_name" name="last_name">
+                    </div>
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role</label>
+                        <select class="form-select" id="role" name="role" required>
+                            <option value="MEMBER">Member</option>
+                            <option value="TEAM_LEAD">Team Lead</option>
+                            <option value="ADMIN">Admin</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="department" class="form-label">Department</label>
+                        <select class="form-select" id="department" name="department">
+                            <option value="">Select Department</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept.id }}">{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add User</button>
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
-</div>
-
-<!-- New User Credentials Modal -->
-<div class="modal fade" id="credentialsModal" tabindex="-1" aria-labelledby="credentialsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title" id="credentialsModalLabel"><i class="fas fa-user-plus me-2"></i> New User Created</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="alert alert-warning">
-          <i class="fas fa-exclamation-triangle me-2"></i> Please save these credentials securely. The password won't be shown again.
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-bold">Email:</label>
-          <div class="input-group">
-            <input type="text" class="form-control" id="newUserEmail" value="{{ request.session.new_user_email }}" readonly>
-            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('newUserEmail')">
-              <i class="fas fa-copy"></i>
-            </button>
-          </div>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-bold">Temporary Password:</label>
-          <div class="input-group">
-            <input type="text" class="form-control" id="newUserPassword" value="{{ request.session.new_user_password }}" readonly>
-            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('newUserPassword')">
-              <i class="fas fa-copy"></i>
-            </button>
-          </div>
-        </div>
-        <div class="alert alert-info mb-0">
-          <p class="mb-1"><i class="fas fa-info-circle me-2"></i> Instructions:</p>
-          <ol class="mb-0 ps-3">
-            <li>Share these credentials with the user securely</li>
-            <li>Ask them to log in and change their password immediately</li>
-            <li>A welcome email has also been sent if email settings are configured</li>
-          </ol>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
-          <i class="fas fa-check me-2"></i> Got it
-        </button>
-      </div>
-    </div>
-  </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Initialize tooltips
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function(tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-    
-    // Toggle advanced filters
-    const toggleAdvancedBtn = document.getElementById('toggleAdvanced');
-    const advancedFilters = document.getElementById('advancedFilters');
-    
-    toggleAdvancedBtn.addEventListener('click', function() {
-      advancedFilters.classList.toggle('show');
-      toggleAdvancedBtn.querySelector('i').classList.toggle('fa-sliders-h');
-      toggleAdvancedBtn.querySelector('i').classList.toggle('fa-times');
-    });
-    
+function resendWelcomeEmail(userId) {
+    if (confirm('Are you sure you want to resend the welcome email?')) {
+        fetch(`/accounts/users/${userId}/resend-welcome/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Success', 'Welcome email has been resent.', 'success');
+            } else {
+                showToast('Error', data.error || 'Failed to resend welcome email.', 'error');
+            }
+        });
+    }
+}
+
+function toggleUserStatus(userId) {
+    if (confirm('Are you sure you want to change this user\'s status?')) {
+        fetch(`/accounts/users/${userId}/toggle-status/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                showToast('Error', data.error || 'Failed to update user status.', 'error');
+            }
+        });
+    }
+}
+
+$(document).ready(function() {
     // Initialize Select2
     $('.select2').select2({
-      theme: 'bootstrap-5',
-      width: '100%',
-      placeholder: 'Select recipients'
+        theme: 'bootstrap-5'
     });
     
-    // Update recipients count
-    $('#notification_recipients').on('change', function() {
-      const selectedOptions = $(this).select2('data');
-      document.getElementById('selectedCount').textContent = selectedOptions.length;
+    // Handle toggle status buttons
+    $('.toggle-status-btn').on('click', function() {
+        const userId = $(this).data('user-id');
+        toggleUserStatus(userId);
     });
     
-    // Handle notify single user
-    const notifyUserBtns = document.querySelectorAll('.notify-user-btn');
-    notifyUserBtns.forEach(btn => {
-      btn.addEventListener('click', function() {
-        const userId = this.getAttribute('data-user-id');
-        const userName = this.getAttribute('data-user-name');
-        
-        // Open modal
-        const modal = new bootstrap.Modal(document.getElementById('notificationModal'));
-        modal.show();
-        
-        // Set user as recipient
-        $('#notification_recipients').val('user_' + userId).trigger('change');
-        document.getElementById('notification_title').focus();
-      });
+    // Handle resend welcome email buttons
+    $('.resend-welcome-btn').on('click', function() {
+        const userId = $(this).data('user-id');
+        resendWelcomeEmail(userId);
     });
-    
-    // Handle "Select All" checkbox in the header (different from headerCheckbox)
-    const selectAllUsers = document.getElementById('selectAllUsers');
-    if (selectAllUsers) {
-      selectAllUsers.addEventListener('change', function() {
-        const headerCheckbox = document.getElementById('headerCheckbox');
-        if (headerCheckbox) {
-          headerCheckbox.checked = this.checked;
-          // Trigger the change event on headerCheckbox
-          const event = new Event('change');
-          headerCheckbox.dispatchEvent(event);
-        }
-      });
-    }
-    
-    // Handle checkbox selection
-    const headerCheckbox = document.getElementById('headerCheckbox');
-    const userCheckboxes = document.querySelectorAll('.user-checkbox');
-    const bulkActionButtons = document.querySelectorAll('#bulkNotify, #bulkApprove, #bulkDeactivate, #bulkDelete');
-    
-    if (headerCheckbox) {
-      headerCheckbox.addEventListener('change', function() {
-        userCheckboxes.forEach(checkbox => {
-          checkbox.checked = this.checked;
-        });
-        updateBulkButtons();
-        
-        // Update selectAllUsers checkbox
-        const selectAllUsers = document.getElementById('selectAllUsers');
-        if (selectAllUsers) {
-          selectAllUsers.checked = this.checked;
-        }
-      });
-    }
-    
-    userCheckboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        updateBulkButtons();
-        
-        // Update header checkbox
-        const allChecked = Array.from(userCheckboxes).every(cb => cb.checked);
-        const someChecked = Array.from(userCheckboxes).some(cb => cb.checked);
-        if (headerCheckbox) {
-          headerCheckbox.checked = allChecked;
-          headerCheckbox.indeterminate = someChecked && !allChecked;
-        }
-        
-        // Update selectAllUsers checkbox
-        const selectAllUsers = document.getElementById('selectAllUsers');
-        if (selectAllUsers) {
-          selectAllUsers.checked = allChecked;
-          selectAllUsers.indeterminate = someChecked && !allChecked;
-        }
-      });
-    });
-    
-    function updateBulkButtons() {
-      const anyChecked = Array.from(userCheckboxes).some(cb => cb.checked);
-      bulkActionButtons.forEach(button => {
-        button.disabled = !anyChecked;
-      });
-    }
-    
-    // Run once to initialize button states
-    updateBulkButtons();
-    
-    // Handle bulk notification
-    document.getElementById('bulkNotify').addEventListener('click', function() {
-      // Get selected user IDs
-      const selectedUserIds = Array.from(userCheckboxes)
-        .filter(cb => cb.checked)
-        .map(cb => 'user_' + cb.value);
-      
-      if (selectedUserIds.length === 0) return;
-      
-      // Open modal
-      const modal = new bootstrap.Modal(document.getElementById('notificationModal'));
-      modal.show();
-      
-      // Set selected users as recipients
-      $('#notification_recipients').val(selectedUserIds).trigger('change');
-    });
-    
-    // Handle send notification button
-    document.getElementById('sendNotificationBtn').addEventListener('click', function() {
-      document.getElementById('notificationForm').submit();
-    });
-    
-    // Copy to clipboard function for credentials
-    window.copyToClipboard = function(elementId) {
-      const copyText = document.getElementById(elementId);
-      copyText.select();
-      copyText.setSelectionRange(0, 99999);
-      document.execCommand("copy");
-      
-      // Show tooltip feedback
-      const tooltip = document.createElement('div');
-      tooltip.className = 'position-absolute bg-dark text-white px-2 py-1 rounded';
-      tooltip.style.right = '45px';
-      tooltip.style.top = '5px';
-      tooltip.style.fontSize = '0.8rem';
-      tooltip.style.opacity = '0.9';
-      tooltip.style.zIndex = '1000';
-      tooltip.textContent = 'Copied!';
-      
-      copyText.parentElement.appendChild(tooltip);
-      
-      setTimeout(() => {
-        tooltip.remove();
-      }, 1000);
-    };
-    
-    // Show credentials modal if credentials exist in session
-    const newUserEmail = "{{ request.session.new_user_email }}";
-    const newUserPassword = "{{ request.session.new_user_password }}";
-    
-    if (newUserEmail && newUserPassword) {
-      const credentialsModal = new bootstrap.Modal(document.getElementById('credentialsModal'));
-      credentialsModal.show();
-      
-      // Clear the session variables after showing
-      fetch('{% url "accounts:clear_user_credentials" %}');
-    }
-    
-    // Bulk action buttons event handlers
-    {% include "accounts/includes/bulk_actions_js.html" %}
-  });
+});
 </script>
->>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
 {% endblock %} 

@@ -135,47 +135,12 @@
                     
                     <!-- User Selection -->
                     <div class="mb-3">
-                        <label for="recipient_select" class="form-label">Select Recipients <span class="text-danger">*</span></label>
-                        <select class="form-select" id="recipient_select" multiple style="width: 100%;">
+                        <label for="users_multiselect" class="form-label">Select Recipients <span class="text-danger">*</span></label>
+                        <select class="form-select" id="users_multiselect" multiple>
                             {% for user in users %}
                                 <option value="{{ user.id }}">{{ user.get_full_name|default:user.email }} ({{ user.email }})</option>
                             {% endfor %}
                         </select>
-<<<<<<< HEAD
-                        <!-- Hidden input to store selected user IDs -->
-                        <input type="hidden" name="selected_users" id="selected_users_input">
-                    </div>
-                    
-                    <!-- Filter Options -->
-                    <div class="filter-section">
-                        <div class="row align-items-center">
-                            <div class="col-md-4">
-                                <label for="department_filter" class="form-label mb-1">Filter by Department</label>
-                                <select class="form-select form-select-sm" id="department_filter">
-                                    <option value="">All Departments</option>
-                                    {% for dept in departments %}
-                                        {% if dept %}
-                                            <option value="{{ dept }}">{{ dept }}</option>
-                                        {% endif %}
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="role_filter" class="form-label mb-1">Filter by Role</label>
-                                <select class="form-select form-select-sm" id="role_filter">
-                                    <option value="">All Roles</option>
-                                    {% for role in roles %}
-                                        <option value="{{ role }}">{{ role }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-4 d-flex align-items-end">
-                                <div class="d-grid w-100">
-                                    <button type="button" class="btn btn-sm btn-outline-primary" id="selectFilteredBtn">
-                                        <i class="fas fa-check-square me-1"></i> Select Filtered Users
-                                    </button>
-                                </div>
-=======
                         
                         <!-- Table showing users in selected department -->
                         <div class="department-users-container mt-4">
@@ -289,7 +254,6 @@
                                         {% endfor %}
                                     </tbody>
                                 </table>
->>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
                             </div>
                         </div>
                     </div>
@@ -372,122 +336,6 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-<<<<<<< HEAD
-    $(document).ready(function() {
-        // Initialize Select2 for user selection
-        $('#recipient_select').select2({
-            theme: 'bootstrap-5',
-            placeholder: 'Select users to notify...',
-            allowClear: true
-        });
-        
-        // Live preview of notification
-        $('#title').on('input', function() {
-            $('#preview_title').text($(this).val() || 'Notification Title');
-        });
-        
-        $('#message').on('input', function() {
-            $('#preview_message').text($(this).val() || 'Notification message will appear here...');
-        });
-        
-        $('#notification_type').on('change', function() {
-            const type = $(this).val();
-            $('#notification_preview').removeClass('info warning success danger').addClass(type.toLowerCase());
-        });
-        
-        $('#link').on('input', function() {
-            const link = $(this).val();
-            if (link) {
-                $('#preview_link_container').show();
-                $('#preview_link').attr('href', link);
-            } else {
-                $('#preview_link_container').hide();
-            }
-        });
-        
-        // Update recipient count when selection changes
-        $('#recipient_select').on('change', function() {
-            const selectedUsers = $(this).val();
-            const count = selectedUsers ? selectedUsers.length : 0;
-            
-            // Update the hidden input with comma-separated list of IDs
-            $('#selected_users_input').val(selectedUsers ? selectedUsers.join(',') : '');
-            
-            // Update the UI
-            $('#recipients_count').text(count + ' recipients selected');
-            
-            if (count > 0) {
-                if (count <= 5) {
-                    // Show names for a small number of recipients
-                    const names = [];
-                    $('#recipient_select option:selected').each(function() {
-                        names.push($(this).text());
-                    });
-                    $('#recipients_summary').html('Selected: <br>' + names.join('<br>'));
-                } else {
-                    // Show summary for larger number
-                    $('#recipients_summary').text('Selected ' + count + ' users to receive this notification');
-                }
-            } else {
-                $('#recipients_summary').text('No recipients selected');
-            }
-        });
-        
-        // Filter handling
-        $('#department_filter, #role_filter').on('change', function() {
-            filterUsers();
-        });
-        
-        function filterUsers() {
-            const department = $('#department_filter').val();
-            const role = $('#role_filter').val();
-            
-            // Loop through all options and show/hide based on filters
-            $('#recipient_select option').each(function() {
-                const $option = $(this);
-                const userData = $option.data();
-                
-                let showOption = true;
-                
-                if (department && userData.department !== department) {
-                    showOption = false;
-                }
-                
-                if (role && userData.role !== role) {
-                    showOption = false;
-                }
-                
-                if (showOption) {
-                    $option.prop('disabled', false);
-                } else {
-                    $option.prop('disabled', true);
-                }
-            });
-            
-            // Refresh Select2 to reflect changes
-            $('#recipient_select').select2('destroy').select2({
-                theme: 'bootstrap-5',
-                placeholder: 'Select users to notify...',
-                allowClear: true
-            });
-        }
-        
-        // Select filtered users button
-        $('#selectFilteredBtn').on('click', function() {
-            // Select all non-disabled options
-            $('#recipient_select option:not(:disabled)').prop('selected', true);
-            $('#recipient_select').trigger('change');
-        });
-        
-        // Form submission
-        $('#notificationForm').on('submit', function(e) {
-            const selectedUsers = $('#recipient_select').val();
-            
-            if (!selectedUsers || selectedUsers.length === 0) {
-                e.preventDefault();
-                alert('Please select at least one recipient.');
-                return false;
-=======
     // Create a hidden element to store the data
     document.addEventListener('DOMContentLoaded', function() {
         const scriptElement = document.createElement('script');
@@ -665,14 +513,8 @@
                     <td colspan="4" class="text-center py-3">No users in this department.</td>
                 `;
                 departmentUsersTable.appendChild(row);
->>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
             }
-            
-            return true;
         });
-<<<<<<< HEAD
-    });
-=======
         
         // Handle role selection
         document.getElementById('role').addEventListener('change', function() {
@@ -823,6 +665,5 @@
         // Initialize preview
         updateNotificationPreview();
     }
->>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
 </script>
 {% endblock %} 

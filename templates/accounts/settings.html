@@ -202,69 +202,6 @@
                                         <i class="fas fa-save me-2"></i> Save Changes
                                     </button>
                                 </div>
-<<<<<<< HEAD
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="email_task_assignments" name="email_task_assignments" checked>
-                                    <label class="form-check-label" for="email_task_assignments">Task assignments and changes</label>
-                                </div>
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="email_leave_requests" name="email_leave_requests" checked>
-                                    <label class="form-check-label" for="email_leave_requests">Leave request status updates</label>
-                                </div>
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="email_admin_announcements" name="email_admin_announcements" checked>
-                                    <label class="form-check-label" for="email_admin_announcements">Administrator announcements</label>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">In-App Notifications</label>
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="app_project_updates" name="app_project_updates" checked>
-                                    <label class="form-check-label" for="app_project_updates">Project updates and mentions</label>
-                                </div>
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="app_task_assignments" name="app_task_assignments" checked>
-                                    <label class="form-check-label" for="app_task_assignments">Task assignments and changes</label>
-                                </div>
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="app_leave_requests" name="app_leave_requests" checked>
-                                    <label class="form-check-label" for="app_leave_requests">Leave request status updates</label>
-                                </div>
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="app_admin_announcements" name="app_admin_announcements" checked>
-                                    <label class="form-check-label" for="app_admin_announcements">Administrator announcements</label>
-                                </div>
-                            </div>
-                            
-                            <button type="submit" class="btn btn-primary">Save Notification Settings</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Security Settings -->
-            <div id="security" class="settings-section">
-                <div class="card security-card mb-4">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Security Settings</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <div>
-                                <h6 class="mb-1">Password</h6>
-                                <p class="text-muted mb-0">Change your password regularly for enhanced security</p>
-                            </div>
-                            <a href="{% url 'account_change_password' %}" class="btn btn-outline-primary">
-                                <i class="fas fa-key me-2"></i>Change Password
-                            </a>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <h6>Login Sessions</h6>
-                            <p class="text-muted">You're currently logged in from this device.</p>
-                            <button type="button" class="btn btn-outline-danger">Log Out From All Devices</button>
-=======
                             </form>
                         </div>
                     </div>
@@ -281,7 +218,6 @@
                         <div class="card-header d-flex align-items-center">
                             <i class="fas fa-sliders-h me-2 text-primary"></i>
                             Appearance
->>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
                         </div>
                         <div class="card-body">
                             <form method="post" action="{% url 'accounts:preferences' %}">

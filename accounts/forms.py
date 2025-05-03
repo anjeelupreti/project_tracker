@@ -152,7 +152,7 @@ class UserEditForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['email', 'username', 'first_name', 'last_name', 'is_active', 
-                 'department', 'role', 'phone_number', 'designation']
+                 'department', 'role', 'phone_number', 'designation', 'is_approved']
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -179,6 +179,10 @@ class UserEditForm(forms.ModelForm):
                 Column('designation', css_class='form-group col-md-6'),
                 css_class='form-row'
             ),
-            'is_active',
+            Row(
+                Column('is_active', css_class='form-group col-md-6'),
+                Column('is_approved', css_class='form-group col-md-6'),
+                css_class='form-row'
+            ),
             Submit('submit', 'Save Changes', css_class='btn-primary')
         ) 

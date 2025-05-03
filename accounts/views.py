@@ -446,13 +446,6 @@ def cancel_designation_request(request, pk):
     messages.success(request, "Your designation request has been canceled.")
     return redirect('accounts:profile')
 
-<<<<<<< HEAD
-@method_decorator(login_required, name='dispatch')
-class UserListView(UserPassesTestMixin, ListView):
-    model = User
-    template_name = 'accounts/user_list.html'
-    context_object_name = 'users'
-=======
 class UserListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     """
     View for listing and managing users
@@ -461,164 +454,9 @@ class UserListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     template_name = 'accounts/user_list.html'
     context_object_name = 'users'
     paginate_by = 10
->>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
     
     def test_func(self):
         return self.request.user.is_admin or self.request.user.is_superuser
-    
-<<<<<<< HEAD
-    def get_queryset(self):
-        return User.objects.all().order_by('-is_active', 'first_name', 'last_name')
-
-class UserCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
-    def test_func(self):
-        return self.request.user.is_admin or self.request.user.is_superuser
-    
-    def post(self, request, *args, **kwargs):
-        try:
-            # Generate a random temporary password
-            temp_password = get_random_string(12)
-            
-            # Create the user
-            user = User.objects.create_user(
-                username=request.POST['email'],
-                email=request.POST['email'],
-                password=temp_password,
-                first_name=request.POST.get('first_name', ''),
-                last_name=request.POST.get('last_name', ''),
-                role=request.POST['role']
-            )
-            
-            # Set department if provided
-            if request.POST.get('department'):
-                department = Department.objects.get(id=request.POST['department'])
-                user.department = department
-                user.save()
-            
-            # Send welcome email
-            self.send_welcome_email(user, temp_password)
-            
-            return JsonResponse({'success': True})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-    
-    def send_welcome_email(self, user, temp_password):
-        current_site = get_current_site(self.request)
-        login_url = self.request.build_absolute_uri(reverse('account_login'))
-        
-        context = {
-            'user': user,
-            'temp_password': temp_password,
-            'login_url': login_url,
-            'site_name': current_site.name
-        }
-        
-        html_message = render_to_string('accounts/email/welcome_email.html', context)
-        plain_message = f"""Welcome to {current_site.name}!
-        
-Your account has been created. Here are your login credentials:
-Email: {user.email}
-Temporary Password: {temp_password}
-
-Please login at {login_url} and change your password.
-"""
-        
-        send_mail(
-            f'Welcome to {current_site.name}',
-            plain_message,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            html_message=html_message
-        )
-
-class UserToggleStatusView(LoginRequiredMixin, UserPassesTestMixin, View):
-    def test_func(self):
-        return self.request.user.is_admin or self.request.user.is_superuser
-    
-    def post(self, request, *args, **kwargs):
-        try:
-            user = get_object_or_404(User, id=kwargs['pk'])
-            user.is_active = not user.is_active
-            user.save()
-            return JsonResponse({'success': True})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-
-class UserEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
-    model = User
-    template_name = 'accounts/user_edit.html'
-    context_object_name = 'edit_user'
-    form_class = UserEditForm
-=======
-    def post(self, request, *args, **kwargs):
-        """Handle bulk actions from the user list page"""
-        action = request.POST.get('action')
-        user_ids = request.POST.getlist('user_ids')
-        
-        if not user_ids:
-            messages.error(request, "No users selected.")
-            return redirect('accounts:user_list')
-        
-        users = User.objects.filter(id__in=user_ids)
-        count = users.count()
-        
-        if action == 'approve':
-            users.update(is_approved=True)
-            messages.success(request, f"{count} users have been approved.")
-            
-            # Log the activity
-            for user in users:
-                ActivityLog.objects.create(
-                    user=request.user,
-                    category=ActivityLog.Category.SYSTEM,
-                    action_type=ActivityLog.ActionType.UPDATE,
-                    description=f"Approved user: {user.email}",
-                    related_user=user
-                )
-        
-        elif action == 'deactivate':
-            # Don't allow deactivating yourself
-            if str(request.user.id) in user_ids:
-                users = users.exclude(id=request.user.id)
-                messages.warning(request, "You cannot deactivate your own account.")
-                count = users.count()
-            
-            users.update(is_active=False)
-            messages.success(request, f"{count} users have been deactivated.")
-            
-            # Log the activity
-            for user in users:
-                ActivityLog.objects.create(
-                    user=request.user,
-                    category=ActivityLog.Category.SYSTEM,
-                    action_type=ActivityLog.ActionType.UPDATE,
-                    description=f"Deactivated user: {user.email}",
-                    related_user=user
-                )
-        
-        elif action == 'delete':
-            # Don't allow deleting yourself
-            if str(request.user.id) in user_ids:
-                user_emails = [user.email for user in users.exclude(id=request.user.id)]
-                users = users.exclude(id=request.user.id)
-                messages.warning(request, "You cannot delete your own account.")
-                count = users.count()
-            else:
-                user_emails = [user.email for user in users]
-            
-            # Log the activity before deletion
-            for user in users:
-                ActivityLog.objects.create(
-                    user=request.user,
-                    category=ActivityLog.Category.SYSTEM,
-                    action_type=ActivityLog.ActionType.DELETE,
-                    description=f"Deleted user: {user.email}"
-                )
-            
-            users.delete()
-            messages.success(request, f"{count} users have been deleted.")
-        
-        return redirect('accounts:user_list')
     
     def get_queryset(self):
         queryset = User.objects.all().select_related('department')
@@ -712,76 +550,10 @@ class UserCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = User
     template_name = 'accounts/user_form.html'
     fields = ['email', 'first_name', 'last_name', 'role', 'department', 'is_active', 'is_approved']
->>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
     
     def test_func(self):
         return self.request.user.is_admin or self.request.user.is_superuser
     
-<<<<<<< HEAD
-    def get_success_url(self):
-        messages.success(self.request, f"User '{self.object.get_full_name()}' has been updated successfully.")
-        return reverse('accounts:user_list')
-
-class UserResendWelcomeView(LoginRequiredMixin, UserPassesTestMixin, View):
-    def test_func(self):
-        return self.request.user.is_admin or self.request.user.is_superuser
-    
-    def post(self, request, *args, **kwargs):
-        try:
-            user = get_object_or_404(User, id=kwargs['pk'])
-            temp_password = get_random_string(12)
-            user.set_password(temp_password)
-            user.save()
-            
-            # Send welcome email
-            current_site = get_current_site(request)
-            login_url = request.build_absolute_uri(reverse('account_login'))
-            
-            context = {
-                'user': user,
-                'temp_password': temp_password,
-                'login_url': login_url,
-                'site_name': current_site.name
-            }
-            
-            html_message = render_to_string('accounts/email/welcome_email.html', context)
-            plain_message = f"""Welcome to {current_site.name}!
-            
-Your account has been created. Here are your login credentials:
-Email: {user.email}
-Temporary Password: {temp_password}
-
-Please login at {login_url} and change your password.
-"""
-            
-            send_mail(
-                f'Welcome to {current_site.name}',
-                plain_message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                html_message=html_message
-            )
-            
-            return JsonResponse({'success': True})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-
-class ForcePasswordChangeView(LoginRequiredMixin, UpdateView):
-    template_name = 'accounts/force_password_change.html'
-    form_class = PasswordChangeForm
-    success_url = reverse_lazy('dashboard:index')
-    
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
-    
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        update_session_auth_hash(self.request, self.request.user)
-        messages.success(self.request, 'Your password has been changed successfully.')
-        return response
-=======
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         form.fields['email'].required = True
@@ -897,30 +669,91 @@ class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def get_success_url(self):
         return reverse('accounts:user_list')
 
-class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
-    """
-    View for deleting users
-    """
+class UserEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = User
-    template_name = 'accounts/user_confirm_delete.html'
-    success_url = reverse_lazy('accounts:user_list')
+    template_name = 'accounts/user_edit.html'
+    context_object_name = 'edit_user'
+    form_class = UserEditForm
     
     def test_func(self):
         return self.request.user.is_admin or self.request.user.is_superuser
     
-    def delete(self, request, *args, **kwargs):
-        user = self.get_object()
-        
-        # Log the activity
-        ActivityLog.objects.create(
-            user=self.request.user,
-            category=ActivityLog.Category.SYSTEM,
-            action_type=ActivityLog.ActionType.DELETE,
-            description=f"Deleted user: {user.email}"
-        )
-        
-        messages.success(request, f"User {user.email} has been deleted successfully.")
-        return super().delete(request, *args, **kwargs)
+    def get_success_url(self):
+        messages.success(self.request, f"User '{self.object.get_full_name()}' has been updated successfully.")
+        return reverse('accounts:user_list')
+
+class UserToggleStatusView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_admin or self.request.user.is_superuser
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            user = get_object_or_404(User, id=kwargs['pk'])
+            user.is_active = not user.is_active
+            user.save()
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+class UserResendWelcomeView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_admin or self.request.user.is_superuser
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            user = get_object_or_404(User, id=kwargs['pk'])
+            temp_password = get_random_string(12)
+            user.set_password(temp_password)
+            user.save()
+            
+            # Send welcome email
+            current_site = get_current_site(request)
+            login_url = request.build_absolute_uri(reverse('account_login'))
+            
+            context = {
+                'user': user,
+                'temp_password': temp_password,
+                'login_url': login_url,
+                'site_name': current_site.name
+            }
+            
+            html_message = render_to_string('accounts/email/welcome_email.html', context)
+            plain_message = f"""Welcome to {current_site.name}!
+            
+Your account has been created. Here are your login credentials:
+Email: {user.email}
+Temporary Password: {temp_password}
+
+Please login at {login_url} and change your password.
+"""
+            
+            send_mail(
+                f'Welcome to {current_site.name}',
+                plain_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                html_message=html_message
+            )
+            
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+class ForcePasswordChangeView(LoginRequiredMixin, UpdateView):
+    template_name = 'accounts/force_password_change.html'
+    form_class = PasswordChangeForm
+    success_url = reverse_lazy('dashboard:index')
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        update_session_auth_hash(self.request, self.request.user)
+        messages.success(self.request, 'Your password has been changed successfully.')
+        return response
 
 @login_required
 def clear_user_credentials(request):
@@ -933,4 +766,17 @@ def clear_user_credentials(request):
         del request.session['new_user_password']
     
     return JsonResponse({'status': 'success'})
->>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
+
+class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    """
+    View for deleting users
+    """
+    model = User
+    template_name = 'accounts/user_confirm_delete.html'
+    
+    def test_func(self):
+        return self.request.user.is_admin or self.request.user.is_superuser
+    
+    def get_success_url(self):
+        messages.success(self.request, f"User has been deleted successfully.")
+        return reverse('accounts:user_list')

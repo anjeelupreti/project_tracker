@@ -49,7 +49,6 @@ INSTALLED_APPS = [
     'simple_history',
     'crispy_forms',
     'crispy_bootstrap5',
-    'django_select2',
     
     # Custom apps
     'accounts',

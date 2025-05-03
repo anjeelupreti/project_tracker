@@ -887,7 +887,6 @@ class ChatMessageCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView)
     def get_success_url(self):
         return reverse('projects:project_chat', kwargs={'project_id': self.kwargs['project_id']})
 
-<<<<<<< HEAD
 class TaskDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     """
     View for deleting a task
@@ -1083,7 +1082,7 @@ class TaskUpdateDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
         update = get_object_or_404(TaskUpdate, pk=kwargs.get('pk'))
         update.delete()
         return JsonResponse({'success': True})
-=======
+
 class DepartmentMemberAddView(LoginRequiredMixin, UserPassesTestMixin, View):
     """
     View for adding members to a department
@@ -1164,4 +1163,3 @@ class DepartmentMemberRemoveView(LoginRequiredMixin, UserPassesTestMixin, View):
         
         messages.success(request, f"{user_to_remove.get_full_name() or user_to_remove.email} has been removed from the department.")
         return redirect('projects:department_detail', pk=department_id)
->>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b

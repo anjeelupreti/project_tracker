@@ -283,13 +283,9 @@
             <div class="mb-3">
               <h5 class="card-title mb-2">Priority</h5>
               <p class="card-text">
-<<<<<<< HEAD
-                <span class="priority-indicator priority-{{ task.priority }}"></span>
-=======
                 <span class="priority-indicator" 
-                      data-priority="{{ task.priority }}">
+                     data-priority="{{ task.priority }}">
                 </span>
->>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
                 {{ task.get_priority_display }}
               </p>
             </div>
@@ -654,20 +650,6 @@
 {% block extra_js %}
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-<<<<<<< HEAD
-    // Handle task status form submissions via AJAX
-    document.querySelectorAll('.task-status-form').forEach(form => {
-      form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        fetch(this.action, {
-          method: 'POST',
-          headers: {
-            'X-CSRFToken': this.querySelector('[name=csrfmiddlewaretoken]').value,
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          body: new URLSearchParams(new FormData(this))
-=======
     // Get CSRF token from cookie
     function getCookie(name) {
       let cookieValue = null;
@@ -685,7 +667,7 @@
     }
     
     // Handle task status update forms
-    const statusForms = document.querySelectorAll('form[action*="task_status_update"]');
+    const statusForms = document.querySelectorAll('.task-status-form');
     
     statusForms.forEach(form => {
       form.addEventListener('submit', function(e) {
@@ -701,31 +683,24 @@
             'X-Requested-With': 'XMLHttpRequest',
             'X-CSRFToken': csrftoken
           }
->>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
         })
-        .then(response => response.json())
+        .then(response => {
+          if (response.ok) {
+            return response.json();
+          }
+          throw new Error('Network response was not ok');
+        })
         .then(data => {
           if (data.success) {
-<<<<<<< HEAD
-            // Reload the page to show updated status
-            window.location.reload();
-          } else {
-            alert('Failed to update task status: ' + (data.error || 'Unknown error'));
-=======
             // Reload the page to show the updated status
             window.location.reload();
           } else {
             alert('Error updating task status: ' + (data.error || 'Unknown error'));
->>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
           }
         })
         .catch(error => {
           console.error('Error:', error);
-<<<<<<< HEAD
-          alert('An error occurred while updating the task status.');
-=======
           alert('An error occurred while updating the task status. Please try again.');
->>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
         });
       });
     });

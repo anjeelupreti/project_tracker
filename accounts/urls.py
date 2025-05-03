@@ -35,15 +35,11 @@ urlpatterns = [
     path('notifications/<int:notification_id>/mark-as-read/', views.mark_notification_as_read, name='mark_notification_as_read'),
     path('notifications/mark-all-as-read/', views.mark_all_notifications_as_read, name='mark_all_notifications_as_read'),
     
-<<<<<<< HEAD
     # User Management URLs
-    path('users/', views.UserListView.as_view(), name='user_list'),
-    path('users/add/', views.UserCreateView.as_view(), name='user_create'),
     path('users/<int:pk>/toggle-status/', views.UserToggleStatusView.as_view(), name='user_toggle_status'),
     path('users/<int:pk>/resend-welcome/', views.UserResendWelcomeView.as_view(), name='user_resend_welcome'),
     path('users/<int:pk>/edit/', views.UserEditView.as_view(), name='user_edit'),
-=======
+    
     # User credentials
     path('clear-user-credentials/', views.clear_user_credentials, name='clear_user_credentials'),
->>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
 ] 

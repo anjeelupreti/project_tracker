@@ -8,121 +8,6 @@
 
 {% block extra_css %}
 <style>
-<<<<<<< HEAD
-    .auth-wrapper {
-        min-height: calc(100vh - 100px);
-        display: flex;
-        align-items: center;
-    }
-    
-    .auth-card {
-        border: none;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    }
-    
-    .auth-card .card-header {
-        background: linear-gradient(45deg, var(--bs-primary), var(--bs-primary-text));
-        border-radius: 15px 15px 0 0;
-        padding: 2rem;
-    }
-    
-    .auth-card .card-header h3 {
-        font-weight: 600;
-        margin: 0;
-    }
-    
-    .auth-card .card-body {
-        padding: 2rem;
-    }
-    
-    .auth-brand {
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-    
-    .auth-brand i {
-        font-size: 3rem;
-        color: var(--bs-primary);
-        margin-bottom: 1rem;
-    }
-    
-    .auth-brand h4 {
-        color: var(--bs-gray-800);
-        font-weight: 600;
-    }
-    
-    .form-control {
-        border-radius: 8px;
-        padding: 0.75rem 1rem;
-    }
-    
-    .btn-signup {
-        padding: 0.75rem;
-        font-weight: 500;
-        border-radius: 8px;
-        background: linear-gradient(45deg, var(--bs-primary), var(--bs-primary-text));
-        border: none;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-signup:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(var(--bs-primary-rgb), 0.4);
-    }
-    
-    .auth-footer {
-        text-align: center;
-        margin-top: 2rem;
-    }
-    
-    .auth-footer p {
-        margin-bottom: 0.5rem;
-    }
-    
-    .auth-footer a {
-        color: var(--bs-primary);
-        text-decoration: none;
-        font-weight: 500;
-    }
-    
-    .auth-footer a:hover {
-        text-decoration: underline;
-    }
-    
-    .auth-divider {
-        text-align: center;
-        margin: 2rem 0;
-        position: relative;
-    }
-    
-    .auth-divider::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 50%;
-        width: 45%;
-        height: 1px;
-        background: var(--bs-gray-300);
-    }
-    
-    .auth-divider::after {
-        content: "";
-        position: absolute;
-        right: 0;
-        top: 50%;
-        width: 45%;
-        height: 1px;
-        background: var(--bs-gray-300);
-    }
-    
-    .auth-divider span {
-        background: var(--bs-body-bg);
-        padding: 0 1rem;
-        color: var(--bs-gray-600);
-        font-size: 0.9rem;
-    }
-=======
   .auth-container {
     min-height: calc(100vh - var(--navbar-height));
     background: linear-gradient(135deg, #4158D0, #C850C0, #FFCC70);
@@ -154,7 +39,7 @@
   }
   
   .auth-header {
-    background: linear-gradient(to right, #43cea2, #185a9d);
+    background: linear-gradient(to right, #4AB1D8, #2DCE89);
     padding: 2.5rem 2rem;
     text-align: center;
     position: relative;
@@ -209,16 +94,16 @@
     font-weight: 600;
     font-size: 1rem;
     border-radius: 0.5rem;
-    background: linear-gradient(to right, #43cea2, #185a9d);
+    background: linear-gradient(to right, #4AB1D8, #2DCE89);
     border: none;
     color: white;
     transition: all 0.3s ease;
   }
   
   .auth-btn:hover {
-    background: linear-gradient(to right, #3ab890, #17538d);
+    background: linear-gradient(to right, #3D99BD, #25B678);
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(67, 206, 162, 0.3);
+    box-shadow: 0 5px 15px rgba(74, 177, 216, 0.3);
   }
   
   .auth-footer {
@@ -238,42 +123,14 @@
   
   .form-control:focus, .form-select:focus {
     background-color: #fff;
-    border-color: #43cea2;
-    box-shadow: 0 0 0 0.25rem rgba(67, 206, 162, 0.25);
+    border-color: #4AB1D8;
+    box-shadow: 0 0 0 0.25rem rgba(74, 177, 216, 0.25);
   }
   
   .help-text {
     color: #6c757d;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     margin-top: 0.5rem;
-  }
-  
-  .social-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    margin: 0 0.5rem;
-    color: white;
-    transition: all 0.3s ease;
-  }
-  
-  .social-btn:hover {
-    transform: translateY(-3px);
-  }
-  
-  .social-btn.google {
-    background-color: #DB4437;
-  }
-  
-  .social-btn.facebook {
-    background-color: #4267B2;
-  }
-  
-  .social-btn.twitter {
-    background-color: #1DA1F2;
   }
   
   .separator {
@@ -312,7 +169,7 @@
     height: 2px;
     bottom: -2px;
     left: 0;
-    background: linear-gradient(to right, #43cea2, #185a9d);
+    background: linear-gradient(to right, #4AB1D8, #2DCE89);
     transition: width 0.3s ease;
   }
   
@@ -320,149 +177,81 @@
     width: 100%;
   }
   
-  /* Animation for form elements */
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  .social-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin: 0 0.5rem;
+    color: white;
+    transition: all 0.3s ease;
   }
   
-  .form-group {
-    animation: fadeInUp 0.5s ease forwards;
-    opacity: 0;
+  .social-btn:hover {
+    transform: translateY(-3px);
   }
   
-  .form-group:nth-child(1) { animation-delay: 0.1s; }
-  .form-group:nth-child(2) { animation-delay: 0.2s; }
-  .form-group:nth-child(3) { animation-delay: 0.3s; }
-  .form-group:nth-child(4) { animation-delay: 0.4s; }
-  .form-group:nth-child(5) { animation-delay: 0.5s; }
->>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
+  .social-btn.google {
+    background-color: #DB4437;
+  }
+  
+  .social-btn.facebook {
+    background-color: #4267B2;
+  }
+  
+  .social-btn.twitter {
+    background-color: #1DA1F2;
+  }
+  
+  .info-box {
+    background-color: rgba(74, 177, 216, 0.1);
+    border-left: 4px solid #4AB1D8;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<<<<<<< HEAD
-<div class="auth-wrapper">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6">
-                <div class="auth-brand">
-                    <i class="fas fa-tasks"></i>
-                    <h4>Project Tracker</h4>
-                </div>
-                
-                <div class="card auth-card">
-                    <div class="card-header text-white text-center">
-                        <h3>{% trans "Create Your Account" %}</h3>
-                        <p class="mb-0">Join us to start managing your projects effectively</p>
-                    </div>
-                    <div class="card-body">
-                        <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
-                            {% csrf_token %}
-                            {{ form|crispy }}
-                            {% if redirect_field_value %}
-                            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
-                            {% endif %}
-                            
-                            <div class="d-grid gap-2 mt-4">
-                                <button type="submit" class="btn btn-primary btn-signup">
-                                    <i class="fas fa-user-plus me-2"></i>{% trans "Sign Up" %}
-                                </button>
-                            </div>
-                            
-                            <div class="auth-divider">
-                                <span>or</span>
-                            </div>
-                            
-                            <div class="auth-footer">
-                                <p>{% trans "Already have an account?" %}</p>
-                                <a href="{{ login_url }}" class="btn btn-outline-primary">
-                                    <i class="fas fa-sign-in-alt me-2"></i>{% trans "Sign In" %}
-                                </a>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                
-                <div class="text-center mt-4">
-                    <p class="text-muted">
-                        By signing up, you agree to our
-                        <a href="#">Terms of Service</a> and
-                        <a href="#">Privacy Policy</a>
-                    </p>
-                </div>
-            </div>
-=======
 <div class="auth-container d-flex align-items-center justify-content-center">
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8 col-xl-6">
         <div class="auth-card">
           <div class="auth-header">
-            <h3>{% trans "Create an Account" %}</h3>
-            <p>Join our platform to manage your projects efficiently</p>
+            <h3>{% trans "Create Account" %}</h3>
+            <p>Join our community to start tracking your projects</p>
           </div>
           <div class="auth-body">
             <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
               {% csrf_token %}
-              
               {{ form|crispy }}
-              
               {% if redirect_field_value %}
-              <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+                <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
               {% endif %}
               
-              <div class="form-check mb-4 mt-3">
-                <input class="form-check-input" type="checkbox" value="" id="termsCheck" required>
-                <label class="form-check-label" for="termsCheck">
-                  I agree to the <a href="#" class="link-animated text-success">Terms of Service</a> and <a href="#" class="link-animated text-success">Privacy Policy</a>
-                </label>
-              </div>
+              <button class="btn btn-primary w-100 mt-4 auth-btn" type="submit">
+                {% trans "Sign Up" %}
+              </button>
               
-              <div class="d-grid gap-2 mt-4">
-                <button class="btn auth-btn" type="submit">
-                  <i class="fas fa-user-plus me-2"></i>{% trans "Create Account" %}
-                </button>
-              </div>
+              <div class="separator">or sign up with</div>
               
-              <div class="separator">OR</div>
-              
-              <div class="text-center mb-3">
-                <p class="mb-3">Sign up with</p>
-                <div>
-                  <a href="#" class="social-btn google">
-                    <i class="fab fa-google"></i>
-                  </a>
-                  <a href="#" class="social-btn facebook">
-                    <i class="fab fa-facebook-f"></i>
-                  </a>
-                  <a href="#" class="social-btn twitter">
-                    <i class="fab fa-twitter"></i>
-                  </a>
-                </div>
-              </div>
-              
-              <div class="text-center mt-4">
-                <p class="mb-0">
-                  {% blocktrans %}Already have an account? <a href="{{ login_url }}" class="link-animated text-success fw-bold">Sign in</a> instead.{% endblocktrans %}
-                </p>
+              <div class="social-login text-center mb-4">
+                <a href="#" class="social-btn google"><i class="fab fa-google"></i></a>
+                <a href="#" class="social-btn facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" class="social-btn twitter"><i class="fab fa-twitter"></i></a>
               </div>
             </form>
           </div>
           <div class="auth-footer">
-            <div class="d-flex align-items-center justify-content-center">
-              <i class="fas fa-shield-alt me-2 text-success"></i>
-              <span>Your data is secure and protected</span>
-            </div>
+            <p>{% trans "Already have an account?" %} <a href="{{ login_url }}" class="link-animated">{% trans "Sign in" %}</a></p>
           </div>
->>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
         </div>
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %} 

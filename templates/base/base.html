@@ -578,15 +578,9 @@
                                         </a>
                                     </li>
                                     <li class="nav-item">
-<<<<<<< HEAD
-                                        <a class="nav-link" href="{% url 'accounts:user_list' %}">
-                                            <i class="fas fa-users"></i>
-                                            User Management
-=======
                                         <a class="nav-link {% if 'user_list' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'accounts:user_list' %}">
                                             <i class="fas fa-users"></i>
                                             Users
->>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
                                         </a>
                                     </li>
                                     <li class="nav-item">
