@@ -67,6 +67,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'simple_history.middleware.HistoryRequestMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    'accounts.middleware.ForcePasswordChangeMiddleware',
 ]
 
 ROOT_URLCONF = 'projecttracker.urls'
@@ -163,7 +164,7 @@ AUTHENTICATION_BACKENDS = [
 
 SITE_ID = 1
 
-# Updated django-allauth settings
+# allauth settings - using newer syntax
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
@@ -172,6 +173,10 @@ ACCOUNT_LOGOUT_ON_GET = True
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 ACCOUNT_LOGOUT_REDIRECT_URL = '/'
+ACCOUNT_SESSION_REMEMBER = True
+
+# Custom allauth templates
+ACCOUNT_TEMPLATE_EXTENSION = 'html'
 
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGIN_URL = '/accounts/login/'
@@ -199,4 +204,3 @@ AUTH_USER_MODEL = 'accounts.User'
 # Session settings
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30 days
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-ACCOUNT_SESSION_REMEMBER = True  # Always remember user sessions

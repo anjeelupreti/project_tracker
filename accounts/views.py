@@ -8,15 +8,22 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.db.models import Q
 from django.utils.decorators import method_decorator
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.contrib.sites.shortcuts import get_current_site
+from django.utils.crypto import get_random_string
+from django.conf import settings
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
 
 from .models import User, DesignationRequest, LeaveRequest, Notification
 from projects.models import Department, ActivityLog
 from .forms import (
     DesignationRequestForm, LeaveRequestForm, UserProfileForm,
-    UserPreferencesForm
+    UserPreferencesForm, UserEditForm
 )
 
 class ProfileView(LoginRequiredMixin, DetailView):
@@ -345,30 +352,17 @@ class NotificationCreateView(UserPassesTestMixin, TemplateView):
             messages.error(request, 'Title and message are required.')
             return self.get(request, *args, **kwargs)
         
-        target_type = request.POST.get('target_type')
+        # Get selected users from the hidden input
+        selected_users = request.POST.get('selected_users', '')
+        if not selected_users:
+            messages.error(request, 'Please select at least one recipient.')
+            return self.get(request, *args, **kwargs)
         
-        if target_type == 'all':
-            users = User.objects.filter(is_active=True)
-        elif target_type == 'department':
-            department = request.POST.get('department')
-            if not department:
-                messages.error(request, 'Please select a department.')
-                return self.get(request, *args, **kwargs)
-            users = User.objects.filter(is_active=True, department__name=department)
-        elif target_type == 'role':
-            role = request.POST.get('role')
-            if not role:
-                messages.error(request, 'Please select a role.')
-                return self.get(request, *args, **kwargs)
-            users = User.objects.filter(is_active=True, role=role)
-        elif target_type == 'individual':
-            user_ids = request.POST.getlist('users')
-            if not user_ids:
-                messages.error(request, 'Please select at least one user.')
-                return self.get(request, *args, **kwargs)
-            users = User.objects.filter(id__in=user_ids)
-        else:
-            messages.error(request, 'Invalid target type.')
+        user_ids = [int(uid) for uid in selected_users.split(',') if uid]
+        users = User.objects.filter(id__in=user_ids)
+        
+        if not users.exists():
+            messages.error(request, 'No valid recipients selected.')
             return self.get(request, *args, **kwargs)
         
         count = 0
@@ -440,3 +434,162 @@ def cancel_designation_request(request, pk):
     
     messages.success(request, "Your designation request has been canceled.")
     return redirect('accounts:profile')
+
+@method_decorator(login_required, name='dispatch')
+class UserListView(UserPassesTestMixin, ListView):
+    model = User
+    template_name = 'accounts/user_list.html'
+    context_object_name = 'users'
+    
+    def test_func(self):
+        return self.request.user.is_admin or self.request.user.is_superuser
+    
+    def get_queryset(self):
+        return User.objects.all().order_by('-is_active', 'first_name', 'last_name')
+
+class UserCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_admin or self.request.user.is_superuser
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            # Generate a random temporary password
+            temp_password = get_random_string(12)
+            
+            # Create the user
+            user = User.objects.create_user(
+                username=request.POST['email'],
+                email=request.POST['email'],
+                password=temp_password,
+                first_name=request.POST.get('first_name', ''),
+                last_name=request.POST.get('last_name', ''),
+                role=request.POST['role']
+            )
+            
+            # Set department if provided
+            if request.POST.get('department'):
+                department = Department.objects.get(id=request.POST['department'])
+                user.department = department
+                user.save()
+            
+            # Send welcome email
+            self.send_welcome_email(user, temp_password)
+            
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    def send_welcome_email(self, user, temp_password):
+        current_site = get_current_site(self.request)
+        login_url = self.request.build_absolute_uri(reverse('account_login'))
+        
+        context = {
+            'user': user,
+            'temp_password': temp_password,
+            'login_url': login_url,
+            'site_name': current_site.name
+        }
+        
+        html_message = render_to_string('accounts/email/welcome_email.html', context)
+        plain_message = f"""Welcome to {current_site.name}!
+        
+Your account has been created. Here are your login credentials:
+Email: {user.email}
+Temporary Password: {temp_password}
+
+Please login at {login_url} and change your password.
+"""
+        
+        send_mail(
+            f'Welcome to {current_site.name}',
+            plain_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            html_message=html_message
+        )
+
+class UserToggleStatusView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_admin or self.request.user.is_superuser
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            user = get_object_or_404(User, id=kwargs['pk'])
+            user.is_active = not user.is_active
+            user.save()
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+class UserEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = User
+    template_name = 'accounts/user_edit.html'
+    context_object_name = 'edit_user'
+    form_class = UserEditForm
+    
+    def test_func(self):
+        return self.request.user.is_admin or self.request.user.is_superuser
+    
+    def get_success_url(self):
+        messages.success(self.request, f"User '{self.object.get_full_name()}' has been updated successfully.")
+        return reverse('accounts:user_list')
+
+class UserResendWelcomeView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_admin or self.request.user.is_superuser
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            user = get_object_or_404(User, id=kwargs['pk'])
+            temp_password = get_random_string(12)
+            user.set_password(temp_password)
+            user.save()
+            
+            # Send welcome email
+            current_site = get_current_site(request)
+            login_url = request.build_absolute_uri(reverse('account_login'))
+            
+            context = {
+                'user': user,
+                'temp_password': temp_password,
+                'login_url': login_url,
+                'site_name': current_site.name
+            }
+            
+            html_message = render_to_string('accounts/email/welcome_email.html', context)
+            plain_message = f"""Welcome to {current_site.name}!
+            
+Your account has been created. Here are your login credentials:
+Email: {user.email}
+Temporary Password: {temp_password}
+
+Please login at {login_url} and change your password.
+"""
+            
+            send_mail(
+                f'Welcome to {current_site.name}',
+                plain_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                html_message=html_message
+            )
+            
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+class ForcePasswordChangeView(LoginRequiredMixin, UpdateView):
+    template_name = 'accounts/force_password_change.html'
+    form_class = PasswordChangeForm
+    success_url = reverse_lazy('dashboard:index')
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        update_session_auth_hash(self.request, self.request.user)
+        messages.success(self.request, 'Your password has been changed successfully.')
+        return response

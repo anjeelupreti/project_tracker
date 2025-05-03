@@ -9,6 +9,10 @@ from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponseRedirect
+from django.views.decorators.http import require_http_methods
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 from .models import (
     Department, Project, ProjectMembership, Task, 
@@ -447,7 +451,7 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
         messages.success(self.request, f"Task '{form.instance.title}' has been created.")
         return response
 
-class TaskUpdateView(LoginRequiredMixin, UpdateView):
+class TaskUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     """
     View for updating a task
     """
@@ -455,55 +459,29 @@ class TaskUpdateView(LoginRequiredMixin, UpdateView):
     form_class = TaskForm
     template_name = 'projects/task_form.html'
     
+    def test_func(self):
+        task = self.get_object()
+        user = self.request.user
+        return (user.is_admin or user.is_superuser or 
+                task.project.lead == user)
+    
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
     
     def form_valid(self, form):
-        old_status = self.get_object().status
-        old_assignee = self.get_object().assignee
-        
         response = super().form_valid(form)
         
-        # Check if status changed to completed
-        if form.instance.status == Task.Status.COMPLETED and old_status != Task.Status.COMPLETED:
-            form.instance.completed_at = timezone.now()
-            form.instance.save(update_fields=['completed_at'])
-            
-            # Log completion
-            ActivityLog.objects.create(
-                user=self.request.user,
-                category=ActivityLog.Category.TASK,
-                action_type=ActivityLog.ActionType.COMPLETE,
-                description=f"Completed task: {form.instance.title}",
-                project=form.instance.project,
-                task=form.instance
-            )
-        # Check if status changed (but not to completed)
-        elif form.instance.status != old_status:
-            # Log status change
-            ActivityLog.objects.create(
-                user=self.request.user,
-                category=ActivityLog.Category.TASK,
-                action_type=ActivityLog.ActionType.STATUS_CHANGE,
-                description=f"Changed task status from {old_status} to {form.instance.status}: {form.instance.title}",
-                project=form.instance.project,
-                task=form.instance
-            )
-            
-        # Check if assignee changed
-        if form.instance.assignee and form.instance.assignee != old_assignee:
-            # Log assignee change
-            ActivityLog.objects.create(
-                user=self.request.user,
-                category=ActivityLog.Category.TASK,
-                action_type=ActivityLog.ActionType.ASSIGN,
-                description=f"Assigned task to {form.instance.assignee.get_full_name() or form.instance.assignee.email}: {form.instance.title}",
-                project=form.instance.project,
-                task=form.instance,
-                related_user=form.instance.assignee
-            )
+        # Log activity
+        ActivityLog.objects.create(
+            user=self.request.user,
+            category=ActivityLog.Category.TASK,
+            action_type=ActivityLog.ActionType.UPDATE,
+            description=f"Updated task: {form.instance.title}",
+            project=form.instance.project,
+            task=form.instance
+        )
         
         messages.success(self.request, f"Task '{form.instance.title}' has been updated.")
         return response
@@ -572,52 +550,53 @@ class TaskAttachmentCreateView(LoginRequiredMixin, CreateView):
     def get_success_url(self):
         return reverse('projects:task_detail', kwargs={'pk': self.kwargs['task_id']})
 
-class TaskStatusUpdateView(LoginRequiredMixin, View):
+class TaskStatusUpdateView(LoginRequiredMixin, UserPassesTestMixin, View):
     """
-    View for quickly updating task status via AJAX
+    View for updating task status via AJAX
     """
+    def test_func(self):
+        task = get_object_or_404(Task, pk=self.kwargs.get('pk'))
+        user = self.request.user
+        return (user.is_admin or user.is_superuser or 
+                task.project.lead == user or 
+                task.assignee == user)
+    
     def post(self, request, *args, **kwargs):
-        task_id = request.POST.get('task_id')
-        new_status = request.POST.get('status')
-        
-        task = get_object_or_404(Task, id=task_id)
-        old_status = task.status
-        
-        # Check if status is valid
-        if new_status not in [choice[0] for choice in Task.Status.choices]:
-            return JsonResponse({'error': 'Invalid status'}, status=400)
+        try:
+            task = get_object_or_404(Task, pk=kwargs.get('pk'))
+            data = json.loads(request.body)
+            new_status = data.get('status')
             
-        # Update the status
-        task.status = new_status
-        
-        # If completing the task, set completed_at
-        if new_status == Task.Status.COMPLETED and old_status != Task.Status.COMPLETED:
-            task.completed_at = timezone.now()
+            if new_status not in dict(Task.Status.choices):
+                return JsonResponse({'success': False, 'error': 'Invalid status'})
             
-        task.save()
-        
-        # Log the status change
-        if new_status == Task.Status.COMPLETED:
-            action_type = ActivityLog.ActionType.COMPLETE
-            description = f"Completed task: {task.title}"
-        else:
-            action_type = ActivityLog.ActionType.STATUS_CHANGE
-            description = f"Changed task status from {old_status} to {new_status}: {task.title}"
+            old_status = task.status
+            task.status = new_status
             
-        ActivityLog.objects.create(
-            user=request.user,
-            category=ActivityLog.Category.TASK,
-            action_type=action_type,
-            description=description,
-            project=task.project,
-            task=task
-        )
-        
-        return JsonResponse({
-            'success': True,
-            'status': task.get_status_display(),
-            'task_id': task.id
-        })
+            # Set completed_at if task is being marked as completed
+            if new_status == Task.Status.COMPLETED and old_status != Task.Status.COMPLETED:
+                task.completed_at = timezone.now()
+            elif new_status != Task.Status.COMPLETED:
+                task.completed_at = None
+                
+            task.save()
+            
+            # Log activity
+            ActivityLog.objects.create(
+                user=request.user,
+                category=ActivityLog.Category.TASK,
+                action_type=ActivityLog.ActionType.UPDATE,
+                description=f"Changed task status from {old_status} to {new_status}: {task.title}",
+                project=task.project,
+                task=task
+            )
+            
+            return JsonResponse({'success': True})
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid JSON data'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
 
 class TaskAssignView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     """
@@ -882,3 +861,199 @@ class ChatMessageCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView)
     
     def get_success_url(self):
         return reverse('projects:project_chat', kwargs={'project_id': self.kwargs['project_id']})
+
+class TaskDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    """
+    View for deleting a task
+    """
+    model = Task
+    template_name = 'projects/task_confirm_delete.html'
+    
+    def test_func(self):
+        task = self.get_object()
+        user = self.request.user
+        return (user.is_admin or user.is_superuser or 
+                task.project.lead == user)
+    
+    def get_success_url(self):
+        messages.success(self.request, f"Task '{self.object.title}' has been deleted.")
+        return reverse('projects:project_detail', kwargs={'pk': self.object.project.id})
+    
+    def delete(self, request, *args, **kwargs):
+        task = self.get_object()
+        
+        # Log activity before deletion
+        ActivityLog.objects.create(
+            user=request.user,
+            category=ActivityLog.Category.TASK,
+            action_type=ActivityLog.ActionType.DELETE,
+            description=f"Deleted task: {task.title}",
+            project=task.project
+        )
+        
+        return super().delete(request, *args, **kwargs)
+
+class ProjectUpdateEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """
+    View for editing a project update
+    """
+    model = ProjectUpdate
+    form_class = ProjectUpdateForm
+    template_name = 'projects/project_update_form.html'
+    
+    def test_func(self):
+        update = self.get_object()
+        user = self.request.user
+        return (user.is_admin or user.is_superuser or 
+                update.project.lead == user or 
+                update.author == user)
+    
+    def get_success_url(self):
+        return reverse('projects:project_detail', kwargs={'pk': self.object.project.id})
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Project update has been edited.")
+        return response
+
+class ProjectUpdateDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    View for deleting a project update
+    """
+    def test_func(self):
+        update = get_object_or_404(ProjectUpdate, pk=self.kwargs.get('pk'))
+        user = self.request.user
+        return (user.is_admin or user.is_superuser or 
+                update.project.lead == user or 
+                update.author == user)
+    
+    def post(self, request, *args, **kwargs):
+        update = get_object_or_404(ProjectUpdate, pk=kwargs.get('pk'))
+        update.delete()
+        return JsonResponse({'success': True})
+
+class ProjectAttachmentDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    View for deleting a project attachment
+    """
+    def test_func(self):
+        attachment = get_object_or_404(ProjectAttachment, pk=self.kwargs.get('pk'))
+        user = self.request.user
+        return (user.is_admin or user.is_superuser or 
+                attachment.project.lead == user or 
+                attachment.uploaded_by == user)
+    
+    def post(self, request, *args, **kwargs):
+        attachment = get_object_or_404(ProjectAttachment, pk=kwargs.get('pk'))
+        
+        # Delete the actual file
+        if attachment.file:
+            try:
+                attachment.file.delete()
+            except Exception:
+                pass
+        
+        attachment.delete()
+        return JsonResponse({'success': True})
+
+class TaskCommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """
+    View for editing a task comment
+    """
+    model = TaskComment
+    form_class = TaskCommentForm
+    template_name = 'projects/task_comment_form.html'
+    
+    def test_func(self):
+        comment = self.get_object()
+        user = self.request.user
+        return (user.is_admin or user.is_superuser or 
+                comment.task.project.lead == user or 
+                comment.author == user)
+    
+    def get_success_url(self):
+        return reverse('projects:task_detail', kwargs={'pk': self.object.task.id})
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Comment has been updated.")
+        return response
+
+class TaskCommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    View for deleting a task comment
+    """
+    def test_func(self):
+        comment = get_object_or_404(TaskComment, pk=self.kwargs.get('pk'))
+        user = self.request.user
+        return (user.is_admin or user.is_superuser or 
+                comment.task.project.lead == user or 
+                comment.author == user)
+    
+    def post(self, request, *args, **kwargs):
+        comment = get_object_or_404(TaskComment, pk=kwargs.get('pk'))
+        comment.delete()
+        return JsonResponse({'success': True})
+
+class TaskAttachmentDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    View for deleting a task attachment
+    """
+    def test_func(self):
+        attachment = get_object_or_404(TaskAttachment, pk=self.kwargs.get('pk'))
+        user = self.request.user
+        return (user.is_admin or user.is_superuser or 
+                attachment.task.project.lead == user or 
+                attachment.uploaded_by == user)
+    
+    def post(self, request, *args, **kwargs):
+        attachment = get_object_or_404(TaskAttachment, pk=kwargs.get('pk'))
+        
+        # Delete the actual file
+        if attachment.file:
+            try:
+                attachment.file.delete()
+            except Exception:
+                pass
+        
+        attachment.delete()
+        return JsonResponse({'success': True})
+
+class TaskUpdateEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """
+    View for editing a task update
+    """
+    model = TaskUpdate
+    form_class = TaskUpdateForm
+    template_name = 'projects/task_update_form.html'
+    
+    def test_func(self):
+        update = self.get_object()
+        user = self.request.user
+        return (user.is_admin or user.is_superuser or 
+                update.task.project.lead == user or 
+                update.author == user)
+    
+    def get_success_url(self):
+        return reverse('projects:task_detail', kwargs={'pk': self.object.task.id})
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Task update has been edited.")
+        return response
+
+class TaskUpdateDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    View for deleting a task update
+    """
+    def test_func(self):
+        update = get_object_or_404(TaskUpdate, pk=self.kwargs.get('pk'))
+        user = self.request.user
+        return (user.is_admin or user.is_superuser or 
+                update.task.project.lead == user or 
+                update.author == user)
+    
+    def post(self, request, *args, **kwargs):
+        update = get_object_or_404(TaskUpdate, pk=kwargs.get('pk'))
+        update.delete()
+        return JsonResponse({'success': True})

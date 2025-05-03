@@ -1,0 +1,34 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Assign Task{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="mb-0">Assign Task: {{ task.title }}</h4>
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            {{ form|crispy }}
+            
+            <div class="d-flex justify-content-between mt-4">
+              <a href="{% url 'projects:task_detail' task.id %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Task
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-user-plus me-1"></i> Assign Task
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

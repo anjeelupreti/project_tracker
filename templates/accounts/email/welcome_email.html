@@ -1,0 +1,80 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .content {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        .credentials {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Welcome to {{ site_name }}!</h1>
+    </div>
+    
+    <div class="content">
+        <p>Hello {{ user.get_full_name|default:user.email }},</p>
+        
+        <p>Your account has been created on {{ site_name }}. Here are your temporary login credentials:</p>
+        
+        <div class="credentials">
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>Temporary Password:</strong> {{ temp_password }}</p>
+        </div>
+        
+        <p><strong>Important:</strong> For security reasons, you must change your password upon first login.</p>
+        
+        <p style="text-align: center;">
+            <a href="{{ login_url }}" class="button">Login Now</a>
+        </p>
+        
+        <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+    </div>
+    
+    <div class="footer">
+        <p>This is an automated message, please do not reply to this email.</p>
+        <p>&copy; {{ site_name }} - All rights reserved</p>
+    </div>
+</body>
+</html> 

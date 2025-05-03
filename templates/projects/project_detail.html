@@ -1,4 +1,6 @@
 {% extends 'base/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
 
 {% block title %}{{ project.name }}{% endblock %}
 
@@ -30,6 +32,14 @@
     .progress {
         height: 8px;
         border-radius: 4px;
+    }
+    
+    .progress-bar {
+        transition: width 0.3s ease;
+    }
+    
+    .progress-bar-dynamic {
+        /* Width will be set via JavaScript */
     }
     
     .tab-content {
@@ -127,7 +137,7 @@
                 <div class="mb-4">
                     <h5 class="card-title mb-3">Progress</h5>
                     <div class="progress mb-2">
-                        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ project.progress }}%;" 
+                        <div class="progress-bar bg-primary progress-bar-dynamic" role="progressbar" 
                              aria-valuenow="{{ project.progress }}" aria-valuemin="0" aria-valuemax="100">
                             {{ project.progress }}%
                         </div>
@@ -227,58 +237,657 @@
     </div>
 </div>
 
-<!-- Project Content Tabs -->
-<ul class="nav nav-tabs" id="projectTabs" role="tablist">
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-4" id="projectTabs" role="tablist">
     <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="tasks-tab" data-bs-toggle="tab" data-bs-target="#tasks" type="button" role="tab" aria-controls="tasks" aria-selected="true">
-            <i class="fas fa-tasks me-1"></i> Tasks
+        <button class="nav-link active" id="tasks-tab" data-bs-toggle="tab" data-bs-target="#tasks" type="button" role="tab">
+            <i class="fas fa-tasks me-2"></i>Tasks
         </button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link" id="team-tab" data-bs-toggle="tab" data-bs-target="#team" type="button" role="tab" aria-controls="team" aria-selected="false">
-            <i class="fas fa-users me-1"></i> Team
+        <button class="nav-link" id="team-tab" data-bs-toggle="tab" data-bs-target="#team" type="button" role="tab">
+            <i class="fas fa-users me-2"></i>Team
         </button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link" id="updates-tab" data-bs-toggle="tab" data-bs-target="#updates" type="button" role="tab" aria-controls="updates" aria-selected="false">
-            <i class="fas fa-history me-1"></i> Updates
+        <button class="nav-link" id="updates-tab" data-bs-toggle="tab" data-bs-target="#updates" type="button" role="tab">
+            <i class="fas fa-newspaper me-2"></i>Updates
         </button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link" id="attachments-tab" data-bs-toggle="tab" data-bs-target="#attachments" type="button" role="tab" aria-controls="attachments" aria-selected="false">
-            <i class="fas fa-paperclip me-1"></i> Attachments
+        <button class="nav-link" id="attachments-tab" data-bs-toggle="tab" data-bs-target="#attachments" type="button" role="tab">
+            <i class="fas fa-paperclip me-2"></i>Attachments
         </button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link" id="activities-tab" data-bs-toggle="tab" data-bs-target="#activities" type="button" role="tab" aria-controls="activities" aria-selected="false">
-            <i class="fas fa-stream me-1"></i> Activities
+        <button class="nav-link" id="activities-tab" data-bs-toggle="tab" data-bs-target="#activities" type="button" role="tab">
+            <i class="fas fa-history me-2"></i>History
         </button>
     </li>
 </ul>
+
 <div class="tab-content" id="projectTabsContent">
     <!-- Tasks Tab -->
     <div class="tab-pane fade show active" id="tasks" role="tabpanel" aria-labelledby="tasks-tab">
-        <p>Project Tasks (basic version - will be expanded)</p>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="h4 mb-0">Project Tasks</h3>
+            {% if user.is_admin or user.is_superuser or user == project.lead %}
+            <a href="{% url 'projects:project_task_create' project.id %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-2"></i>New Task
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Task Lists -->
+        <div class="row">
+            <!-- To Do Tasks -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">To Do</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for task in todo_tasks %}
+                        <div class="task-card mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <a href="{% url 'projects:task_detail' task.id %}" class="text-decoration-none">
+                                            {{ task.title }}
+                                        </a>
+                                    </h6>
+                                    <p class="card-text small text-muted mb-2">
+                                        <i class="fas fa-user me-1"></i>
+                                        {{ task.assignee.get_full_name|default:task.assignee.email }}
+                                    </p>
+                                    <p class="card-text small text-muted">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        Due: {{ task.due_date|date:"M d, Y" }}
+                                    </p>
+                                    {% if user.is_admin or user.is_superuser or user == project.lead or user == task.assignee %}
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                            Actions
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a class="dropdown-item task-status-action" href="#" 
+                                                   data-task-id="{{ task.id }}" data-status="IN_PROGRESS">
+                                                    <i class="fas fa-play me-2"></i>Start Task
+                                                </a>
+                                            </li>
+                                            {% if user.is_admin or user.is_superuser or user == project.lead %}
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'projects:task_update' task.id %}">
+                                                    <i class="fas fa-edit me-2"></i>Edit
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item text-danger" href="{% url 'projects:task_delete' task.id %}">
+                                                    <i class="fas fa-trash me-2"></i>Delete
+                                                </a>
+                                            </li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">No tasks in this status.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- In Progress Tasks -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">In Progress</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for task in in_progress_tasks %}
+                        <div class="task-card mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <a href="{% url 'projects:task_detail' task.id %}" class="text-decoration-none">
+                                            {{ task.title }}
+                                        </a>
+                                    </h6>
+                                    <p class="card-text small text-muted mb-2">
+                                        <i class="fas fa-user me-1"></i>
+                                        {{ task.assignee.get_full_name|default:task.assignee.email }}
+                                    </p>
+                                    <p class="card-text small text-muted">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        Due: {{ task.due_date|date:"M d, Y" }}
+                                    </p>
+                                    {% if user.is_admin or user.is_superuser or user == project.lead or user == task.assignee %}
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                            Actions
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a class="dropdown-item task-status-action" href="#" 
+                                                   data-task-id="{{ task.id }}" data-status="COMPLETED">
+                                                    <i class="fas fa-check me-2"></i>Complete
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item task-status-action" href="#" 
+                                                   data-task-id="{{ task.id }}" data-status="BLOCKED">
+                                                    <i class="fas fa-ban me-2"></i>Block
+                                                </a>
+                                            </li>
+                                            {% if user.is_admin or user.is_superuser or user == project.lead %}
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'projects:task_update' task.id %}">
+                                                    <i class="fas fa-edit me-2"></i>Edit
+                                                </a>
+                                            </li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">No tasks in this status.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completed Tasks -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">Completed</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for task in completed_tasks %}
+                        <div class="task-card mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <a href="{% url 'projects:task_detail' task.id %}" class="text-decoration-none">
+                                            {{ task.title }}
+                                        </a>
+                                    </h6>
+                                    <p class="card-text small text-muted mb-2">
+                                        <i class="fas fa-user me-1"></i>
+                                        {{ task.assignee.get_full_name|default:task.assignee.email }}
+                                    </p>
+                                    <p class="card-text small text-muted">
+                                        <i class="fas fa-calendar-check me-1"></i>
+                                        Completed: {{ task.completed_at|date:"M d, Y" }}
+                                    </p>
+                                    {% if user.is_admin or user.is_superuser or user == project.lead %}
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                            Actions
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a class="dropdown-item task-status-action" href="#" 
+                                                   data-task-id="{{ task.id }}" data-status="IN_PROGRESS">
+                                                    <i class="fas fa-undo me-2"></i>Reopen
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">No tasks in this status.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     
     <!-- Team Tab -->
     <div class="tab-pane fade" id="team" role="tabpanel" aria-labelledby="team-tab">
-        <p>Team Members (basic version - will be expanded)</p>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="h4 mb-0">Team Members</h3>
+            {% if user.is_admin or user.is_superuser or user == project.lead %}
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMemberModal">
+                <i class="fas fa-user-plus me-2"></i>Add Member
+            </button>
+            {% endif %}
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for member in members %}
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-shrink-0">
+                                <div class="avatar-circle">
+                                    {{ member.get_initials }}
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5 class="card-title mb-1">{{ member.get_full_name|default:member.email }}</h5>
+                                <p class="card-text text-muted mb-0">
+                                    {% if member == project.lead %}
+                                    <span class="badge bg-primary">Project Lead</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Team Member</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        {% if user.is_admin or user.is_superuser or user == project.lead %}
+                        {% if member != project.lead %}
+                        <form action="{% url 'projects:project_member_remove' project.id member.id %}" method="post" class="mt-3">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                                <i class="fas fa-user-minus me-2"></i>Remove
+                            </button>
+                        </form>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>No team members added yet.
+                </div>
+            </div>
+            {% endfor %}
+        </div>
     </div>
     
     <!-- Updates Tab -->
     <div class="tab-pane fade" id="updates" role="tabpanel" aria-labelledby="updates-tab">
-        <p>Project Updates (basic version - will be expanded)</p>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="h4 mb-0">Project Updates</h3>
+            {% if user.is_admin or user.is_superuser or user == project.lead or user in project.members.all %}
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUpdateModal">
+                <i class="fas fa-plus-circle me-2"></i>Add Update
+            </button>
+            {% endif %}
+        </div>
+
+        <div class="updates-list">
+            {% for update in updates %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title mb-0">{{ update.get_update_type_display }}</h5>
+                        <span class="text-muted small">{{ update.created_at|date:"M d, Y H:i" }}</span>
+                    </div>
+                    <p class="card-text">{{ update.content }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            By {{ update.author.get_full_name|default:update.author.email }}
+                        </small>
+                        {% if user == update.author or user.is_admin or user.is_superuser or user == project.lead %}
+                        <div class="btn-group">
+                            <a href="{% url 'projects:project_update_edit' project.id update.id %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-update-btn" 
+                                    data-url="{% url 'projects:project_update_delete' project.id update.id %}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>No updates posted yet.
+            </div>
+            {% endfor %}
+        </div>
     </div>
     
     <!-- Attachments Tab -->
     <div class="tab-pane fade" id="attachments" role="tabpanel" aria-labelledby="attachments-tab">
-        <p>Project Attachments (basic version - will be expanded)</p>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="h4 mb-0">Project Attachments</h3>
+            {% if user.is_admin or user.is_superuser or user == project.lead or user in project.members.all %}
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAttachmentModal">
+                <i class="fas fa-paperclip me-2"></i>Add Attachment
+            </button>
+            {% endif %}
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for attachment in attachments %}
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title text-truncate">{{ attachment.filename }}</h5>
+                        <p class="card-text small text-muted mb-3">
+                            <i class="fas fa-upload me-1"></i>
+                            Uploaded by {{ attachment.uploaded_by.get_full_name|default:attachment.uploaded_by.email }}
+                            <br>
+                            <i class="fas fa-calendar me-1"></i>
+                            {{ attachment.uploaded_at|date:"M d, Y H:i" }}
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ attachment.file.url }}" class="btn btn-sm btn-primary" download>
+                                <i class="fas fa-download me-2"></i>Download
+                            </a>
+                            {% if user == attachment.uploaded_by or user.is_admin or user.is_superuser or user == project.lead %}
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-attachment-btn"
+                                    data-url="{% url 'projects:project_attachment_delete' project.id attachment.id %}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>No attachments uploaded yet.
+                </div>
+            </div>
+            {% endfor %}
+        </div>
     </div>
     
     <!-- Activities Tab -->
     <div class="tab-pane fade" id="activities" role="tabpanel" aria-labelledby="activities-tab">
-        <p>Recent Activities (basic version - will be expanded)</p>
+        <h3 class="h4 mb-4">Activity History</h3>
+        
+        <!-- Recent Activity -->
+        <div class="card dashboard-card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">Recent Activity</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="activity-timeline" style="max-height: 400px; overflow-y: auto;">
+                    {% if activities %}
+                        {% for activity in activities %}
+                            <div class="activity-item d-flex py-3 px-4">
+                                <div class="avatar me-3">
+                                    {% if activity.user.profile_picture %}
+                                        <img src="{{ activity.user.profile_picture.url }}" alt="{{ activity.user.get_full_name }}" class="rounded-circle" width="40" height="40">
+                                    {% else %}
+                                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <span class="text-white fw-bold">{{ activity.user.get_initials }}</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="activity-content flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong>{{ activity.user.get_full_name }}</strong>
+                                        <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                                    </div>
+                                    <p class="mb-0">{{ activity.description }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <div class="text-center p-3">
+                            <a href="#" class="btn btn-sm btn-outline-primary">View All Activity</a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-muted mb-0">No activity recorded yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- Add Member Modal -->
+<div class="modal fade" id="addMemberModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Team Member</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{% url 'projects:project_member_add' project.id %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="user_id" class="form-label">Select User</label>
+                        <select name="user_id" id="user_id" class="form-select" required>
+                            <option value="">Choose...</option>
+                            {% for user in available_users %}
+                            <option value="{{ user.id }}">{{ user.get_full_name|default:user.email }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role</label>
+                        <input type="text" name="role" id="role" class="form-control" placeholder="e.g. Developer, Designer">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Update Modal -->
+<div class="modal fade" id="addUpdateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Project Update</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{% url 'projects:project_update_add' project.id %}" method="post">
+                {% csrf_token %}
+                {{ update_form|crispy }}
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Post Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Attachment Modal -->
+<div class="modal fade" id="addAttachmentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Attachment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{% url 'projects:project_attachment_add' project.id %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ attachment_form|crispy }}
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+// Task status update function
+function updateTaskStatus(taskId, newStatus) {
+    const url = `/projects/tasks/${taskId}/update-status/`;
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            status: newStatus
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Success', 'Task status updated successfully', 'success');
+            location.reload();
+        } else {
+            showToast('Error', data.error || 'Failed to update task status', 'error');
+        }
+    })
+    .catch(error => {
+        showToast('Error', 'An error occurred while updating task status', 'error');
+    });
+}
+
+// Delete update function
+function deleteUpdate(url) {
+    if (confirm('Are you sure you want to delete this update?')) {
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                showToast('Error', data.error || 'Failed to delete update', 'error');
+            }
+        });
+    }
+}
+
+// Delete attachment function
+function deleteAttachment(url) {
+    if (confirm('Are you sure you want to delete this attachment?')) {
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                showToast('Error', data.error || 'Failed to delete attachment', 'error');
+            }
+        });
+    }
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Set progress bar width
+    const progressBar = document.querySelector('.progress-bar-dynamic');
+    if (progressBar) {
+        const progressValue = progressBar.getAttribute('aria-valuenow');
+        progressBar.style.width = `${progressValue}%`;
+    }
+    
+    // Task status actions
+    document.querySelectorAll('.task-status-action').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const taskId = this.dataset.taskId;
+            const newStatus = this.dataset.status;
+            updateTaskStatus(taskId, newStatus);
+        });
+    });
+    
+    // Delete update buttons
+    document.querySelectorAll('.delete-update-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            deleteUpdate(this.dataset.url);
+        });
+    });
+    
+    // Delete attachment buttons
+    document.querySelectorAll('.delete-attachment-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            deleteAttachment(this.dataset.url);
+        });
+    });
+});
+</script>
+{% endblock %}
+
+<!-- Toast container for notifications -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="toast-container"></div>
+</div>
+
+<style>
+/* Timeline styling */
+.timeline {
+    position: relative;
+    padding: 20px 0;
+}
+
+.timeline-item {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #f8f9fa;
+    border: 2px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+}
+
+.timeline-content {
+    flex-grow: 1;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+}
+
+/* Avatar circle */
+.avatar-circle {
+    width: 48px;
+    height: 48px;
+    background-color: #6c757d;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* Task card hover effect */
+.task-card .card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.task-card .card:hover {
+    transform: translateY(-2px);
+}
+</style>
 {% endblock %} 

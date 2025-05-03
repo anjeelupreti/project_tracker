@@ -145,3 +145,40 @@ class LeaveRequestForm(forms.ModelForm):
             self.add_error('end_date', ValidationError(_('End date cannot be before start date')))
             
         return cleaned_data 
+
+class UserEditForm(forms.ModelForm):
+    """Form for editing user accounts"""
+    
+    class Meta:
+        model = User
+        fields = ['email', 'username', 'first_name', 'last_name', 'is_active', 
+                 'department', 'role', 'phone_number', 'designation']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            Row(
+                Column('email', css_class='form-group col-md-6'),
+                Column('username', css_class='form-group col-md-6'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('first_name', css_class='form-group col-md-6'),
+                Column('last_name', css_class='form-group col-md-6'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('department', css_class='form-group col-md-6'),
+                Column('role', css_class='form-group col-md-6'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('phone_number', css_class='form-group col-md-6'),
+                Column('designation', css_class='form-group col-md-6'),
+                css_class='form-row'
+            ),
+            'is_active',
+            Submit('submit', 'Save Changes', css_class='btn-primary')
+        ) 

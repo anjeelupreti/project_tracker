@@ -1,4 +1,4 @@
-{% extends 'base/base.html' %}
+{% extends "base/base.html" %}
 {% load static %}
 {% load i18n %}
 {% load account %}
@@ -6,35 +6,176 @@
 
 {% block title %}{% trans "Sign Up" %}{% endblock %}
 
+{% block extra_css %}
+<style>
+    .auth-wrapper {
+        min-height: calc(100vh - 100px);
+        display: flex;
+        align-items: center;
+    }
+    
+    .auth-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .auth-card .card-header {
+        background: linear-gradient(45deg, var(--bs-primary), var(--bs-primary-text));
+        border-radius: 15px 15px 0 0;
+        padding: 2rem;
+    }
+    
+    .auth-card .card-header h3 {
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .auth-card .card-body {
+        padding: 2rem;
+    }
+    
+    .auth-brand {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .auth-brand i {
+        font-size: 3rem;
+        color: var(--bs-primary);
+        margin-bottom: 1rem;
+    }
+    
+    .auth-brand h4 {
+        color: var(--bs-gray-800);
+        font-weight: 600;
+    }
+    
+    .form-control {
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+    }
+    
+    .btn-signup {
+        padding: 0.75rem;
+        font-weight: 500;
+        border-radius: 8px;
+        background: linear-gradient(45deg, var(--bs-primary), var(--bs-primary-text));
+        border: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-signup:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(var(--bs-primary-rgb), 0.4);
+    }
+    
+    .auth-footer {
+        text-align: center;
+        margin-top: 2rem;
+    }
+    
+    .auth-footer p {
+        margin-bottom: 0.5rem;
+    }
+    
+    .auth-footer a {
+        color: var(--bs-primary);
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .auth-footer a:hover {
+        text-decoration: underline;
+    }
+    
+    .auth-divider {
+        text-align: center;
+        margin: 2rem 0;
+        position: relative;
+    }
+    
+    .auth-divider::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        width: 45%;
+        height: 1px;
+        background: var(--bs-gray-300);
+    }
+    
+    .auth-divider::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: 50%;
+        width: 45%;
+        height: 1px;
+        background: var(--bs-gray-300);
+    }
+    
+    .auth-divider span {
+        background: var(--bs-body-bg);
+        padding: 0 1rem;
+        color: var(--bs-gray-600);
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-  <div class="row justify-content-center">
-    <div class="col-md-8">
-      <div class="card shadow">
-        <div class="card-header bg-primary text-white">
-          <h3 class="mb-0">{% trans "Sign Up" %}</h3>
-        </div>
-        <div class="card-body">
-          <p class="text-muted mb-4">
-            {% blocktrans %}Already have an account? Then please <a href="{{ login_url }}" class="link-primary">sign in</a>.{% endblocktrans %}
-          </p>
-          
-          <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
-            {% csrf_token %}
-            
-            {{ form|crispy }}
-            
-            {% if redirect_field_value %}
-            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
-            {% endif %}
-            
-            <div class="d-grid gap-2 mt-4">
-              <button class="btn btn-primary" type="submit">{% trans "Sign Up" %}</button>
+<div class="auth-wrapper">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="auth-brand">
+                    <i class="fas fa-tasks"></i>
+                    <h4>Project Tracker</h4>
+                </div>
+                
+                <div class="card auth-card">
+                    <div class="card-header text-white text-center">
+                        <h3>{% trans "Create Your Account" %}</h3>
+                        <p class="mb-0">Join us to start managing your projects effectively</p>
+                    </div>
+                    <div class="card-body">
+                        <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
+                            {% csrf_token %}
+                            {{ form|crispy }}
+                            {% if redirect_field_value %}
+                            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+                            {% endif %}
+                            
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-primary btn-signup">
+                                    <i class="fas fa-user-plus me-2"></i>{% trans "Sign Up" %}
+                                </button>
+                            </div>
+                            
+                            <div class="auth-divider">
+                                <span>or</span>
+                            </div>
+                            
+                            <div class="auth-footer">
+                                <p>{% trans "Already have an account?" %}</p>
+                                <a href="{{ login_url }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-sign-in-alt me-2"></i>{% trans "Sign In" %}
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <p class="text-muted">
+                        By signing up, you agree to our
+                        <a href="#">Terms of Service</a> and
+                        <a href="#">Privacy Policy</a>
+                    </p>
+                </div>
             </div>
-          </form>
         </div>
-      </div>
     </div>
-  </div>
 </div>
 {% endblock %} 

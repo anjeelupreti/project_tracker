@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">Delete Task</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-4">Are you sure you want to delete the task "{{ object.title }}"? This action cannot be undone.</p>
+                    
+                    <div class="alert alert-warning">
+                        <h6 class="alert-heading">Warning</h6>
+                        <p class="mb-0">Deleting this task will also remove:</p>
+                        <ul class="mb-0">
+                            <li>All comments on this task</li>
+                            <li>All attachments associated with this task</li>
+                            <li>All task updates and history</li>
+                        </ul>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'projects:task_detail' object.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>Delete Task
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
