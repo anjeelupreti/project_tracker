@@ -8,250 +8,259 @@
 
 {% block extra_css %}
 <style>
-  .auth-container {
-    min-height: calc(100vh - var(--navbar-height));
-    background: linear-gradient(135deg, #4158D0, #C850C0, #FFCC70);
-    background-size: 300% 300%;
-    animation: gradient-animation 15s ease infinite;
-    padding: 2rem 1rem;
-  }
-  
-  @keyframes gradient-animation {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-  
-  .auth-card {
-    border: none;
-    border-radius: 1rem;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
-    background: rgba(255, 255, 255, 0.9);
-    transform: translateY(0);
-    transition: all 0.3s ease;
-  }
-  
-  .auth-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-  }
-  
-  .auth-header {
-    background: linear-gradient(to right, #4AB1D8, #2DCE89);
-    padding: 2.5rem 2rem;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .auth-header::before {
-    content: '';
-    position: absolute;
-    width: 300px;
-    height: 300px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    top: -150px;
-    right: -150px;
-  }
-  
-  .auth-header::after {
-    content: '';
-    position: absolute;
-    width: 200px;
-    height: 200px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    bottom: -100px;
-    left: -100px;
-  }
-  
-  .auth-header h3 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-    color: white;
-    position: relative;
-    z-index: 1;
-  }
-  
-  .auth-header p {
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 1rem;
-    margin-bottom: 0;
-    position: relative;
-    z-index: 1;
-  }
-  
-  .auth-body {
-    padding: 2.5rem;
-  }
-  
-  .auth-btn {
-    padding: 0.8rem 1rem;
-    font-weight: 600;
-    font-size: 1rem;
-    border-radius: 0.5rem;
-    background: linear-gradient(to right, #4AB1D8, #2DCE89);
-    border: none;
-    color: white;
-    transition: all 0.3s ease;
-  }
-  
-  .auth-btn:hover {
-    background: linear-gradient(to right, #3D99BD, #25B678);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(74, 177, 216, 0.3);
-  }
-  
-  .auth-footer {
-    background-color: rgba(0, 0, 0, 0.03);
-    padding: 1.5rem;
-    text-align: center;
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
-  }
-  
-  .form-control, .form-select {
-    padding: 0.75rem 1rem;
-    border-radius: 0.5rem;
-    border: 1px solid #e0e0e0;
-    background-color: #f8f9fa;
-    transition: all 0.3s ease;
-  }
-  
-  .form-control:focus, .form-select:focus {
-    background-color: #fff;
-    border-color: #4AB1D8;
-    box-shadow: 0 0 0 0.25rem rgba(74, 177, 216, 0.25);
-  }
-  
-  .help-text {
-    color: #6c757d;
-    font-size: 0.85rem;
-    margin-top: 0.5rem;
-  }
-  
-  .separator {
-    display: flex;
-    align-items: center;
-    text-align: center;
-    margin: 1.5rem 0;
-    color: #6c757d;
-  }
-  
-  .separator::before,
-  .separator::after {
-    content: '';
-    flex: 1;
-    border-bottom: 1px solid #e0e0e0;
-  }
-  
-  .separator:not(:empty)::before {
-    margin-right: 1rem;
-  }
-  
-  .separator:not(:empty)::after {
-    margin-left: 1rem;
-  }
-  
-  .link-animated {
-    position: relative;
-    font-weight: 600;
-    text-decoration: none;
-  }
-  
-  .link-animated::after {
-    content: '';
-    position: absolute;
-    width: 0;
-    height: 2px;
-    bottom: -2px;
-    left: 0;
-    background: linear-gradient(to right, #4AB1D8, #2DCE89);
-    transition: width 0.3s ease;
-  }
-  
-  .link-animated:hover::after {
-    width: 100%;
-  }
-  
-  .social-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    margin: 0 0.5rem;
-    color: white;
-    transition: all 0.3s ease;
-  }
-  
-  .social-btn:hover {
-    transform: translateY(-3px);
-  }
-  
-  .social-btn.google {
-    background-color: #DB4437;
-  }
-  
-  .social-btn.facebook {
-    background-color: #4267B2;
-  }
-  
-  .social-btn.twitter {
-    background-color: #1DA1F2;
-  }
-  
-  .info-box {
-    background-color: rgba(74, 177, 216, 0.1);
-    border-left: 4px solid #4AB1D8;
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-    margin-bottom: 2rem;
-  }
+    body {
+        background: linear-gradient(135deg, #4158D0, #2370e2, #4158D0);
+        background-size: 400% 400%;
+        animation: gradient-animation 15s ease infinite;
+        min-height: 100vh;
+    }
+    
+    @keyframes gradient-animation {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    .auth-container {
+        min-height: calc(100vh - var(--navbar-height));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+    }
+    
+    .auth-card {
+        border: none;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.95);
+        transform: translateY(0);
+        transition: all 0.3s ease;
+        width: 100%;
+        max-width: 500px;
+    }
+    
+    [data-bs-theme="dark"] .auth-card {
+        background: rgba(33, 37, 41, 0.95);
+    }
+    
+    .auth-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    }
+    
+    .auth-header {
+        background: var(--theme-color);
+        padding: 2rem;
+        text-align: center;
+        color: white;
+    }
+    
+    .auth-header h3 {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .auth-header p {
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+    
+    .auth-body {
+        padding: 2rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-control {
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        border: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+    }
+    
+    [data-bs-theme="dark"] .form-control {
+        background-color: #343a40;
+        border-color: #495057;
+        color: #e9ecef;
+    }
+    
+    .form-control:focus {
+        border-color: var(--theme-color);
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    
+    .btn-primary {
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        border-radius: 0.5rem;
+        background: var(--theme-color);
+        border: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(13, 110, 253, 0.4);
+    }
+    
+    .separator {
+        text-align: center;
+        margin: 1.5rem 0;
+        position: relative;
+        color: #6c757d;
+    }
+    
+    .separator::before, .separator::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: calc(50% - 30px);
+        height: 1px;
+        background-color: #dee2e6;
+    }
+    
+    .separator::before {
+        left: 0;
+    }
+    
+    .separator::after {
+        right: 0;
+    }
+    
+    .social-login {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .social-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        color: white;
+        transition: all 0.3s ease;
+    }
+    
+    .social-btn:hover {
+        transform: translateY(-2px);
+    }
+    
+    .social-btn.google {
+        background-color: #DB4437;
+    }
+    
+    .social-btn.facebook {
+        background-color: #4267B2;
+    }
+    
+    .social-btn.twitter {
+        background-color: #1DA1F2;
+    }
+    
+    .auth-footer {
+        text-align: center;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #dee2e6;
+    }
+    
+    .link-animated {
+        color: var(--theme-color);
+        text-decoration: none;
+        position: relative;
+        font-weight: 500;
+    }
+    
+    .link-animated::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 2px;
+        bottom: -2px;
+        left: 0;
+        background-color: var(--theme-color);
+        transform: scaleX(0);
+        transform-origin: right;
+        transition: transform 0.3s ease;
+    }
+    
+    .link-animated:hover::after {
+        transform: scaleX(1);
+        transform-origin: left;
+    }
+    
+    .info-box {
+        background-color: #e3f2fd;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    [data-bs-theme="dark"] .info-box {
+        background-color: #343a40;
+    }
+    
+    .terms-check {
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="auth-container d-flex align-items-center justify-content-center">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-md-10 col-lg-8 col-xl-6">
-        <div class="auth-card">
-          <div class="auth-header">
-            <h3>{% trans "Create Account" %}</h3>
-            <p>Join our community to start tracking your projects</p>
-          </div>
-          <div class="auth-body">
-            <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
-              {% csrf_token %}
-              {{ form|crispy }}
-              {% if redirect_field_value %}
-                <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
-              {% endif %}
-              
-              <button class="btn btn-primary w-100 mt-4 auth-btn" type="submit">
-                {% trans "Sign Up" %}
-              </button>
-              
-              <div class="separator">or sign up with</div>
-              
-              <div class="social-login text-center mb-4">
-                <a href="#" class="social-btn google"><i class="fab fa-google"></i></a>
-                <a href="#" class="social-btn facebook"><i class="fab fa-facebook-f"></i></a>
-                <a href="#" class="social-btn twitter"><i class="fab fa-twitter"></i></a>
-              </div>
-            </form>
-          </div>
-          <div class="auth-footer">
-            <p>{% trans "Already have an account?" %} <a href="{{ login_url }}" class="link-animated">{% trans "Sign in" %}</a></p>
-          </div>
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h3>{% trans "Create an Account" %}</h3>
+            <p>Join our platform to track your projects</p>
         </div>
-      </div>
+        <div class="auth-body">
+            <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
+                {% csrf_token %}
+                {{ form|crispy }}
+                {% if redirect_field_value %}
+                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+                {% endif %}
+                
+                <div class="terms-check">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="terms-agree" required>
+                        <label class="form-check-label" for="terms-agree">
+                            I agree to the <a href="#" class="link-animated">Terms of Service</a> and <a href="#" class="link-animated">Privacy Policy</a>
+                        </label>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary w-100">{% trans "Sign Up" %}</button>
+                
+                <div class="separator">or sign up with</div>
+                
+                <div class="social-login">
+                    <a href="#" class="social-btn google"><i class="fab fa-google"></i></a>
+                    <a href="#" class="social-btn facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-btn twitter"><i class="fab fa-twitter"></i></a>
+                </div>
+                
+                <div class="auth-footer">
+                    <p>Already have an account? <a href="{% url 'account_login' %}" class="link-animated">{% trans "Sign In" %}</a></p>
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
 </div>
 {% endblock %} 
