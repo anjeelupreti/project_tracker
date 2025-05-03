@@ -1,0 +1,125 @@
+// Bulk approve button
+document.getElementById('bulkApprove').addEventListener('click', function() {
+  if (!confirm('Are you sure you want to approve the selected users?')) return;
+  
+  // Get selected user IDs
+  const selectedUserIds = Array.from(userCheckboxes)
+    .filter(cb => cb.checked)
+    .map(cb => cb.value);
+  
+  // Create a form to submit the request
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '{% url "accounts:user_list" %}';
+  
+  // Add the action type
+  const actionInput = document.createElement('input');
+  actionInput.type = 'hidden';
+  actionInput.name = 'action';
+  actionInput.value = 'approve';
+  form.appendChild(actionInput);
+  
+  // Add CSRF token
+  const csrfInput = document.createElement('input');
+  csrfInput.type = 'hidden';
+  csrfInput.name = 'csrfmiddlewaretoken';
+  csrfInput.value = '{{ csrf_token }}';
+  form.appendChild(csrfInput);
+  
+  // Add selected user IDs
+  selectedUserIds.forEach(userId => {
+    const userInput = document.createElement('input');
+    userInput.type = 'hidden';
+    userInput.name = 'user_ids';
+    userInput.value = userId;
+    form.appendChild(userInput);
+  });
+  
+  // Submit the form
+  document.body.appendChild(form);
+  form.submit();
+});
+
+// Bulk deactivate button
+document.getElementById('bulkDeactivate').addEventListener('click', function() {
+  if (!confirm('Are you sure you want to deactivate the selected users?')) return;
+  
+  // Get selected user IDs
+  const selectedUserIds = Array.from(userCheckboxes)
+    .filter(cb => cb.checked)
+    .map(cb => cb.value);
+  
+  // Create a form to submit the request
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '{% url "accounts:user_list" %}';
+  
+  // Add the action type
+  const actionInput = document.createElement('input');
+  actionInput.type = 'hidden';
+  actionInput.name = 'action';
+  actionInput.value = 'deactivate';
+  form.appendChild(actionInput);
+  
+  // Add CSRF token
+  const csrfInput = document.createElement('input');
+  csrfInput.type = 'hidden';
+  csrfInput.name = 'csrfmiddlewaretoken';
+  csrfInput.value = '{{ csrf_token }}';
+  form.appendChild(csrfInput);
+  
+  // Add selected user IDs
+  selectedUserIds.forEach(userId => {
+    const userInput = document.createElement('input');
+    userInput.type = 'hidden';
+    userInput.name = 'user_ids';
+    userInput.value = userId;
+    form.appendChild(userInput);
+  });
+  
+  // Submit the form
+  document.body.appendChild(form);
+  form.submit();
+});
+
+// Bulk delete button
+document.getElementById('bulkDelete').addEventListener('click', function() {
+  if (!confirm('Are you sure you want to delete the selected users? This action cannot be undone.')) return;
+  
+  // Get selected user IDs
+  const selectedUserIds = Array.from(userCheckboxes)
+    .filter(cb => cb.checked)
+    .map(cb => cb.value);
+  
+  // Create a form to submit the request
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '{% url "accounts:user_list" %}';
+  
+  // Add the action type
+  const actionInput = document.createElement('input');
+  actionInput.type = 'hidden';
+  actionInput.name = 'action';
+  actionInput.value = 'delete';
+  form.appendChild(actionInput);
+  
+  // Add CSRF token
+  const csrfInput = document.createElement('input');
+  csrfInput.type = 'hidden';
+  csrfInput.name = 'csrfmiddlewaretoken';
+  csrfInput.value = '{{ csrf_token }}';
+  form.appendChild(csrfInput);
+  
+  // Add selected user IDs
+  selectedUserIds.forEach(userId => {
+    const userInput = document.createElement('input');
+    userInput.type = 'hidden';
+    userInput.name = 'user_ids';
+    userInput.value = userId;
+    form.appendChild(userInput);
+  });
+  
+  // Submit the form
+  document.body.appendChild(form);
+  form.submit();
+}); 

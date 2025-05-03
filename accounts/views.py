@@ -20,7 +20,7 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
 
 from .models import User, DesignationRequest, LeaveRequest, Notification
-from projects.models import Department, ActivityLog
+from projects.models import Department, ActivityLog, Project
 from .forms import (
     DesignationRequestForm, LeaveRequestForm, UserProfileForm,
     UserPreferencesForm, UserEditForm
@@ -337,9 +337,20 @@ class NotificationCreateView(UserPassesTestMixin, TemplateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['users'] = User.objects.filter(is_active=True).order_by('username')
-        context['departments'] = User.objects.filter(is_active=True).values_list('department__name', flat=True).distinct()
-        context['roles'] = [choice[0] for choice in User.Role.choices]
+        context['users'] = User.objects.filter(is_active=True)
+        context['all_users_count'] = context['users'].count()
+        context['departments'] = Department.objects.all()
+        
+        # Check if a project ID was passed in the URL
+        project_id = self.request.GET.get('project')
+        if project_id:
+            try:
+                project = Project.objects.get(id=project_id)
+                context['project'] = project
+                context['preselected_users'] = [user.id for user in project.members.all()]
+            except (Project.DoesNotExist, ValueError):
+                pass
+        
         return context
     
     def post(self, request, *args, **kwargs):
@@ -435,15 +446,27 @@ def cancel_designation_request(request, pk):
     messages.success(request, "Your designation request has been canceled.")
     return redirect('accounts:profile')
 
+<<<<<<< HEAD
 @method_decorator(login_required, name='dispatch')
 class UserListView(UserPassesTestMixin, ListView):
     model = User
     template_name = 'accounts/user_list.html'
     context_object_name = 'users'
+=======
+class UserListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """
+    View for listing and managing users
+    """
+    model = User
+    template_name = 'accounts/user_list.html'
+    context_object_name = 'users'
+    paginate_by = 10
+>>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
     
     def test_func(self):
         return self.request.user.is_admin or self.request.user.is_superuser
     
+<<<<<<< HEAD
     def get_queryset(self):
         return User.objects.all().order_by('-is_active', 'first_name', 'last_name')
 
@@ -526,10 +549,175 @@ class UserEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     template_name = 'accounts/user_edit.html'
     context_object_name = 'edit_user'
     form_class = UserEditForm
+=======
+    def post(self, request, *args, **kwargs):
+        """Handle bulk actions from the user list page"""
+        action = request.POST.get('action')
+        user_ids = request.POST.getlist('user_ids')
+        
+        if not user_ids:
+            messages.error(request, "No users selected.")
+            return redirect('accounts:user_list')
+        
+        users = User.objects.filter(id__in=user_ids)
+        count = users.count()
+        
+        if action == 'approve':
+            users.update(is_approved=True)
+            messages.success(request, f"{count} users have been approved.")
+            
+            # Log the activity
+            for user in users:
+                ActivityLog.objects.create(
+                    user=request.user,
+                    category=ActivityLog.Category.SYSTEM,
+                    action_type=ActivityLog.ActionType.UPDATE,
+                    description=f"Approved user: {user.email}",
+                    related_user=user
+                )
+        
+        elif action == 'deactivate':
+            # Don't allow deactivating yourself
+            if str(request.user.id) in user_ids:
+                users = users.exclude(id=request.user.id)
+                messages.warning(request, "You cannot deactivate your own account.")
+                count = users.count()
+            
+            users.update(is_active=False)
+            messages.success(request, f"{count} users have been deactivated.")
+            
+            # Log the activity
+            for user in users:
+                ActivityLog.objects.create(
+                    user=request.user,
+                    category=ActivityLog.Category.SYSTEM,
+                    action_type=ActivityLog.ActionType.UPDATE,
+                    description=f"Deactivated user: {user.email}",
+                    related_user=user
+                )
+        
+        elif action == 'delete':
+            # Don't allow deleting yourself
+            if str(request.user.id) in user_ids:
+                user_emails = [user.email for user in users.exclude(id=request.user.id)]
+                users = users.exclude(id=request.user.id)
+                messages.warning(request, "You cannot delete your own account.")
+                count = users.count()
+            else:
+                user_emails = [user.email for user in users]
+            
+            # Log the activity before deletion
+            for user in users:
+                ActivityLog.objects.create(
+                    user=request.user,
+                    category=ActivityLog.Category.SYSTEM,
+                    action_type=ActivityLog.ActionType.DELETE,
+                    description=f"Deleted user: {user.email}"
+                )
+            
+            users.delete()
+            messages.success(request, f"{count} users have been deleted.")
+        
+        return redirect('accounts:user_list')
+    
+    def get_queryset(self):
+        queryset = User.objects.all().select_related('department')
+        
+        # Search filter
+        search_query = self.request.GET.get('search', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(email__icontains=search_query) | 
+                Q(first_name__icontains=search_query) | 
+                Q(last_name__icontains=search_query) |
+                Q(department__name__icontains=search_query)
+            )
+        
+        # Role filter
+        role_filter = self.request.GET.get('role', '')
+        if role_filter:
+            queryset = queryset.filter(role=role_filter)
+        
+        # Department filter
+        dept_filter = self.request.GET.get('department', '')
+        if dept_filter:
+            queryset = queryset.filter(department_id=dept_filter)
+        
+        # Status filter
+        status_filter = self.request.GET.get('status', '')
+        if status_filter == 'active':
+            queryset = queryset.filter(is_active=True, is_approved=True)
+        elif status_filter == 'inactive':
+            queryset = queryset.filter(is_active=False)
+        elif status_filter == 'not_approved':
+            queryset = queryset.filter(is_approved=False)
+        
+        # Date filters
+        joined_after = self.request.GET.get('joined_after', '')
+        if joined_after:
+            queryset = queryset.filter(date_joined__gte=joined_after)
+            
+        joined_before = self.request.GET.get('joined_before', '')
+        if joined_before:
+            queryset = queryset.filter(date_joined__lte=joined_before)
+        
+        # Sorting
+        sort_by = self.request.GET.get('sort_by', 'date_joined')
+        order = self.request.GET.get('order', 'desc')
+        
+        if sort_by == 'name':
+            sort_field = 'first_name'
+        elif sort_by == 'role':
+            sort_field = 'role'
+        elif sort_by == 'department':
+            sort_field = 'department__name'
+        elif sort_by == 'status':
+            sort_field = 'is_active'
+        else:
+            sort_field = 'date_joined'
+            
+        if order == 'asc':
+            sort_field = sort_field
+        else:
+            sort_field = f'-{sort_field}'
+            
+        return queryset.order_by(sort_field)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Add user statistics
+        context['total_users'] = User.objects.count()
+        context['active_users'] = User.objects.filter(is_active=True, is_approved=True).count()
+        context['pending_users'] = User.objects.filter(is_approved=False).count()
+        context['admin_users'] = User.objects.filter(
+            Q(role=User.Role.ADMIN) | Q(is_superuser=True)
+        ).count()
+        
+        # Add departments for filtering
+        context['departments'] = Department.objects.all()
+        
+        # Add roles for filtering
+        context['roles'] = User.Role.choices
+        
+        # For the notification modal
+        context['all_users'] = User.objects.all()
+        
+        return context
+
+class UserCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    """
+    View for creating new users
+    """
+    model = User
+    template_name = 'accounts/user_form.html'
+    fields = ['email', 'first_name', 'last_name', 'role', 'department', 'is_active', 'is_approved']
+>>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
     
     def test_func(self):
         return self.request.user.is_admin or self.request.user.is_superuser
     
+<<<<<<< HEAD
     def get_success_url(self):
         messages.success(self.request, f"User '{self.object.get_full_name()}' has been updated successfully.")
         return reverse('accounts:user_list')
@@ -593,3 +781,156 @@ class ForcePasswordChangeView(LoginRequiredMixin, UpdateView):
         update_session_auth_hash(self.request, self.request.user)
         messages.success(self.request, 'Your password has been changed successfully.')
         return response
+=======
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.fields['email'].required = True
+        return form
+    
+    def form_valid(self, form):
+        # Generate a random password for the new user
+        import random
+        import string
+        import uuid
+        password = ''.join(random.choices(string.ascii_letters + string.digits + '!@#$%^&*()', k=12))
+        
+        user = form.save(commit=False)
+        
+        # Generate a unique username based on email or UUID
+        email_username = user.email.split('@')[0]
+        base_username = ''.join(c for c in email_username if c.isalnum() or c == '.' or c == '_').lower()
+        username = base_username
+        
+        # Check if username exists and generate a unique one
+        suffix = 1
+        while User.objects.filter(username=username).exists():
+            if suffix > 5:  # After 5 attempts, use UUID
+                username = f"user_{uuid.uuid4().hex[:8]}"
+                break
+            username = f"{base_username}{suffix}"
+            suffix += 1
+            
+        user.username = username
+        user.set_password(password)
+        user.save()
+        
+        # Log the activity
+        ActivityLog.objects.create(
+            user=self.request.user,
+            category=ActivityLog.Category.SYSTEM,
+            action_type=ActivityLog.ActionType.CREATE,
+            description=f"Created new user: {user.email}",
+            related_user=user
+        )
+        
+        # Create a notification for the user
+        Notification.objects.create(
+            user=user,
+            title="Welcome to Project Tracker",
+            message="Your account has been created. Please login with your temporary password and update it in settings.",
+            notification_type="INFO",
+            link="/accounts/password/change/"
+        )
+        
+        # Store the generated password in the session to display in a modal
+        self.request.session['new_user_email'] = user.email
+        self.request.session['new_user_password'] = password
+        
+        # Try to send a welcome email if email settings are configured
+        try:
+            from django.core.mail import send_mail
+            from django.template.loader import render_to_string
+            from django.utils.html import strip_tags
+            
+            html_message = render_to_string('accounts/email/welcome_email.html', {
+                'user': user,
+                'password': password,
+                'admin': self.request.user,
+            })
+            
+            plain_message = strip_tags(html_message)
+            
+            send_mail(
+                'Welcome to Project Tracker',
+                plain_message,
+                None,  # Uses DEFAULT_FROM_EMAIL from settings
+                [user.email],
+                html_message=html_message,
+                fail_silently=True,
+            )
+        except Exception as e:
+            # Log the error but don't prevent user creation
+            print(f"Error sending welcome email: {str(e)}")
+        
+        messages.success(self.request, f"User {user.email} has been created successfully. The credentials are displayed below.")
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse('accounts:user_list')
+
+class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """
+    View for updating existing users
+    """
+    model = User
+    template_name = 'accounts/user_form.html'
+    fields = ['email', 'first_name', 'last_name', 'role', 'department', 'is_active', 'is_approved']
+    
+    def test_func(self):
+        return self.request.user.is_admin or self.request.user.is_superuser
+    
+    def form_valid(self, form):
+        user = form.save()
+        
+        # Log the activity
+        ActivityLog.objects.create(
+            user=self.request.user,
+            category=ActivityLog.Category.SYSTEM,
+            action_type=ActivityLog.ActionType.UPDATE,
+            description=f"Updated user: {user.email}",
+            related_user=user
+        )
+        
+        messages.success(self.request, f"User {user.email} has been updated successfully.")
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse('accounts:user_list')
+
+class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    """
+    View for deleting users
+    """
+    model = User
+    template_name = 'accounts/user_confirm_delete.html'
+    success_url = reverse_lazy('accounts:user_list')
+    
+    def test_func(self):
+        return self.request.user.is_admin or self.request.user.is_superuser
+    
+    def delete(self, request, *args, **kwargs):
+        user = self.get_object()
+        
+        # Log the activity
+        ActivityLog.objects.create(
+            user=self.request.user,
+            category=ActivityLog.Category.SYSTEM,
+            action_type=ActivityLog.ActionType.DELETE,
+            description=f"Deleted user: {user.email}"
+        )
+        
+        messages.success(request, f"User {user.email} has been deleted successfully.")
+        return super().delete(request, *args, **kwargs)
+
+@login_required
+def clear_user_credentials(request):
+    """
+    View to clear the new user credentials from the session
+    """
+    if 'new_user_email' in request.session:
+        del request.session['new_user_email']
+    if 'new_user_password' in request.session:
+        del request.session['new_user_password']
+    
+    return JsonResponse({'status': 'success'})
+>>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b

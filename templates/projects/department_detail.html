@@ -141,10 +141,15 @@
 <div class="mb-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3 class="h4 mb-0">Team Members</h3>
+    {% if user.is_admin or user.is_superuser or user.is_department_head and department.head == user %}
+      <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addMemberModal">
+        <i class="fas fa-user-plus me-1"></i> Add Member
+      </button>
+    {% endif %}
   </div>
   
   <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-    {% for member in members %}
+    {% for member in department.members.all %}
       <div class="col">
         <div class="card member-card h-100">
           <div class="card-body">
@@ -156,10 +161,32 @@
                   {{ member.get_initials }}
                 {% endif %}
               </div>
-              <div>
+              <div class="flex-grow-1">
                 <h5 class="card-title mb-0">{{ member.get_full_name|default:member.email }}</h5>
                 <p class="card-text text-muted">{{ member.email }}</p>
               </div>
+              {% if user.is_admin or user.is_superuser or user.is_department_head and department.head == user %}
+                {% if member != department.head %}
+                  <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary" type="button" id="memberActions{{ member.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                      <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="memberActions{{ member.id }}">
+                      <li><a class="dropdown-item" href="{% url 'accounts:user_profile' member.id %}">
+                        <i class="fas fa-user me-2"></i> View Profile
+                      </a></li>
+                      <li>
+                        <form action="{% url 'projects:department_member_remove' department.id member.id %}" method="post" class="d-inline">
+                          {% csrf_token %}
+                          <button type="submit" class="dropdown-item text-danger">
+                            <i class="fas fa-user-minus me-2"></i> Remove from Department
+                          </button>
+                        </form>
+                      </li>
+                    </ul>
+                  </div>
+                {% endif %}
+              {% endif %}
             </div>
             
             <div>
@@ -169,6 +196,8 @@
                   Administrator
                 {% elif member.is_team_lead %}
                   Team Lead
+                {% elif member == department.head %}
+                  Department Head
                 {% else %}
                   Team Member
                 {% endif %}
@@ -177,7 +206,7 @@
                 <strong>Joined:</strong> {{ member.date_joined|date:"M d, Y" }}
               </p>
               <p class="card-text">
-                <strong>Projects:</strong> {{ member.projects.count }}
+                <strong>Projects:</strong> {{ member.assigned_projects.count }}
               </p>
             </div>
           </div>
@@ -192,6 +221,64 @@
     {% endfor %}
   </div>
 </div>
+
+<!-- Add Member Modal -->
+{% if user.is_admin or user.is_superuser or user.is_department_head and department.head == user %}
+<div class="modal fade" id="addMemberModal" tabindex="-1" aria-labelledby="addMemberModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addMemberModalLabel">Add Member to {{ department.name }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form action="{% url 'projects:department_member_add' department.id %}" method="post" id="addMemberForm">
+          {% csrf_token %}
+          
+          <div class="mb-3">
+            <label for="userSearch" class="form-label">Search Users</label>
+            <input type="text" class="form-control" id="userSearch" placeholder="Search by name or email">
+          </div>
+          
+          <div class="table-responsive">
+            <table class="table table-hover" id="usersTable">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for user in available_users %}
+                  <tr>
+                    <td>{{ user.get_full_name|default:"-" }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.get_role_display }}</td>
+                    <td>
+                      <button type="submit" name="user_id" value="{{ user.id }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus-circle me-1"></i> Add
+                      </button>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="4" class="text-center py-3">No users available to add.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 <!-- Projects Section -->
 <div>

@@ -5,17 +5,70 @@
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
 <style>
+    /* Dashboard container */
+    .dashboard-container {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 1.5rem;
+    }
+    
+    /* Stats cards */
     .stats-card {
-        border-radius: 0.75rem;
+        border-radius: 1rem;
         border: none;
         transition: all 0.3s ease;
+        overflow: hidden;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.08);
+        height: 100%;
     }
     
     .stats-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        box-shadow: 0 0.75rem 1.5rem rgba(0,0,0,0.15);
     }
     
+    .stats-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .stats-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stats-value {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1.2;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stats-label {
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        opacity: 0.8;
+    }
+    
+    .stats-trend {
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .stats-trend i {
+        margin-right: 0.25rem;
+    }
+    
+    /* Activity timeline */
     .activity-timeline .activity-item {
         position: relative;
         padding-bottom: 1.5rem;
@@ -27,21 +80,23 @@
         position: absolute;
         left: 0;
         top: 0;
-        width: 12px;
-        height: 12px;
+        width: 14px;
+        height: 14px;
         border-radius: 50%;
         background: var(--bs-primary);
-        margin-left: -6px;
+        margin-left: -7px;
+        z-index: 2;
+        box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), 0.2);
     }
     
     .activity-timeline .activity-item:after {
         content: "";
         position: absolute;
         left: 0;
-        top: 12px;
+        top: 14px;
         bottom: 0;
         width: 2px;
-        background: rgba(var(--bs-primary-rgb), 0.25);
+        background: rgba(var(--bs-primary-rgb), 0.2);
         margin-left: -1px;
     }
     
@@ -49,28 +104,66 @@
         display: none;
     }
     
-    .table-hover tbody tr:hover {
-        background-color: rgba(var(--bs-primary-rgb), 0.075);
+    .activity-time {
+        font-size: 0.75rem;
+        color: var(--bs-secondary-color);
     }
     
+    /* Dashboard cards */
+    .dashboard-card {
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,0.05);
+        overflow: hidden;
+        height: 100%;
+    }
+    
+    .dashboard-card .card-header {
+        background-color: var(--bs-white);
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        padding: 1.25rem 1.5rem;
+        font-weight: 600;
+    }
+    
+    .dashboard-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    /* Tables */
+    .table-hover tbody tr:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+    }
+    
+    /* Progress bars */
     .progress {
         height: 8px;
         border-radius: 4px;
+        overflow: hidden;
+        background-color: rgba(var(--bs-primary-rgb), 0.1);
     }
     
+    /* Badges */
     .badge {
         padding: 0.5em 0.75em;
         font-weight: 500;
+        letter-spacing: 0.5px;
     }
     
     .badge-rounded-pill {
         border-radius: 50rem;
     }
     
-    /* Add fixed max-width to container to prevent infinite growth */
-    .dashboard-container {
-        max-width: 1600px;
-        margin: 0 auto;
+    /* Project cards */
+    .project-card {
+        border: none;
+        border-radius: 0.75rem;
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .project-card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+        transform: translateY(-3px);
     }
     
     /* Ensure rows don't overflow */
@@ -83,33 +176,38 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid px-4 dashboard-container">
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">My Dashboard</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <a href="{% url 'projects:task_list' %}?assignee={{ request.user.id }}" class="btn btn-sm btn-outline-primary d-flex align-items-center">
-                <i class="fas fa-tasks me-1"></i> My Tasks
+<div class="container-fluid dashboard-container">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4">
+        <div>
+            <h1 class="h2 mb-0">Welcome, {{ request.user.first_name }}</h1>
+            <p class="text-muted mb-0">{{ today|date:"l, F j, Y" }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'projects:task_list' %}?assignee={{ request.user.id }}" class="btn btn-primary d-flex align-items-center">
+                <i class="fas fa-tasks me-2"></i> My Tasks
+            </a>
+            <a href="{% url 'projects:project_list' %}" class="btn btn-outline-primary d-flex align-items-center">
+                <i class="fas fa-th-large me-2"></i> All Projects
             </a>
         </div>
     </div>
 
     <!-- Overview Cards -->
-    <div class="row g-4 mb-4">
+    <div class="row g-4 mb-5">
         <div class="col-md-3">
-            <div class="card stats-card bg-primary text-white h-100">
+            <div class="stats-card bg-white border-start border-primary border-4">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-0 text-white-50">My Projects</h6>
-                            <h2 class="mt-2 mb-0 display-6">{{ projects_count }}</h2>
-                        </div>
-                        <div class="icon fs-1 opacity-75">
-                            <i class="fas fa-project-diagram"></i>
-                        </div>
+                    <div class="stats-icon bg-primary-subtle text-primary">
+                        <i class="fas fa-project-diagram"></i>
                     </div>
-                    <div class="mt-4">
-                        <a href="{% url 'projects:project_list' %}?member={{ request.user.id }}" class="text-white d-flex align-items-center text-decoration-none">
-                            View all projects <i class="fas fa-arrow-right ms-1"></i>
+                    <div class="stats-label text-primary">My Projects</div>
+                    <div class="stats-value">{{ projects_count }}</div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="stats-trend text-success">
+                            <i class="fas fa-arrow-up"></i> 12% from last month
+                        </div>
+                        <a href="{% url 'projects:project_list' %}?member={{ request.user.id }}" class="btn btn-sm btn-primary rounded-pill">
+                            <i class="fas fa-arrow-right"></i>
                         </a>
                     </div>
                 </div>
@@ -117,20 +215,19 @@
         </div>
         
         <div class="col-md-3">
-            <div class="card stats-card bg-success text-white h-100">
+            <div class="stats-card bg-white border-start border-success border-4">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-0 text-white-50">Tasks Assigned</h6>
-                            <h2 class="mt-2 mb-0 display-6">{{ assigned_tasks_count }}</h2>
-                        </div>
-                        <div class="icon fs-1 opacity-75">
-                            <i class="fas fa-tasks"></i>
-                        </div>
+                    <div class="stats-icon bg-success-subtle text-success">
+                        <i class="fas fa-tasks"></i>
                     </div>
-                    <div class="mt-4">
-                        <a href="{% url 'projects:task_list' %}?assignee={{ request.user.id }}" class="text-white d-flex align-items-center text-decoration-none">
-                            View all tasks <i class="fas fa-arrow-right ms-1"></i>
+                    <div class="stats-label text-success">Tasks Assigned</div>
+                    <div class="stats-value">{{ assigned_tasks_count }}</div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="stats-trend text-danger">
+                            <i class="fas fa-arrow-down"></i> 3% from last week
+                        </div>
+                        <a href="{% url 'projects:task_list' %}?assignee={{ request.user.id }}" class="btn btn-sm btn-success rounded-pill">
+                            <i class="fas fa-arrow-right"></i>
                         </a>
                     </div>
                 </div>
@@ -138,20 +235,19 @@
         </div>
         
         <div class="col-md-3">
-            <div class="card stats-card bg-info text-white h-100">
+            <div class="stats-card bg-white border-start border-info border-4">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-0 text-white-50">Completion Rate</h6>
-                            <h2 class="mt-2 mb-0 display-6">{{ completion_rate|floatformat:0 }}%</h2>
-                        </div>
-                        <div class="icon fs-1 opacity-75">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
+                    <div class="stats-icon bg-info-subtle text-info">
+                        <i class="fas fa-check-circle"></i>
                     </div>
-                    <div class="mt-4">
-                        <a href="#tasks-chart" class="text-white d-flex align-items-center text-decoration-none">
-                            View your progress <i class="fas fa-arrow-right ms-1"></i>
+                    <div class="stats-label text-info">Completion Rate</div>
+                    <div class="stats-value">{{ completion_rate|floatformat:0 }}%</div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="stats-trend text-success">
+                            <i class="fas fa-arrow-up"></i> 8% improvement
+                        </div>
+                        <a href="#tasks-chart" class="btn btn-sm btn-info rounded-pill text-white">
+                            <i class="fas fa-chart-line"></i>
                         </a>
                     </div>
                 </div>
@@ -159,20 +255,19 @@
         </div>
         
         <div class="col-md-3">
-            <div class="card stats-card bg-warning text-white h-100">
+            <div class="stats-card bg-white border-start border-warning border-4">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-0 text-white-50">Upcoming Deadlines</h6>
-                            <h2 class="mt-2 mb-0 display-6">{{ upcoming_deadlines.count }}</h2>
-                        </div>
-                        <div class="icon fs-1 opacity-75">
-                            <i class="fas fa-calendar-alt"></i>
-                        </div>
+                    <div class="stats-icon bg-warning-subtle text-warning">
+                        <i class="fas fa-calendar-alt"></i>
                     </div>
-                    <div class="mt-4">
-                        <a href="#deadlines" class="text-white d-flex align-items-center text-decoration-none">
-                            View deadlines <i class="fas fa-arrow-right ms-1"></i>
+                    <div class="stats-label text-warning">Upcoming Deadlines</div>
+                    <div class="stats-value">{{ upcoming_deadlines.count }}</div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="stats-trend">
+                            Next: <span class="fw-semibold">{{ upcoming_deadlines.first.due_date|date:"M d" }}</span>
+                        </div>
+                        <a href="#deadlines" class="btn btn-sm btn-warning rounded-pill text-white">
+                            <i class="fas fa-arrow-right"></i>
                         </a>
                     </div>
                 </div>

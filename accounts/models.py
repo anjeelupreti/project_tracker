@@ -64,6 +64,11 @@ class User(AbstractUser):
         return self.role == self.Role.ADMIN
     
     @property
+    def is_department_head(self):
+        """Check if user is a department head"""
+        return self.headed_departments.exists()
+    
+    @property
     def is_superuser_role(self):
         return self.role == self.Role.SUPERUSER
     

@@ -16,6 +16,7 @@
         :root {
             --navbar-height: 60px;
             --sidebar-width: 280px;
+            --theme-color: #0d6efd; /* Revert to blue as primary color */
         }
         
         body {
@@ -84,6 +85,12 @@
         @media (max-width: 768px) {
             .sidebar {
                 margin-left: -280px;
+                transition: margin-left 0.3s ease;
+                position: fixed;
+                top: 56px; /* Navbar height */
+                bottom: 0;
+                z-index: 1031;
+                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
             }
             
             .sidebar.active {
@@ -92,6 +99,7 @@
             
             .main-content {
                 margin-left: 0;
+                transition: margin-left 0.3s ease;
             }
         }
         
@@ -129,10 +137,52 @@
         
         .dashboard-card {
             border-radius: 0.5rem;
-            border: none;
+            border: none !important;
             box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
             transition: all 0.3s;
             margin-bottom: 1rem;
+            background-color: inherit;
+            border: 1px solid var(--bs-border-color);
+            overflow: hidden;
+            opacity: 1 !important;
+            display: block !important;
+            visibility: visible !important;
+        }
+        
+        /* Keep color cards visible when using dark theme */
+        .dashboard-card.bg-primary, 
+        .dashboard-card.bg-success, 
+        .dashboard-card.bg-info, 
+        .dashboard-card.bg-warning, 
+        .dashboard-card.bg-danger,
+        .dashboard-card.bg-secondary {
+            color: white !important;
+            opacity: 1 !important;
+        }
+        
+        /* Ensure proper color contrast in dark mode */
+        [data-bs-theme="dark"] .dashboard-card.bg-primary {
+            background-color: #0d6efd !important;
+        }
+        
+        [data-bs-theme="dark"] .dashboard-card.bg-success {
+            background-color: #198754 !important;
+        }
+        
+        [data-bs-theme="dark"] .dashboard-card.bg-info {
+            background-color: #0dcaf0 !important;
+        }
+        
+        [data-bs-theme="dark"] .dashboard-card.bg-warning {
+            background-color: #ffc107 !important;
+        }
+        
+        [data-bs-theme="dark"] .dashboard-card.bg-danger {
+            background-color: #dc3545 !important;
+        }
+        
+        [data-bs-theme="dark"] .dashboard-card.bg-secondary {
+            background-color: #6c757d !important;
         }
         
         .dashboard-card:hover {
@@ -142,12 +192,28 @@
         
         .dashboard-card .card-header {
             border-bottom: none;
-            background-color: transparent;
-            padding: 1.25rem 1.25rem 0;
+            background-color: rgba(13, 110, 253, 0.1);
+            padding: 1.25rem 1.25rem 0.75rem;
+            border-bottom: 1px solid rgba(13, 110, 253, 0.2);
+        }
+        
+        .dashboard-card .card-header i {
+            color: var(--theme-color);
         }
         
         .dashboard-card .card-body {
             padding: 1.25rem;
+        }
+        
+        .dashboard-card .value {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .dashboard-card .label {
+            color: var(--bs-secondary-color);
+            font-size: 0.9rem;
         }
         
         .activity-timeline .activity-item {
@@ -183,18 +249,132 @@
         }
 
         .btn-bd-primary {
-            --bs-btn-bg: var(--bs-primary);
-            --bs-btn-color: var(--bs-white);
-            --bs-btn-border-color: var(--bs-primary);
-            --bs-btn-hover-bg: var(--bs-primary-dark);
-            --bs-btn-hover-color: var(--bs-white);
-            --bs-btn-hover-border-color: var(--bs-primary-dark);
+            --bs-btn-bg: var(--theme-color);
+            --bs-btn-color: #fff;
+            --bs-btn-border-color: var(--theme-color);
+            --bs-btn-hover-bg: var(--theme-color);
+            --bs-btn-hover-color: #fff;
+            --bs-btn-hover-border-color: var(--theme-color);
         }
         
-        /* Fixed max-width container to prevent dashboard infinite growth */
-        .dashboard-container {
-            max-width: 1600px;
-            margin: 0 auto;
+        /* Override Bootstrap colors consistently */
+        .bg-primary, .btn-primary, .badge-primary {
+            background-color: var(--theme-color) !important;
+            border-color: var(--theme-color) !important;
+            color: #fff !important;
+        }
+        
+        .text-primary {
+            color: var(--theme-color) !important;
+        }
+        
+        .border-primary {
+            border-color: var(--theme-color) !important;
+        }
+        
+        .btn-outline-primary {
+            border-color: var(--theme-color) !important;
+            color: var(--theme-color) !important;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--theme-color) !important;
+            color: #fff !important;
+        }
+        
+        /* Cleanup warning/primary confusion - ensure a consistent blue theme */
+        .btn-warning, .bg-warning.card-header, .bg-warning.card, .progress-bar.bg-warning {
+            background-color: var(--theme-color) !important;
+            border-color: var(--theme-color) !important;
+            color: #fff !important;
+        }
+        
+        /* Fix JS theme toggling to keep primary blue */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme-color: #0d6efd;
+            }
+        }
+        
+        @media (prefers-color-scheme: light) {
+            :root {
+                --theme-color: #0d6efd;
+            }
+        }
+        
+        /* Stats icons in dashboard */
+        .stats-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            background-color: rgba(13, 110, 253, 0.15);
+            color: var(--theme-color);
+            margin-bottom: 1rem;
+        }
+        
+        /* Project and task cards */
+        .project-card, .task-card {
+            transition: all 0.3s ease;
+            border: 1px solid var(--bs-border-color);
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .project-card:hover, .task-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Prevent tables from being affected by color overrides */
+        .table-primary {
+            --bs-table-color: #000;
+            --bs-table-bg: rgba(13, 110, 253, 0.1);
+            --bs-table-border-color: rgba(13, 110, 253, 0.2);
+        }
+        
+        /* Ensure dashboard stat cards are always visible */
+        .dashboard-stat-card {
+            background-color: var(--bs-body-bg);
+            border: 1px solid rgba(13, 110, 253, 0.2);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            opacity: 1 !important;
+            visibility: visible !important;
+            display: block !important;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+        }
+        
+        /* Blue colored progress bars */
+        .progress-bar {
+            background-color: var(--theme-color) !important;
+        }
+        
+        /* Mobile sidebar backdrop */
+        .sidebar-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1030;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        
+        .sidebar-backdrop.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Prevent body scroll when sidebar is open */
+        body.sidebar-open {
+            overflow: hidden;
         }
     </style>
     
@@ -398,9 +578,15 @@
                                         </a>
                                     </li>
                                     <li class="nav-item">
+<<<<<<< HEAD
                                         <a class="nav-link" href="{% url 'accounts:user_list' %}">
                                             <i class="fas fa-users"></i>
                                             User Management
+=======
+                                        <a class="nav-link {% if 'user_list' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'accounts:user_list' %}">
+                                            <i class="fas fa-users"></i>
+                                            Users
+>>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
                                         </a>
                                     </li>
                                     <li class="nav-item">
@@ -473,9 +659,8 @@
     
     <!-- Theme Toggling -->
     <script>
-        (() => {
-            'use strict'
-            
+        // Theme toggling
+        document.addEventListener('DOMContentLoaded', () => {
             const getStoredTheme = () => localStorage.getItem('theme')
             const setStoredTheme = theme => localStorage.setItem('theme', theme)
 
@@ -494,15 +679,49 @@
                 } else {
                     document.documentElement.setAttribute('data-bs-theme', theme)
                 }
+                
+                // Apply theme-specific classes to elements
+                document.querySelectorAll('.theme-specific').forEach(element => {
+                    element.classList.remove('theme-light', 'theme-dark');
+                    element.classList.add(`theme-${theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme}`);
+                });
+                
+                // For cards
+                document.querySelectorAll('.card').forEach(card => {
+                    // In dark mode, cards should have a subtle dark background
+                    if (theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                        card.classList.add('bg-dark-subtle', 'border-dark-subtle');
+                        card.classList.remove('bg-light', 'border-light');
+                    } else {
+                        card.classList.add('bg-light', 'border-light');
+                        card.classList.remove('bg-dark-subtle', 'border-dark-subtle');
+                    }
+                });
+                
+                // For tables
+                document.querySelectorAll('table.table').forEach(table => {
+                    if (theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                        table.classList.add('table-dark');
+                    } else {
+                        table.classList.remove('table-dark');
+                    }
+                });
+                
+                // Do NOT convert primary elements to warning anymore - we want a consistent blue theme
             }
 
             setTheme(getPreferredTheme())
 
-            const showActiveTheme = theme => {
-                const activeThemeIcon = document.querySelector('.theme-icon-active use')
-                const btnToActive = document.querySelector(`[data-bs-theme-value="${theme}"]`)
-                const svgUseForActive = btnToActive.querySelector('svg use').getAttribute('href')
+            const showActiveTheme = (theme, focus = false) => {
+                const themeSwitcher = document.querySelector('#bd-theme')
+                if (!themeSwitcher) {
+                    return
+                }
 
+                const themeSwitcherText = document.querySelector('#bd-theme-text')
+                const activeThemeIcon = document.querySelector('.theme-icon-active')
+                const btnToActive = document.querySelector(`[data-bs-theme-value="${theme}"]`)
+                
                 document.querySelectorAll('[data-bs-theme-value]').forEach(element => {
                     element.classList.remove('active')
                     element.setAttribute('aria-pressed', 'false')
@@ -510,11 +729,22 @@
 
                 btnToActive.classList.add('active')
                 btnToActive.setAttribute('aria-pressed', 'true')
-                activeThemeIcon.setAttribute('href', svgUseForActive)
+                
+                const themeSwitcherLabel = `${btnToActive.querySelector('.theme-icon').getAttribute('data-theme-icon-name')} mode`
+                themeSwitcherText.textContent = themeSwitcherLabel
+                
+                if (activeThemeIcon) {
+                    activeThemeIcon.innerHTML = btnToActive.querySelector('.theme-icon').innerHTML
+                }
+                
+                if (focus) {
+                    themeSwitcher.focus()
+                }
             }
 
             window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-                if (getStoredTheme() !== 'light' || getStoredTheme() !== 'dark') {
+                const storedTheme = getStoredTheme()
+                if (storedTheme !== 'light' && storedTheme !== 'dark') {
                     setTheme(getPreferredTheme())
                 }
             })
@@ -522,17 +752,70 @@
             window.addEventListener('DOMContentLoaded', () => {
                 showActiveTheme(getPreferredTheme())
 
-                document.querySelectorAll('[data-bs-theme-value]')
-                    .forEach(toggle => {
-                        toggle.addEventListener('click', () => {
-                            const theme = toggle.getAttribute('data-bs-theme-value')
-                            setStoredTheme(theme)
-                            setTheme(theme)
-                            showActiveTheme(theme)
-                        })
+                document.querySelectorAll('[data-bs-theme-value]').forEach(toggle => {
+                    toggle.addEventListener('click', () => {
+                        const theme = toggle.getAttribute('data-bs-theme-value')
+                        setStoredTheme(theme)
+                        setTheme(theme)
+                        showActiveTheme(theme, true)
                     })
+                })
             })
-        })()
+        });
+
+        // Mobile sidebar toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.querySelector('.sidebar');
+            const backdrop = document.createElement('div');
+            
+            backdrop.className = 'sidebar-backdrop';
+            document.body.appendChild(backdrop);
+            
+            // Function to open sidebar
+            function openSidebar() {
+                sidebar.classList.add('active');
+                backdrop.classList.add('show');
+                document.body.classList.add('sidebar-open');
+            }
+            
+            // Function to close sidebar
+            function closeSidebar() {
+                sidebar.classList.remove('active');
+                backdrop.classList.remove('show');
+                document.body.classList.remove('sidebar-open');
+            }
+            
+            // Toggle sidebar on hamburger click
+            sidebarToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (sidebar.classList.contains('active')) {
+                    closeSidebar();
+                } else {
+                    openSidebar();
+                }
+            });
+            
+            // Close sidebar when clicking on backdrop
+            backdrop.addEventListener('click', closeSidebar);
+            
+            // Close sidebar when clicking on an item in mobile view
+            const sidebarItems = document.querySelectorAll('.sidebar .nav-link');
+            sidebarItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) {
+                        closeSidebar();
+                    }
+                });
+            });
+            
+            // Close sidebar when window is resized to desktop size
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768 && sidebar.classList.contains('active')) {
+                    closeSidebar();
+                }
+            });
+        });
     </script>
     
     <!-- Additional JS -->

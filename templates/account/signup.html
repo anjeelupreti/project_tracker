@@ -8,6 +8,7 @@
 
 {% block extra_css %}
 <style>
+<<<<<<< HEAD
     .auth-wrapper {
         min-height: calc(100vh - 100px);
         display: flex;
@@ -121,10 +122,232 @@
         color: var(--bs-gray-600);
         font-size: 0.9rem;
     }
+=======
+  .auth-container {
+    min-height: calc(100vh - var(--navbar-height));
+    background: linear-gradient(135deg, #4158D0, #C850C0, #FFCC70);
+    background-size: 300% 300%;
+    animation: gradient-animation 15s ease infinite;
+    padding: 2rem 1rem;
+  }
+  
+  @keyframes gradient-animation {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  .auth-card {
+    border: none;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(0);
+    transition: all 0.3s ease;
+  }
+  
+  .auth-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  }
+  
+  .auth-header {
+    background: linear-gradient(to right, #43cea2, #185a9d);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .auth-header::before {
+    content: '';
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    top: -150px;
+    right: -150px;
+  }
+  
+  .auth-header::after {
+    content: '';
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    bottom: -100px;
+    left: -100px;
+  }
+  
+  .auth-header h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: white;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .auth-header p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1rem;
+    margin-bottom: 0;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .auth-body {
+    padding: 2.5rem;
+  }
+  
+  .auth-btn {
+    padding: 0.8rem 1rem;
+    font-weight: 600;
+    font-size: 1rem;
+    border-radius: 0.5rem;
+    background: linear-gradient(to right, #43cea2, #185a9d);
+    border: none;
+    color: white;
+    transition: all 0.3s ease;
+  }
+  
+  .auth-btn:hover {
+    background: linear-gradient(to right, #3ab890, #17538d);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(67, 206, 162, 0.3);
+  }
+  
+  .auth-footer {
+    background-color: rgba(0, 0, 0, 0.03);
+    padding: 1.5rem;
+    text-align: center;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+  }
+  
+  .form-control, .form-select {
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #e0e0e0;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+  }
+  
+  .form-control:focus, .form-select:focus {
+    background-color: #fff;
+    border-color: #43cea2;
+    box-shadow: 0 0 0 0.25rem rgba(67, 206, 162, 0.25);
+  }
+  
+  .help-text {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+  
+  .social-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin: 0 0.5rem;
+    color: white;
+    transition: all 0.3s ease;
+  }
+  
+  .social-btn:hover {
+    transform: translateY(-3px);
+  }
+  
+  .social-btn.google {
+    background-color: #DB4437;
+  }
+  
+  .social-btn.facebook {
+    background-color: #4267B2;
+  }
+  
+  .social-btn.twitter {
+    background-color: #1DA1F2;
+  }
+  
+  .separator {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 1.5rem 0;
+    color: #6c757d;
+  }
+  
+  .separator::before,
+  .separator::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .separator:not(:empty)::before {
+    margin-right: 1rem;
+  }
+  
+  .separator:not(:empty)::after {
+    margin-left: 1rem;
+  }
+  
+  .link-animated {
+    position: relative;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  
+  .link-animated::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -2px;
+    left: 0;
+    background: linear-gradient(to right, #43cea2, #185a9d);
+    transition: width 0.3s ease;
+  }
+  
+  .link-animated:hover::after {
+    width: 100%;
+  }
+  
+  /* Animation for form elements */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .form-group {
+    animation: fadeInUp 0.5s ease forwards;
+    opacity: 0;
+  }
+  
+  .form-group:nth-child(1) { animation-delay: 0.1s; }
+  .form-group:nth-child(2) { animation-delay: 0.2s; }
+  .form-group:nth-child(3) { animation-delay: 0.3s; }
+  .form-group:nth-child(4) { animation-delay: 0.4s; }
+  .form-group:nth-child(5) { animation-delay: 0.5s; }
+>>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
 </style>
 {% endblock %}
 
 {% block content %}
+<<<<<<< HEAD
 <div class="auth-wrapper">
     <div class="container">
         <div class="row justify-content-center">
@@ -175,6 +398,70 @@
                     </p>
                 </div>
             </div>
+=======
+<div class="auth-container d-flex align-items-center justify-content-center">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-10 col-lg-8 col-xl-6">
+        <div class="auth-card">
+          <div class="auth-header">
+            <h3>{% trans "Create an Account" %}</h3>
+            <p>Join our platform to manage your projects efficiently</p>
+          </div>
+          <div class="auth-body">
+            <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
+              {% csrf_token %}
+              
+              {{ form|crispy }}
+              
+              {% if redirect_field_value %}
+              <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+              {% endif %}
+              
+              <div class="form-check mb-4 mt-3">
+                <input class="form-check-input" type="checkbox" value="" id="termsCheck" required>
+                <label class="form-check-label" for="termsCheck">
+                  I agree to the <a href="#" class="link-animated text-success">Terms of Service</a> and <a href="#" class="link-animated text-success">Privacy Policy</a>
+                </label>
+              </div>
+              
+              <div class="d-grid gap-2 mt-4">
+                <button class="btn auth-btn" type="submit">
+                  <i class="fas fa-user-plus me-2"></i>{% trans "Create Account" %}
+                </button>
+              </div>
+              
+              <div class="separator">OR</div>
+              
+              <div class="text-center mb-3">
+                <p class="mb-3">Sign up with</p>
+                <div>
+                  <a href="#" class="social-btn google">
+                    <i class="fab fa-google"></i>
+                  </a>
+                  <a href="#" class="social-btn facebook">
+                    <i class="fab fa-facebook-f"></i>
+                  </a>
+                  <a href="#" class="social-btn twitter">
+                    <i class="fab fa-twitter"></i>
+                  </a>
+                </div>
+              </div>
+              
+              <div class="text-center mt-4">
+                <p class="mb-0">
+                  {% blocktrans %}Already have an account? <a href="{{ login_url }}" class="link-animated text-success fw-bold">Sign in</a> instead.{% endblocktrans %}
+                </p>
+              </div>
+            </form>
+          </div>
+          <div class="auth-footer">
+            <div class="d-flex align-items-center justify-content-center">
+              <i class="fas fa-shield-alt me-2 text-success"></i>
+              <span>Your data is secure and protected</span>
+            </div>
+          </div>
+>>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
         </div>
     </div>
 </div>

@@ -9,6 +9,8 @@ urlpatterns = [
     path('departments/<int:pk>/', views.DepartmentDetailView.as_view(), name='department_detail'),
     path('departments/create/', views.DepartmentCreateView.as_view(), name='department_create'),
     path('departments/<int:pk>/update/', views.DepartmentUpdateView.as_view(), name='department_update'),
+    path('departments/<int:department_id>/members/add/', views.DepartmentMemberAddView.as_view(), name='department_member_add'),
+    path('departments/<int:department_id>/members/<int:user_id>/remove/', views.DepartmentMemberRemoveView.as_view(), name='department_member_remove'),
     
     # Project URLs
     path('', views.ProjectListView.as_view(), name='project_list'),

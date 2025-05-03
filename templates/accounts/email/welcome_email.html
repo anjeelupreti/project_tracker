@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% load i18n %}
 <!DOCTYPE html>
 <html>
@@ -6,6 +7,17 @@
     <style>
         body {
             font-family: Arial, sans-serif;
+=======
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Project Tracker</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+>>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
             line-height: 1.6;
             color: #333;
             max-width: 600px;
@@ -13,6 +25,7 @@
             padding: 20px;
         }
         .header {
+<<<<<<< HEAD
             background-color: #007bff;
             color: white;
             padding: 20px;
@@ -24,10 +37,32 @@
             background: #f8f9fa;
             border-radius: 5px;
             margin-top: 20px;
+=======
+            background-color: #4361ee;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 0 0 5px 5px;
+            border: 1px solid #ddd;
+            border-top: none;
+        }
+        .credentials {
+            background-color: #ffffff;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 20px 0;
+>>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
         }
         .button {
             display: inline-block;
             padding: 10px 20px;
+<<<<<<< HEAD
             background-color: #28a745;
             color: white;
             text-decoration: none;
@@ -45,11 +80,25 @@
             padding: 15px;
             border-radius: 5px;
             margin: 20px 0;
+=======
+            background-color: #4361ee;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+>>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
         }
     </style>
 </head>
 <body>
     <div class="header">
+<<<<<<< HEAD
         <h1>Welcome to {{ site_name }}!</h1>
     </div>
     
@@ -75,6 +124,40 @@
     <div class="footer">
         <p>This is an automated message, please do not reply to this email.</p>
         <p>&copy; {{ site_name }} - All rights reserved</p>
+=======
+        <h1>Welcome to Project Tracker!</h1>
+    </div>
+    <div class="content">
+        <p>Hello {{ user.first_name|default:user.email }},</p>
+        
+        <p>Welcome to Project Tracker! Your account has been created by {{ admin.get_full_name|default:admin.email }}.</p>
+        
+        <p>Here are your login credentials:</p>
+        
+        <div class="credentials">
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>Temporary Password:</strong> {{ password }}</p>
+        </div>
+        
+        <p><strong>Important:</strong> Please log in and change your password immediately for security reasons.</p>
+        
+        <p>With Project Tracker, you can:</p>
+        <ul>
+            <li>Manage and track your assigned projects and tasks</li>
+            <li>Collaborate with team members</li>
+            <li>Monitor progress and performance</li>
+            <li>Stay updated with notifications</li>
+        </ul>
+        
+        <a href="{{ site_url }}" class="button">Log In Now</a>
+        
+        <p>If you have any questions or need assistance, please contact your administrator.</p>
+        
+        <p>Best regards,<br>The Project Tracker Team</p>
+    </div>
+    <div class="footer">
+        <p>This is an automated message. Please do not reply to this email.</p>
+>>>>>>> cc47ea71edbd1f679e22d6b19718f340718a304b
     </div>
 </body>
 </html> 

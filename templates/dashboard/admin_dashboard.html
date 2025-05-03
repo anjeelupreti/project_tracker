@@ -218,13 +218,14 @@
         
         <div class="col-md-6">
             <div class="card dashboard-card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Recent Activities</h5>
+                    <span class="badge bg-primary">{{ recent_activities|length }}</span>
                 </div>
                 <div class="card-body">
-                    <div class="activity-timeline">
-                        {% for activity in recent_activities %}
-                            <div class="activity-item">
+                    <div class="activity-timeline" style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                        {% for activity in recent_activities|slice:":15" %}
+                            <div class="activity-item mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
                                 <div class="d-flex justify-content-between">
                                     <strong>{{ activity.user.get_full_name|default:activity.user.email }}</strong>
                                     <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
@@ -247,6 +248,16 @@
                             <p class="text-muted mb-0">No recent activities to display.</p>
                         {% endfor %}
                     </div>
+                    {% if recent_activities|length > 15 %}
+                    <div class="text-center mt-3">
+                        <div class="text-muted mb-2 small">
+                            Showing 15 of {{ recent_activities|length }} activities
+                        </div>
+                        <a href="{% url 'projects:activity_list' %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-list me-1"></i> View All Activities
+                        </a>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -342,9 +353,9 @@
         const projectStatusChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: {{ project_status_data.labels|safe }},
+                labels: JSON.parse('{{ project_status_data.labels|safe }}'),
                 datasets: [{
-                    data: {{ project_status_data.data|safe }},
+                    data: JSON.parse('{{ project_status_data.data|safe }}'),
                     backgroundColor: [
                         '#6c757d',  // PLANNED
                         '#007bff',  // IN_PROGRESS
@@ -360,7 +371,7 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'bottom',
+                        position: 'bottom'
                     }
                 }
             }

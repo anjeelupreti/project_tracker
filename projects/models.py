@@ -50,13 +50,16 @@ class Project(models.Model):
     description = models.TextField()
     department = models.ForeignKey(
         Department,
-        on_delete=models.CASCADE,
-        related_name='projects'
+        on_delete=models.SET_NULL,
+        related_name='projects',
+        null=True,
+        blank=True
     )
     lead = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
         related_name='led_projects'
     )
     members = models.ManyToManyField(
@@ -420,3 +423,20 @@ class ChatMessage(models.Model):
     
     class Meta:
         ordering = ['-timestamp']
+
+class TaskAssignee(models.Model):
+    """
+    Model to support multiple assignees for a task
+    """
+    task = models.ForeignKey('Task', on_delete=models.CASCADE, related_name='task_assignees')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='task_assignees')
+    assigned_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='task_assignments_created')
+    assigned_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('task', 'user')
+        verbose_name = 'Task Assignee'
+        verbose_name_plural = 'Task Assignees'
+        
+    def __str__(self):
+        return f"{self.task.title} - {self.user.get_full_name() or self.user.email}"
