@@ -46,10 +46,11 @@
     }
     
     .filter-section {
-        background-color: var(--bs-light);
+        background-color: var(--bs-tertiary-bg);
         padding: 1rem;
         border-radius: 0.5rem;
         margin-bottom: 1rem;
+        border: 1px solid var(--bs-border-color);
     }
     
     .table th {
@@ -61,6 +62,76 @@
     
     .selected-row {
         background-color: var(--bs-primary-bg-subtle) !important;
+    }
+    
+    .table-filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        padding: 1rem;
+        background-color: var(--bs-tertiary-bg);
+        border-radius: 0.5rem 0.5rem 0 0;
+        border: 1px solid var(--bs-border-color);
+        border-bottom: none;
+    }
+    
+    .recipients-table-container {
+        border: 1px solid var(--bs-border-color);
+        border-radius: 0 0 0.5rem 0.5rem;
+        overflow: hidden;
+    }
+    
+    .recipients-count {
+        font-size: 0.875rem;
+        color: var(--bs-secondary);
+        padding: 0.5rem 1rem;
+        background-color: var(--bs-tertiary-bg);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid var(--bs-border-color);
+    }
+    
+    .search-container {
+        flex-grow: 1;
+        position: relative;
+    }
+    
+    .search-container i {
+        position: absolute;
+        left: 10px;
+        top: 11px;
+        color: var(--bs-secondary);
+    }
+    
+    .search-input {
+        padding-left: 30px;
+        width: 100%;
+    }
+    
+    .filter-dropdown {
+        min-width: 180px;
+    }
+    
+    .is-loading::after {
+        content: "";
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: var(--bs-primary);
+        border-radius: 50%;
+        animation: loading-spinner 1s ease infinite;
+    }
+    
+    @keyframes loading-spinner {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
     }
 </style>
 {% endblock %}
@@ -76,7 +147,8 @@
         "email": "{{ user.email }}",
         "department": "{{ user.department.id|default:'' }}",
         "departmentName": "{{ user.department.name|default:'Not assigned' }}",
-        "role": "{{ user.get_role_display }}"
+        "role": "{{ user.get_role_display }}",
+        "project": "{{ user.projects.all|join:', ' }}"
     }{% if not forloop.last %},{% endif %}
     {% endfor %}
 ]
@@ -94,8 +166,8 @@
                 
                 <!-- Notification Content Section -->
                 <div class="notification-section">
-                    <div class="section-title">
-                        <i class="fas fa-bell fa-lg"></i>
+                    <div class="section-title d-flex align-items-center mb-3">
+                        <i class="fas fa-bell fa-lg me-2 text-primary"></i>
                         <h5 class="mb-0">Notification Content</h5>
                     </div>
                     
@@ -128,135 +200,91 @@
                 
                 <!-- Recipients Section -->
                 <div class="notification-section">
-                    <div class="section-title mb-3">
-                        <i class="fas fa-users fa-lg"></i>
+                    <div class="section-title d-flex align-items-center mb-3">
+                        <i class="fas fa-users fa-lg me-2 text-primary"></i>
                         <h5 class="mb-0">Recipients</h5>
                     </div>
                     
-                    <!-- User Selection -->
-                    <div class="mb-3">
-                        <label for="users_multiselect" class="form-label">Select Recipients <span class="text-danger">*</span></label>
-                        <select class="form-select" id="users_multiselect" multiple>
-                            {% for user in users %}
-                                <option value="{{ user.id }}">{{ user.get_full_name|default:user.email }} ({{ user.email }})</option>
+                    <!-- Improved filtering interface -->
+                    <div class="table-filter-bar">
+                        <div class="search-container">
+                            <i class="fas fa-search"></i>
+                            <input type="text" class="form-control search-input" id="user_search" placeholder="Search users by name or email...">
+                        </div>
+                        
+                        <select class="form-select filter-dropdown" id="department_filter">
+                            <option value="">All Departments</option>
+                            {% for dept in departments %}
+                                <option value="{{ dept.id }}">{{ dept.name }}</option>
                             {% endfor %}
                         </select>
                         
-                        <!-- Table showing users in selected department -->
-                        <div class="department-users-container mt-4">
-                            <h6>Department Members:</h6>
-                            <div class="table-responsive user-table">
-                                <table class="table table-sm table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 40px;">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="selectAllDeptUsers">
-                                                </div>
-                                            </th>
-                                            <th>Name</th>
-                                            <th>Email</th>
-                                            <th>Role</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="department_users_table">
-                                        <!-- Department users will be populated here -->
-                                    </tbody>
-                                </table>
+                        <select class="form-select filter-dropdown" id="role_filter">
+                            <option value="">All Roles</option>
+                            {% for role_value, role_name in roles %}
+                                <option value="{{ role_value }}">{{ role_name }}</option>
+                            {% endfor %}
+                        </select>
+                        
+                        <select class="form-select filter-dropdown" id="project_filter">
+                            <option value="">All Projects</option>
+                            {% for project in projects %}
+                                <option value="{{ project.id }}">{{ project.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Recipients table with filtering -->
+                    <div class="recipients-table-container">
+                        <div class="table-responsive user-table">
+                            <table class="table table-hover mb-0" id="recipients_table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40px;">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="selectAllUsers">
+                                            </div>
+                                        </th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Department</th>
+                                        <th>Role</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recipients_tbody">
+                                    {% for user in users %}
+                                    <tr data-user-id="{{ user.id }}" data-department="{{ user.department.id|default:'' }}" data-role="{{ user.get_role_display }}">
+                                        <td>
+                                            <div class="form-check">
+                                                <input class="form-check-input user-checkbox" type="checkbox" 
+                                                       name="selected_users" 
+                                                       value="{{ user.id }}" 
+                                                       id="user-{{ user.id }}"
+                                                       {% if preselected_users and user.id in preselected_users %}checked{% endif %}>
+                                            </div>
+                                        </td>
+                                        <td>{{ user.get_full_name|default:user.email }}</td>
+                                        <td>{{ user.email }}</td>
+                                        <td>{{ user.department.name|default:"Not assigned" }}</td>
+                                        <td>{{ user.get_role_display }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="recipients-count">
+                            <div>
+                                <span id="filtered_count">{{ users|length }}</span> users displayed
+                            </div>
+                            <div>
+                                <strong><span id="selected_count">0</span> users selected</strong>
                             </div>
                         </div>
                     </div>
                     
-                    <div id="role_section" class="target-section mb-3">
-                        <label for="role" class="form-label">Select Role</label>
-                        <select class="form-select" id="role" name="role">
-                            <option value="">Select a role</option>
-                            {% for role in roles %}
-                                <option value="{{ role }}">{{ role }}</option>
-                            {% endfor %}
-                        </select>
-                        
-                        <!-- Table showing users with selected role -->
-                        <div class="role-users-container mt-4">
-                            <h6>Users with Selected Role:</h6>
-                            <div class="table-responsive user-table">
-                                <table class="table table-sm table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 40px;">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="selectAllRoleUsers">
-                                                </div>
-                                            </th>
-                                            <th>Name</th>
-                                            <th>Email</th>
-                                            <th>Department</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="role_users_table">
-                                        <!-- Role users will be populated here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div id="individual_section" class="target-section mb-3">
-                        <label for="users" class="form-label">Select Users</label>
-                        {% if project %}
-                        <div class="alert alert-info mb-3">
-                            <i class="fas fa-info-circle me-2"></i>
-                            Users for project <strong>{{ project.name }}</strong> have been pre-selected.
-                        </div>
-                        {% endif %}
-                        
-                        <!-- Direct selection using multiselect -->
-                        <div class="user-filter mb-3">
-                            <select class="form-select select2-users" id="users" name="users" multiple style="width: 100%;">
-                                {% for user in users %}
-                                    <option value="{{ user.id }}" {% if preselected_users and user.id in preselected_users %}selected{% endif %}>{{ user.get_full_name|default:user.email }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <!-- Table for selecting users with checkboxes -->
-                        <div class="user-table-container mt-4">
-                            <h6>Or select from table:</h6>
-                            <div class="table-responsive user-table">
-                                <table class="table table-sm table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 40px;">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="selectAllUsersTable">
-                                                </div>
-                                            </th>
-                                            <th>Name</th>
-                                            <th>Email</th>
-                                            <th>Department</th>
-                                            <th>Role</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="individual_users_table">
-                                        {% for user in users %}
-                                        <tr>
-                                            <td>
-                                                <div class="form-check">
-                                                    <input class="form-check-input user-checkbox" type="checkbox" value="{{ user.id }}" id="user-{{ user.id }}" 
-                                                    {% if preselected_users and user.id in preselected_users %}checked{% endif %}>
-                                                </div>
-                                            </td>
-                                            <td>{{ user.get_full_name|default:user.email }}</td>
-                                            <td>{{ user.email }}</td>
-                                            <td>{{ user.department.name|default:"Not assigned" }}</td>
-                                            <td>{{ user.get_role_display }}</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Hidden input to store selected users -->
+                    <input type="hidden" name="recipient_ids" id="recipient_ids" value="">
                     
                     <div class="d-grid gap-2 mt-4">
                         <button type="submit" class="btn btn-primary" id="submitBtn">
@@ -286,47 +314,19 @@
                             <h6 class="mb-0">Recipients Summary</h6>
                         </div>
                         <div class="card-body">
-                            <p id="recipients_summary">No recipients selected</p>
-                            <div id="recipients_count" class="text-end text-muted">0 recipients selected</div>
+                            <div id="recipients_details">
+                                <div class="mb-2">
+                                    <span class="badge bg-primary me-2" id="total_recipients">0</span>
+                                    <span>Total recipients</span>
+                                </div>
+                                
+                                <div id="dept_breakdown" class="mt-3 small">
+                                    <!-- Department breakdown will be populated by JS -->
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Recipients Preview -->
-<div id="recipient_preview" class="mt-5">
-    <div class="card">
-        <div class="card-header bg-body-tertiary">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Recipients</h5>
-                <span class="badge bg-warning" id="recipient_count">0</span>
-            </div>
-        </div>
-        <div class="card-body">
-            <p class="mb-3" id="recipients_list">No recipients selected</p>
-            
-            <div id="no_recipients" class="text-center py-4">
-                <i class="fas fa-users-slash text-muted fa-2x mb-3"></i>
-                <p class="text-muted mb-0">No recipients selected or matching your criteria</p>
-            </div>
-            
-            <div class="table-responsive">
-                <table class="table table-hover table-striped" id="recipients_table" style="display: none;">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Department</th>
-                        </tr>
-                    </thead>
-                    <tbody id="recipients_table_body">
-                        <!-- Recipients will be populated here -->
-                    </tbody>
-                </table>
             </div>
         </div>
     </div>
@@ -336,334 +336,243 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-    // Create a hidden element to store the data
     document.addEventListener('DOMContentLoaded', function() {
-        const scriptElement = document.createElement('script');
-        scriptElement.id = 'all_users_data';
-        scriptElement.type = 'application/json';
-        scriptElement.textContent = document.getElementById('all_users_data').textContent;
-        document.body.appendChild(scriptElement);
+        // Get all users data
+        const allUsersData = JSON.parse(document.getElementById('all_users_data').textContent);
         
-        // Initialize the rest of the functionality
-        initNotificationForm();
-    });
-    
-    function initNotificationForm() {
-        // Initialize file upload functionality
-        const uploadArea = document.getElementById('upload_area');
-        const attachmentInput = document.getElementById('attachment');
-        const attachmentPreview = document.getElementById('attachment_preview');
-        const fileNameDisplay = document.getElementById('file_name');
-        const removeAttachmentBtn = document.getElementById('remove_attachment');
-        
-        // Initialize Select2 for user selection
-        $('.select2-users').select2({
-            theme: 'bootstrap-5',
-            placeholder: 'Search and select users...',
-            allowClear: true,
-            width: '100%',
-            escapeMarkup: function(markup) {
-                return markup;
-            },
-            templateResult: function(data) {
-                if (!data.id) return data.text;
-                return $('<span>' + data.text + '</span>');
-            }
-        }).on('select2:open', function() {
-            document.querySelector('.select2-search__field').focus();
-        });
-        
-        // Handle table selection and sync with select2
-        const selectAllUsersTable = document.getElementById('selectAllUsersTable');
+        // Elements
+        const userSearch = document.getElementById('user_search');
+        const departmentFilter = document.getElementById('department_filter');
+        const roleFilter = document.getElementById('role_filter');
+        const projectFilter = document.getElementById('project_filter');
+        const selectAllCheckbox = document.getElementById('selectAllUsers');
         const userCheckboxes = document.querySelectorAll('.user-checkbox');
+        const recipientIds = document.getElementById('recipient_ids');
+        const selectedCountDisplay = document.getElementById('selected_count');
+        const filteredCountDisplay = document.getElementById('filtered_count');
+        const totalRecipientsDisplay = document.getElementById('total_recipients');
+        const deptBreakdownContainer = document.getElementById('dept_breakdown');
         
-        if (selectAllUsersTable) {
-            selectAllUsersTable.addEventListener('change', function() {
-                const isChecked = this.checked;
-                
-                // Update all checkboxes
-                userCheckboxes.forEach(checkbox => {
-                    checkbox.checked = isChecked;
-                });
-                
-                // Update select2 selection
-                syncTableToSelect2();
-            });
+        // Notification preview elements
+        const titleInput = document.getElementById('title');
+        const messageInput = document.getElementById('message');
+        const notificationTypeSelect = document.getElementById('notification_type');
+        const linkInput = document.getElementById('link');
+        const previewTitle = document.getElementById('preview_title');
+        const previewMessage = document.getElementById('preview_message');
+        const previewLinkContainer = document.getElementById('preview_link_container');
+        const previewLink = document.getElementById('preview_link');
+        const notificationPreview = document.getElementById('notification_preview');
+        
+        // Initialize notification preview
+        function updateNotificationPreview() {
+            previewTitle.textContent = titleInput.value || 'Notification Title';
+            previewMessage.textContent = messageInput.value || 'Notification message will appear here...';
+            
+            const link = linkInput.value;
+            if (link && link.trim() !== '') {
+                previewLinkContainer.style.display = 'block';
+                previewLink.href = link;
+            } else {
+                previewLinkContainer.style.display = 'none';
+            }
+            
+            // Update preview style based on notification type
+            const type = notificationTypeSelect.value;
+            notificationPreview.className = 'notification-preview ' + type.toLowerCase();
         }
+        
+        // Add event listeners for preview updates
+        titleInput.addEventListener('input', updateNotificationPreview);
+        messageInput.addEventListener('input', updateNotificationPreview);
+        notificationTypeSelect.addEventListener('change', updateNotificationPreview);
+        linkInput.addEventListener('input', updateNotificationPreview);
+        
+        // Initialize preview on page load
+        updateNotificationPreview();
+        
+        // Filter users in the table
+        function filterUsers() {
+            const searchTerm = userSearch.value.toLowerCase();
+            const departmentValue = departmentFilter.value;
+            const roleValue = roleFilter.value;
+            const projectValue = projectFilter.value;
+            
+            let filteredCount = 0;
+            
+            document.querySelectorAll('#recipients_tbody tr').forEach(row => {
+                const userId = row.dataset.userId;
+                const userData = allUsersData.find(u => u.id === userId);
+                
+                const nameMatch = userData.name.toLowerCase().includes(searchTerm) || 
+                                 userData.email.toLowerCase().includes(searchTerm);
+                const departmentMatch = !departmentValue || userData.department === departmentValue;
+                const roleMatch = !roleValue || userData.role === roleValue;
+                const projectMatch = !projectValue || (userData.project && userData.project.includes(projectValue));
+                
+                const shouldShow = nameMatch && departmentMatch && roleMatch && projectMatch;
+                
+                row.style.display = shouldShow ? 'table-row' : 'none';
+                
+                if (shouldShow) filteredCount++;
+            });
+            
+            filteredCountDisplay.textContent = filteredCount;
+            
+            // Update "select all" checkbox state for visible rows
+            updateSelectAllState();
+        }
+        
+        // Add event listeners for filtering
+        userSearch.addEventListener('input', filterUsers);
+        departmentFilter.addEventListener('change', filterUsers);
+        roleFilter.addEventListener('change', filterUsers);
+        projectFilter.addEventListener('change', filterUsers);
+        
+        // Handle "select all" checkbox
+        selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            
+            // Only affect visible rows
+            document.querySelectorAll('#recipients_tbody tr').forEach(row => {
+                if (row.style.display !== 'none') {
+                    const checkbox = row.querySelector('.user-checkbox');
+                    if (checkbox) checkbox.checked = isChecked;
+                }
+            });
+            
+            updateSelectedUsersCount();
+            updateRecipientsSummary();
+        });
         
         // Add event listeners to individual checkboxes
         userCheckboxes.forEach(checkbox => {
             checkbox.addEventListener('change', function() {
-                // Update select all checkbox state
                 updateSelectAllState();
-                
-                // Update select2 selection
-                syncTableToSelect2();
+                updateSelectedUsersCount();
+                updateRecipientsSummary();
             });
+            
+            // Initialize with preselected users if any
+            if (checkbox.checked) {
+                updateSelectedUsersCount();
+                updateRecipientsSummary();
+            }
         });
         
-        // Function to update select all checkbox based on individual selections
+        // Update "select all" checkbox state based on visible checkboxes
         function updateSelectAllState() {
-            if (!selectAllUsersTable) return;
+            const visibleRows = Array.from(document.querySelectorAll('#recipients_tbody tr'))
+                .filter(row => row.style.display !== 'none');
             
-            const checkedCount = document.querySelectorAll('.user-checkbox:checked').length;
-            const totalCount = userCheckboxes.length;
+            const visibleCheckboxes = visibleRows.map(row => row.querySelector('.user-checkbox'));
+            const checkedCount = visibleCheckboxes.filter(cb => cb && cb.checked).length;
             
-            selectAllUsersTable.checked = checkedCount > 0 && checkedCount === totalCount;
-            selectAllUsersTable.indeterminate = checkedCount > 0 && checkedCount < totalCount;
-        }
-        
-        // Function to sync table selections to select2
-        function syncTableToSelect2() {
-            const selectedUserIds = Array.from(document.querySelectorAll('.user-checkbox:checked'))
-                .map(checkbox => checkbox.value);
-            
-            // Get all users from the JSON data
-            const allUsersData = JSON.parse(document.getElementById('all_users_data').textContent);
-            
-            // Clear the recipients table
-            const recipientsTableBody = document.getElementById('recipients_table_body');
-            recipientsTableBody.innerHTML = '';
-            
-            // Populate the recipients table with selected users
-            const selectedUsers = allUsersData.filter(user => selectedUserIds.includes(user.id));
-            
-            if (selectedUsers.length > 0) {
-                document.getElementById('recipients_table').style.display = 'table';
-                document.getElementById('no_recipients').style.display = 'none';
-                
-                selectedUsers.forEach(user => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${user.name}</td>
-                        <td>${user.email}</td>
-                        <td>${user.role}</td>
-                        <td>${user.departmentName}</td>
-                    `;
-                    recipientsTableBody.appendChild(row);
-                });
-                
-                // Update recipient count
-                document.getElementById('recipient_count').textContent = selectedUsers.length;
-                document.getElementById('recipients_summary').textContent = 
-                    `${selectedUsers.length} users will receive this notification.`;
+            if (visibleCheckboxes.length === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            } else if (checkedCount === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            } else if (checkedCount === visibleCheckboxes.length) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
             } else {
-                document.getElementById('recipients_table').style.display = 'none';
-                document.getElementById('no_recipients').style.display = 'block';
-                document.getElementById('recipient_count').textContent = '0';
-                document.getElementById('recipients_summary').textContent = 'No recipients selected.';
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
             }
         }
         
-        // Handle department selection 
-        document.getElementById('department').addEventListener('change', function() {
-            const departmentId = this.value;
-            const departmentUsersTable = document.getElementById('department_users_table');
-            departmentUsersTable.innerHTML = '';
+        // Update the count of selected users
+        function updateSelectedUsersCount() {
+            const selectedUsers = Array.from(document.querySelectorAll('.user-checkbox:checked'));
+            const selectedCount = selectedUsers.length;
             
-            if (!departmentId) {
+            // Update counters
+            selectedCountDisplay.textContent = selectedCount;
+            totalRecipientsDisplay.textContent = selectedCount;
+            
+            // Update hidden field with selected user IDs
+            const selectedIds = selectedUsers.map(cb => cb.value).join(',');
+            recipientIds.value = selectedIds;
+        }
+        
+        // Update recipients summary in the preview panel
+        function updateRecipientsSummary() {
+            const selectedUsers = Array.from(document.querySelectorAll('.user-checkbox:checked'))
+                .map(cb => cb.value);
+                
+            // Clear department breakdown
+            deptBreakdownContainer.innerHTML = '';
+            
+            if (selectedUsers.length === 0) {
+                deptBreakdownContainer.innerHTML = '<p class="text-muted">No recipients selected</p>';
                 return;
             }
             
-            // Get all users from JSON data 
-            const allUsersData = JSON.parse(document.getElementById('all_users_data').textContent);
+            // Count users by department
+            const deptCounts = {};
             
-            // Filter users by department
-            const departmentUsers = allUsersData.filter(user => user.department === departmentId);
-            
-            if (departmentUsers.length > 0) {
-                departmentUsers.forEach(user => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>
-                            <div class="form-check">
-                                <input class="form-check-input dept-user-checkbox" 
-                                    type="checkbox" 
-                                    value="${user.id}" 
-                                    id="dept-user-${user.id}"
-                                    data-user-id="${user.id}">
-                            </div>
-                        </td>
-                        <td>${user.name}</td>
-                        <td>${user.email}</td>
-                        <td>${user.role}</td>
-                    `;
-                    departmentUsersTable.appendChild(row);
-                });
+            selectedUsers.forEach(userId => {
+                const userData = allUsersData.find(u => u.id === userId);
+                const deptName = userData.departmentName || 'Not assigned';
                 
-                // Add event listeners to the newly created checkboxes
-                document.querySelectorAll('.dept-user-checkbox').forEach(checkbox => {
-                    checkbox.addEventListener('change', function() {
-                        const userId = this.dataset.userId;
-                        const isChecked = this.checked;
-                        
-                        // Find the corresponding checkbox in the individual users table
-                        const individualCheckbox = document.getElementById(`user-${userId}`);
-                        if (individualCheckbox) {
-                            individualCheckbox.checked = isChecked;
-                        }
-                        
-                        // Update recipients table
-                        syncTableToSelect2();
-                    });
-                });
-            } else {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td colspan="4" class="text-center py-3">No users in this department.</td>
-                `;
-                departmentUsersTable.appendChild(row);
-            }
-        });
-        
-        // Handle role selection
-        document.getElementById('role').addEventListener('change', function() {
-            const roleValue = this.value;
-            const roleUsersTable = document.getElementById('role_users_table');
-            roleUsersTable.innerHTML = '';
-            
-            if (!roleValue) {
-                return;
-            }
-            
-            // Get all users from JSON data
-            const allUsersData = JSON.parse(document.getElementById('all_users_data').textContent);
-            
-            // Filter users by role
-            const roleUsers = allUsersData.filter(user => user.role === roleValue);
-            
-            if (roleUsers.length > 0) {
-                roleUsers.forEach(user => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>
-                            <div class="form-check">
-                                <input class="form-check-input role-user-checkbox" 
-                                    type="checkbox" 
-                                    value="${user.id}" 
-                                    id="role-user-${user.id}"
-                                    data-user-id="${user.id}">
-                            </div>
-                        </td>
-                        <td>${user.name}</td>
-                        <td>${user.email}</td>
-                        <td>${user.departmentName}</td>
-                    `;
-                    roleUsersTable.appendChild(row);
-                });
+                if (!deptCounts[deptName]) {
+                    deptCounts[deptName] = 0;
+                }
                 
-                // Add event listeners to the newly created checkboxes
-                document.querySelectorAll('.role-user-checkbox').forEach(checkbox => {
-                    checkbox.addEventListener('change', function() {
-                        const userId = this.dataset.userId;
-                        const isChecked = this.checked;
-                        
-                        // Find the corresponding checkbox in the individual users table
-                        const individualCheckbox = document.getElementById(`user-${userId}`);
-                        if (individualCheckbox) {
-                            individualCheckbox.checked = isChecked;
-                        }
-                        
-                        // Update recipients table
-                        syncTableToSelect2();
-                    });
-                });
-            } else {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td colspan="4" class="text-center py-3">No users with this role.</td>
-                `;
-                roleUsersTable.appendChild(row);
-            }
-        });
-        
-        // Initialize target section visibility
-        function initTargetSections() {
-            const targetSections = document.querySelectorAll('.target-section');
-            const checkedRadio = document.querySelector('.target-radio:checked');
-            
-            // Hide all sections first
-            targetSections.forEach(section => {
-                section.style.display = 'none';
+                deptCounts[deptName]++;
             });
             
-            // Show only the selected section
-            if (checkedRadio) {
-                const targetType = checkedRadio.value;
-                const targetSection = document.getElementById(`${targetType}_section`);
-                if (targetSection) {
-                    targetSection.style.display = 'block';
-                }
-            }
+            // Create breakdown list
+            const breakdownList = document.createElement('ul');
+            breakdownList.className = 'list-unstyled mb-0';
+            
+            Object.entries(deptCounts).forEach(([dept, count]) => {
+                const item = document.createElement('li');
+                item.className = 'd-flex justify-content-between align-items-center mb-1';
+                item.innerHTML = `
+                    <span>${dept}</span>
+                    <span class="badge bg-secondary">${count}</span>
+                `;
+                breakdownList.appendChild(item);
+            });
+            
+            deptBreakdownContainer.appendChild(breakdownList);
         }
         
-        // Handle target type selection changes
-        document.querySelectorAll('.target-radio').forEach(radio => {
-            radio.addEventListener('change', function() {
-                initTargetSections();
-                updateRecipientsPreview();
+        // Initialize row click to toggle checkbox
+        document.querySelectorAll('#recipients_tbody tr').forEach(row => {
+            row.addEventListener('click', function(e) {
+                // Ignore clicks on the checkbox itself
+                if (e.target.type === 'checkbox') return;
+                
+                const checkbox = this.querySelector('.user-checkbox');
+                if (checkbox) {
+                    checkbox.checked = !checkbox.checked;
+                    
+                    // Trigger the change event
+                    const changeEvent = new Event('change', { bubbles: true });
+                    checkbox.dispatchEvent(changeEvent);
+                }
             });
         });
         
-        // Update recipients preview based on selection
-        function updateRecipientsPreview() {
-            const targetType = document.querySelector('.target-radio:checked').value;
-            const allUsersData = JSON.parse(document.getElementById('all_users_data').textContent);
+        // Initialize the form with current filters
+        filterUsers();
+        updateSelectAllState();
+        updateSelectedUsersCount();
+        updateRecipientsSummary();
+        
+        // Handle form submission
+        document.getElementById('notificationForm').addEventListener('submit', function(e) {
+            const selectedUsers = document.querySelectorAll('.user-checkbox:checked');
             
-            let recipientCount = 0;
-            let summaryText = '';
-            
-            if (targetType === 'all') {
-                recipientCount = allUsersData.length;
-                summaryText = `All ${recipientCount} users will receive this notification.`;
-            } else if (targetType === 'department') {
-                const departmentId = document.getElementById('department').value;
-                if (departmentId) {
-                    const departmentName = document.querySelector(`#department option[value="${departmentId}"]`).textContent;
-                    const departmentUsers = allUsersData.filter(user => user.department === departmentId);
-                    recipientCount = departmentUsers.length;
-                    summaryText = `${recipientCount} users from ${departmentName} department will receive this notification.`;
-                } else {
-                    summaryText = 'Please select a department.';
-                }
-            } else if (targetType === 'role') {
-                const roleValue = document.getElementById('role').value;
-                if (roleValue) {
-                    const roleName = document.querySelector(`#role option[value="${roleValue}"]`).textContent;
-                    const roleUsers = allUsersData.filter(user => user.role === roleValue);
-                    recipientCount = roleUsers.length;
-                    summaryText = `${recipientCount} users with ${roleName} role will receive this notification.`;
-                } else {
-                    summaryText = 'Please select a role.';
-                }
-            } else if (targetType === 'individual') {
-                const selectedUserIds = Array.from(document.querySelectorAll('.user-checkbox:checked'))
-                    .map(checkbox => checkbox.value);
-                recipientCount = selectedUserIds.length;
-                
-                if (recipientCount > 0) {
-                    summaryText = `${recipientCount} selected users will receive this notification.`;
-                } else {
-                    summaryText = 'No individual users selected.';
-                }
+            if (selectedUsers.length === 0) {
+                e.preventDefault();
+                alert('Please select at least one recipient for the notification.');
             }
-            
-            document.getElementById('recipients_summary').textContent = summaryText;
-            document.getElementById('recipient_count').textContent = recipientCount;
-        }
-        
-        // Initialize the form
-        initTargetSections();
-        updateRecipientsPreview();
-        
-        // Add event listeners to form elements for preview updates
-        document.getElementById('title').addEventListener('input', updateNotificationPreview);
-        document.getElementById('message').addEventListener('input', updateNotificationPreview);
-        document.getElementById('notification_type').addEventListener('change', updateNotificationPreview);
-        document.getElementById('link').addEventListener('input', updateNotificationPreview);
-        
-        // Initialize preview
-        updateNotificationPreview();
-    }
+        });
+    });
 </script>
 {% endblock %} 
