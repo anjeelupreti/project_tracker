@@ -4,260 +4,413 @@
 
 {% block extra_css %}
 <style>
+    .settings-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
     .settings-sidebar {
         border-right: 1px solid var(--bs-border-color);
+        background-color: var(--bs-light);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        position: sticky;
+        top: 2rem;
     }
     
     .settings-sidebar .nav-link {
-        padding: 0.75rem 1rem;
+        padding: 0.85rem 1rem;
         color: var(--bs-body-color);
         border-radius: 0.375rem;
         margin: 0.25rem 0;
+        transition: all 0.2s ease;
     }
     
     .settings-sidebar .nav-link:hover {
-        background-color: var(--bs-tertiary-bg);
+        background-color: rgba(var(--bs-primary-rgb), 0.1);
+        color: var(--bs-primary);
     }
     
     .settings-sidebar .nav-link.active {
-        background-color: var(--bs-primary-bg-subtle);
-        color: var(--bs-primary);
+        background-color: var(--bs-primary);
+        color: var(--bs-white);
         font-weight: 500;
+        box-shadow: 0 4px 8px rgba(var(--bs-primary-rgb), 0.25);
     }
     
     .settings-sidebar .nav-link i {
-        width: 1.25rem;
+        width: 1.5rem;
         text-align: center;
-        margin-right: 0.5rem;
+        margin-right: 0.75rem;
+        font-size: 1.1rem;
     }
     
     .settings-content {
-        min-height: 500px;
+        min-height: 600px;
+        padding: 0 1rem;
     }
     
     .settings-section {
         display: none;
+        animation: fadeIn 0.3s ease;
     }
     
     .settings-section.active {
         display: block;
     }
     
+    .section-header {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--bs-border-color);
+    }
+    
+    .card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin-bottom: 1.5rem;
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+    
+    .card-header {
+        background-color: var(--bs-white);
+        border-bottom: 1px solid rgba(var(--bs-primary-rgb), 0.1);
+        padding: 1rem 1.25rem;
+        font-weight: 600;
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
     .form-check-input:checked {
         background-color: var(--bs-primary);
         border-color: var(--bs-primary);
+    }
+    
+    .form-switch .form-check-input {
+        width: 2.5em;
+        height: 1.25em;
+    }
+    
+    .form-switch .form-check-input:focus {
+        border-color: rgba(var(--bs-primary-rgb), 0.25);
+        box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+    
+    .color-swatch {
+        display: inline-block;
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+        border: 3px solid var(--bs-white);
+        box-shadow: 0 0 0 1px var(--bs-border-color);
+        vertical-align: middle;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Settings</h1>
-</div>
-
-<div class="row g-5">
-    <div class="col-12 col-md-3">
-        <div class="settings-sidebar">
-            <div class="nav flex-column">
-                <a href="#account" class="nav-link active" data-section="account">
-                    <i class="fas fa-user"></i> Account
-                </a>
-                <a href="#personalization" class="nav-link" data-section="personalization">
-                    <i class="fas fa-palette"></i> Personalization
-                </a>
-                <a href="#notifications" class="nav-link" data-section="notifications">
-                    <i class="fas fa-bell"></i> Notifications
-                </a>
-                <a href="#security" class="nav-link" data-section="security">
-                    <i class="fas fa-shield-alt"></i> Security
-                </a>
-            </div>
+<div class="container-fluid py-4 settings-container">
+    <div class="d-flex align-items-center mb-4">
+        <h1 class="h2 mb-0">Account Settings</h1>
+        <div class="ms-auto">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Settings</li>
+                </ol>
+            </nav>
         </div>
     </div>
-    
-    <div class="col-12 col-md-9">
-        <div class="settings-content">
-            <!-- Account Settings -->
-            <div id="account" class="settings-section active">
-                <div class="card">
-                    <div class="card-header bg-body-tertiary">
-                        <h5 class="mb-0">Account Information</h5>
-                    </div>
-                    <div class="card-body">
-                        <form method="post" action="{% url 'accounts:profile_edit' %}">
-                            {% csrf_token %}
-                            
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="first_name" class="form-label">First Name</label>
-                                    <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="last_name" class="form-label">Last Name</label>
-                                    <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}">
-                                </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="email" class="form-label">Email Address</label>
-                                <input type="email" class="form-control" id="email" value="{{ user.email }}" readonly>
-                                <div class="form-text">Email address cannot be changed directly. Please contact an administrator.</div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="phone" class="form-label">Phone Number</label>
-                                <input type="tel" class="form-control" id="phone" name="phone_number" value="{{ user.phone_number }}">
-                            </div>
-                            
-                            <button type="submit" class="btn btn-primary">Save Changes</button>
-                        </form>
-                    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-3">
+            <div class="settings-sidebar">
+                <div class="nav flex-column">
+                    <a href="#account" class="nav-link active" data-section="account">
+                        <i class="fas fa-user"></i> Account
+                    </a>
+                    <a href="#personalization" class="nav-link" data-section="personalization">
+                        <i class="fas fa-palette"></i> Personalization
+                    </a>
+                    <a href="#notifications" class="nav-link" data-section="notifications">
+                        <i class="fas fa-bell"></i> Notifications
+                    </a>
+                    <a href="#security" class="nav-link" data-section="security">
+                        <i class="fas fa-shield-alt"></i> Security
+                    </a>
                 </div>
             </div>
-            
-            <!-- Personalization Settings -->
-            <div id="personalization" class="settings-section">
-                <div class="card">
-                    <div class="card-header bg-body-tertiary">
-                        <h5 class="mb-0">Appearance</h5>
+        </div>
+        
+        <div class="col-12 col-lg-9">
+            <div class="settings-content">
+                <!-- Account Settings -->
+                <div id="account" class="settings-section active">
+                    <div class="section-header">
+                        <h3 class="mb-1">Account Information</h3>
+                        <p class="text-muted mb-0">Manage your personal information and account details</p>
                     </div>
-                    <div class="card-body">
-                        <form method="post" action="{% url 'accounts:preferences' %}">
-                            {% csrf_token %}
-                            
-                            <div class="mb-4">
-                                <label class="form-label">Theme</label>
-                                <div class="d-flex gap-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="theme_preference" id="theme_light" value="light" {% if user.theme_preference == 'light' %}checked{% endif %}>
-                                        <label class="form-check-label" for="theme_light">
-                                            <i class="fas fa-sun me-1"></i> Light
-                                        </label>
+                    
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center">
+                            <i class="fas fa-id-card me-2 text-primary"></i>
+                            Personal Information
+                        </div>
+                        <div class="card-body">
+                            <form method="post" action="{% url 'accounts:profile_edit' %}">
+                                {% csrf_token %}
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="first_name" class="form-label fw-medium">First Name</label>
+                                        <input type="text" class="form-control form-control-lg" id="first_name" name="first_name" value="{{ user.first_name }}">
                                     </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="theme_preference" id="theme_dark" value="dark" {% if user.theme_preference == 'dark' %}checked{% endif %}>
-                                        <label class="form-check-label" for="theme_dark">
-                                            <i class="fas fa-moon me-1"></i> Dark
-                                        </label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="theme_preference" id="theme_auto" value="auto" {% if user.theme_preference == 'auto' %}checked{% endif %}>
-                                        <label class="form-check-label" for="theme_auto">
-                                            <i class="fas fa-adjust me-1"></i> Auto (System)
-                                        </label>
+                                    <div class="col-md-6">
+                                        <label for="last_name" class="form-label fw-medium">Last Name</label>
+                                        <input type="text" class="form-control form-control-lg" id="last_name" name="last_name" value="{{ user.last_name }}">
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <label class="form-label">Dashboard Layout</label>
-                                <div class="d-flex gap-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="dashboard_layout" id="layout_standard" value="standard" checked>
-                                        <label class="form-check-label" for="layout_standard">
-                                            <i class="fas fa-th-large me-1"></i> Standard
-                                        </label>
+                                
+                                <div class="mb-3">
+                                    <label for="email" class="form-label fw-medium">Email Address</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-envelope"></i></span>
+                                        <input type="email" class="form-control form-control-lg" id="email" value="{{ user.email }}" readonly>
                                     </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="dashboard_layout" id="layout_compact" value="compact">
-                                        <label class="form-check-label" for="layout_compact">
-                                            <i class="fas fa-th me-1"></i> Compact
-                                        </label>
+                                    <div class="form-text">Email address cannot be changed directly. Please contact an administrator.</div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="phone" class="form-label fw-medium">Phone Number</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-phone"></i></span>
+                                        <input type="tel" class="form-control form-control-lg" id="phone" name="phone_number" value="{{ user.phone_number }}">
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <button type="submit" class="btn btn-primary">Save Preferences</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Notification Settings -->
-            <div id="notifications" class="settings-section">
-                <div class="card">
-                    <div class="card-header bg-body-tertiary">
-                        <h5 class="mb-0">Notification Preferences</h5>
-                    </div>
-                    <div class="card-body">
-                        <form method="post" action="{% url 'accounts:preferences' %}">
-                            {% csrf_token %}
-                            
-                            <div class="mb-3">
-                                <label class="form-label">Email Notifications</label>
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="email_project_updates" name="email_project_updates" checked>
-                                    <label class="form-check-label" for="email_project_updates">Project updates and mentions</label>
+                                
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary px-4 py-2">
+                                        <i class="fas fa-save me-2"></i> Save Changes
+                                    </button>
                                 </div>
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="email_task_assignments" name="email_task_assignments" checked>
-                                    <label class="form-check-label" for="email_task_assignments">Task assignments and changes</label>
-                                </div>
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="email_leave_requests" name="email_leave_requests" checked>
-                                    <label class="form-check-label" for="email_leave_requests">Leave request status updates</label>
-                                </div>
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="email_admin_announcements" name="email_admin_announcements" checked>
-                                    <label class="form-check-label" for="email_admin_announcements">Administrator announcements</label>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">In-App Notifications</label>
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="app_project_updates" name="app_project_updates" checked>
-                                    <label class="form-check-label" for="app_project_updates">Project updates and mentions</label>
-                                </div>
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="app_task_assignments" name="app_task_assignments" checked>
-                                    <label class="form-check-label" for="app_task_assignments">Task assignments and changes</label>
-                                </div>
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="app_leave_requests" name="app_leave_requests" checked>
-                                    <label class="form-check-label" for="app_leave_requests">Leave request status updates</label>
-                                </div>
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="app_admin_announcements" name="app_admin_announcements" checked>
-                                    <label class="form-check-label" for="app_admin_announcements">Administrator announcements</label>
-                                </div>
-                            </div>
-                            
-                            <button type="submit" class="btn btn-primary">Save Notification Settings</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Security Settings -->
-            <div id="security" class="settings-section">
-                <div class="card mb-4">
-                    <div class="card-header bg-body-tertiary">
-                        <h5 class="mb-0">Change Password</h5>
-                    </div>
-                    <div class="card-body">
-                        <a href="{% url 'account_change_password' %}" class="btn btn-primary">
-                            <i class="fas fa-key me-1"></i> Go to Password Change Page
-                        </a>
-                        <p class="mt-3 text-muted">You will be redirected to the password change page where you can securely update your password.</p>
+                            </form>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="card">
-                    <div class="card-header bg-body-tertiary">
-                        <h5 class="mb-0">Account Security</h5>
+                <!-- Personalization Settings -->
+                <div id="personalization" class="settings-section">
+                    <div class="section-header">
+                        <h3 class="mb-1">Personalization</h3>
+                        <p class="text-muted mb-0">Customize your interface appearance and layout preferences</p>
                     </div>
-                    <div class="card-body">
-                        <div class="mb-4">
-                            <h6>Login Sessions</h6>
-                            <p class="text-muted">You're currently logged in from this device.</p>
-                            <button type="button" class="btn btn-outline-danger">Log Out From All Devices</button>
+                    
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center">
+                            <i class="fas fa-sliders-h me-2 text-primary"></i>
+                            Appearance
                         </div>
-                        
-                        <div class="mb-4">
-                            <h6>Account Deactivation</h6>
-                            <p class="text-muted">Deactivating your account will remove you from all projects and teams. This action cannot be undone.</p>
-                            <button type="button" class="btn btn-outline-danger">Deactivate Account</button>
+                        <div class="card-body">
+                            <form method="post" action="{% url 'accounts:preferences' %}">
+                                {% csrf_token %}
+                                
+                                <div class="mb-4">
+                                    <label class="form-label fw-medium mb-3">Theme Mode</label>
+                                    <div class="d-flex gap-4 mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="theme_preference" id="theme_light" value="light" {% if user.theme_preference == 'light' %}checked{% endif %}>
+                                            <label class="form-check-label d-flex align-items-center" for="theme_light">
+                                                <div class="color-swatch bg-white"></div>
+                                                <i class="fas fa-sun me-2 text-warning"></i> Light
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="theme_preference" id="theme_dark" value="dark" {% if user.theme_preference == 'dark' %}checked{% endif %}>
+                                            <label class="form-check-label d-flex align-items-center" for="theme_dark">
+                                                <div class="color-swatch bg-dark"></div>
+                                                <i class="fas fa-moon me-2 text-primary"></i> Dark
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="theme_preference" id="theme_auto" value="auto" {% if user.theme_preference == 'auto' %}checked{% endif %}>
+                                            <label class="form-check-label d-flex align-items-center" for="theme_auto">
+                                                <div class="color-swatch" style="background: linear-gradient(135deg, #fff 50%, #212529 50%)"></div>
+                                                <i class="fas fa-adjust me-2 text-secondary"></i> Auto (System)
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label fw-medium mb-3">Dashboard Layout</label>
+                                    <div class="d-flex gap-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="dashboard_layout" id="layout_standard" value="standard" checked>
+                                            <label class="form-check-label d-flex align-items-center" for="layout_standard">
+                                                <i class="fas fa-th-large me-2 text-success"></i> Standard
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="dashboard_layout" id="layout_compact" value="compact">
+                                            <label class="form-check-label d-flex align-items-center" for="layout_compact">
+                                                <i class="fas fa-th me-2 text-info"></i> Compact
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary px-4 py-2">
+                                        <i class="fas fa-save me-2"></i> Save Preferences
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Notification Settings -->
+                <div id="notifications" class="settings-section">
+                    <div class="section-header">
+                        <h3 class="mb-1">Notification Preferences</h3>
+                        <p class="text-muted mb-0">Control which notifications you receive and how they are delivered</p>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center">
+                            <i class="fas fa-envelope me-2 text-primary"></i>
+                            Email Notifications
+                        </div>
+                        <div class="card-body">
+                            <form method="post" action="{% url 'accounts:preferences' %}">
+                                {% csrf_token %}
+                                
+                                <div class="mb-4">
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="email_project_updates" name="email_project_updates" checked>
+                                        <label class="form-check-label d-flex align-items-center" for="email_project_updates">
+                                            <i class="fas fa-project-diagram me-2 text-primary"></i>
+                                            <div>
+                                                <span class="fw-medium">Project updates and mentions</span>
+                                                <p class="text-muted small mb-0">Receive notifications when you're mentioned or projects are updated</p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="email_task_assignments" name="email_task_assignments" checked>
+                                        <label class="form-check-label d-flex align-items-center" for="email_task_assignments">
+                                            <i class="fas fa-tasks me-2 text-success"></i>
+                                            <div>
+                                                <span class="fw-medium">Task assignments and changes</span>
+                                                <p class="text-muted small mb-0">Receive notifications when tasks are assigned to you or changed</p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="email_leave_requests" name="email_leave_requests" checked>
+                                        <label class="form-check-label d-flex align-items-center" for="email_leave_requests">
+                                            <i class="fas fa-calendar-alt me-2 text-warning"></i>
+                                            <div>
+                                                <span class="fw-medium">Leave request status updates</span>
+                                                <p class="text-muted small mb-0">Receive notifications when your leave requests status changes</p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="email_admin_announcements" name="email_admin_announcements" checked>
+                                        <label class="form-check-label d-flex align-items-center" for="email_admin_announcements">
+                                            <i class="fas fa-bullhorn me-2 text-danger"></i>
+                                            <div>
+                                                <span class="fw-medium">Administrator announcements</span>
+                                                <p class="text-muted small mb-0">Receive important announcements from administrators</p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary px-4 py-2">
+                                        <i class="fas fa-save me-2"></i> Save Notification Settings
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Security Settings -->
+                <div id="security" class="settings-section">
+                    <div class="section-header">
+                        <h3 class="mb-1">Security Settings</h3>
+                        <p class="text-muted mb-0">Manage your password and account security options</p>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header d-flex align-items-center">
+                            <i class="fas fa-key me-2 text-primary"></i>
+                            Password Management
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-4">
+                                <div>
+                                    <h5 class="mb-1">Change Password</h5>
+                                    <p class="text-muted mb-0">Update your password to maintain account security</p>
+                                </div>
+                                <div class="ms-auto">
+                                    <a href="{% url 'account_change_password' %}" class="btn btn-primary px-4">
+                                        <i class="fas fa-key me-2"></i> Change Password
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info d-flex">
+                                <i class="fas fa-info-circle me-3 fs-4"></i>
+                                <div>
+                                    <strong>Security tip:</strong> Use a strong, unique password that you don't use elsewhere. 
+                                    A strong password is at least 12 characters and includes a mix of uppercase letters, lowercase letters, 
+                                    numbers, and special characters.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center">
+                            <i class="fas fa-shield-alt me-2 text-primary"></i>
+                            Account Security
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-4">
+                                <div>
+                                    <h5 class="mb-1">Login Sessions</h5>
+                                    <p class="text-muted mb-0">Manage your active login sessions</p>
+                                </div>
+                                <div class="ms-auto">
+                                    <button type="button" class="btn btn-danger px-4">
+                                        <i class="fas fa-sign-out-alt me-2"></i> Sign Out All Devices
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-secondary d-flex">
+                                <i class="fas fa-exclamation-triangle me-3 fs-4"></i>
+                                <div>
+                                    <strong>Notice:</strong> Signing out of all devices will terminate all active sessions and 
+                                    require you to log in again on all devices.
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -265,41 +418,37 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const settingsLinks = document.querySelectorAll('.settings-sidebar .nav-link');
+        // Tab navigation
+        const navLinks = document.querySelectorAll('.settings-sidebar .nav-link');
         const settingsSections = document.querySelectorAll('.settings-section');
         
-        // Handle settings navigation
-        settingsLinks.forEach(link => {
+        navLinks.forEach(function(link) {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
                 
-                const sectionId = this.getAttribute('data-section');
+                // Remove active class from all links and sections
+                navLinks.forEach(l => l.classList.remove('active'));
+                settingsSections.forEach(s => s.classList.remove('active'));
                 
-                // Update active link
-                settingsLinks.forEach(l => l.classList.remove('active'));
+                // Add active class to clicked link
                 this.classList.add('active');
                 
-                // Show appropriate section
-                settingsSections.forEach(section => {
-                    section.classList.remove('active');
-                    if (section.id === sectionId) {
-                        section.classList.add('active');
-                    }
-                });
+                // Show corresponding section
+                const targetSection = this.getAttribute('data-section');
+                document.getElementById(targetSection).classList.add('active');
                 
                 // Update URL hash
-                window.location.hash = sectionId;
+                window.location.hash = targetSection;
             });
         });
         
-        // Check for hash in URL on page load
-        const hash = window.location.hash.substring(1);
-        if (hash && document.getElementById(hash)) {
+        // Handle URL hash on page load
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
             const targetLink = document.querySelector(`.nav-link[data-section="${hash}"]`);
             if (targetLink) {
                 targetLink.click();
@@ -307,4 +456,5 @@
         }
     });
 </script>
+{% endblock %}
 {% endblock %} 

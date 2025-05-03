@@ -11,6 +11,12 @@ urlpatterns = [
     path('preferences/', views.UserPreferencesView.as_view(), name='preferences'),
     path('settings/', views.SettingsView.as_view(), name='settings'),
     
+    # User management views
+    path('users/', views.UserListView.as_view(), name='user_list'),
+    path('users/create/', views.UserCreateView.as_view(), name='user_create'),
+    path('users/<int:pk>/update/', views.UserUpdateView.as_view(), name='user_update'),
+    path('users/<int:pk>/delete/', views.UserDeleteView.as_view(), name='user_delete'),
+    
     # Designation request views
     path('designation-requests/', views.DesignationRequestListView.as_view(), name='designation_request_list'),
     path('designation-requests/create/', views.DesignationRequestCreateView.as_view(), name='designation_request_create'),
@@ -28,4 +34,7 @@ urlpatterns = [
     path('notifications/create/', views.NotificationCreateView.as_view(), name='notification_create'),
     path('notifications/<int:notification_id>/mark-as-read/', views.mark_notification_as_read, name='mark_notification_as_read'),
     path('notifications/mark-all-as-read/', views.mark_all_notifications_as_read, name='mark_all_notifications_as_read'),
+    
+    # User credentials
+    path('clear-user-credentials/', views.clear_user_credentials, name='clear_user_credentials'),
 ] 

@@ -38,10 +38,22 @@ class DepartmentDetailView(LoginRequiredMixin, DetailView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        department = self.get_object()
         
-        context['projects'] = department.projects.all()
-        context['members'] = department.members.all()
+        # Get department stats
+        department = self.get_object()
+        context['in_progress_projects'] = department.projects.filter(status=Project.Status.IN_PROGRESS).count()
+        context['completed_projects'] = department.projects.filter(status=Project.Status.COMPLETED).count()
+        
+        # Get projects for department
+        context['projects'] = department.projects.all().select_related('lead')
+        
+        # Get available users to add to department
+        if self.request.user.is_admin or self.request.user.is_superuser or (department.head == self.request.user):
+            context['available_users'] = User.objects.filter(
+                department__isnull=True  # Users without a department
+            ).exclude(
+                id=department.head_id if department.head else None  # Exclude head if they are not in department yet
+            ).order_by('last_name', 'first_name')
         
         return context
 
@@ -194,8 +206,8 @@ class ProjectCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         
         response = super().form_valid(form)
         
-        # Add creator as a member if not already the lead
-        if form.instance.lead != self.request.user:
+        # Always add creator as a member
+        if not form.instance.lead or form.instance.lead != self.request.user:
             ProjectMembership.objects.create(
                 project=form.instance,
                 user=self.request.user,
@@ -432,6 +444,19 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
         if not form.instance.assignee:
             form.instance.assignee = self.request.user
             
+        # Check if user has permission to create task for this project
+        project = form.instance.project
+        user = self.request.user
+        
+        # Admin/superuser can create tasks in any project
+        if not (user.is_admin or user.is_superuser):
+            # Project lead can create tasks for their projects
+            if project.lead and project.lead != user:
+                # Check if user is member of the project
+                if not project.members.filter(id=user.id).exists():
+                    messages.error(self.request, "You don't have permission to create tasks for this project.")
+                    return self.form_invalid(form)
+                    
         response = super().form_valid(form)
         
         # Log activity
@@ -882,3 +907,84 @@ class ChatMessageCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView)
     
     def get_success_url(self):
         return reverse('projects:project_chat', kwargs={'project_id': self.kwargs['project_id']})
+
+class DepartmentMemberAddView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    View for adding members to a department
+    """
+    def test_func(self):
+        department_id = self.kwargs.get('department_id')
+        department = get_object_or_404(Department, id=department_id)
+        user = self.request.user
+        return user.is_admin or user.is_superuser or department.head == user
+    
+    def post(self, request, *args, **kwargs):
+        department_id = self.kwargs.get('department_id')
+        user_id = request.POST.get('user_id')
+        
+        department = get_object_or_404(Department, id=department_id)
+        user_to_add = get_object_or_404(User, id=user_id)
+        
+        # Check if user is already a member
+        if user_to_add.department == department:
+            messages.warning(request, f"{user_to_add.get_full_name() or user_to_add.email} is already a member of this department.")
+            return redirect('projects:department_detail', pk=department_id)
+        
+        # Add user to department
+        user_to_add.department = department
+        user_to_add.save()
+        
+        # Log activity
+        ActivityLog.objects.create(
+            user=request.user,
+            category=ActivityLog.Category.TEAM,
+            action_type=ActivityLog.ActionType.ASSIGN,
+            description=f"Added {user_to_add.get_full_name() or user_to_add.email} to department: {department.name}",
+            related_user=user_to_add
+        )
+        
+        messages.success(request, f"{user_to_add.get_full_name() or user_to_add.email} has been added to the department.")
+        return redirect('projects:department_detail', pk=department_id)
+
+class DepartmentMemberRemoveView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    View for removing members from a department
+    """
+    def test_func(self):
+        department_id = self.kwargs.get('department_id')
+        department = get_object_or_404(Department, id=department_id)
+        user = self.request.user
+        return user.is_admin or user.is_superuser or department.head == user
+    
+    def post(self, request, *args, **kwargs):
+        department_id = self.kwargs.get('department_id')
+        user_id = self.kwargs.get('user_id')
+        
+        department = get_object_or_404(Department, id=department_id)
+        user_to_remove = get_object_or_404(User, id=user_id)
+        
+        # Don't allow removing the department head
+        if department.head == user_to_remove:
+            messages.error(request, "Cannot remove the department head from the department.")
+            return redirect('projects:department_detail', pk=department_id)
+        
+        # Check if user is actually in this department
+        if user_to_remove.department != department:
+            messages.warning(request, f"{user_to_remove.get_full_name() or user_to_remove.email} is not a member of this department.")
+            return redirect('projects:department_detail', pk=department_id)
+        
+        # Remove user from department
+        user_to_remove.department = None
+        user_to_remove.save()
+        
+        # Log activity
+        ActivityLog.objects.create(
+            user=request.user,
+            category=ActivityLog.Category.TEAM,
+            action_type=ActivityLog.ActionType.DELETE,
+            description=f"Removed {user_to_remove.get_full_name() or user_to_remove.email} from department: {department.name}",
+            related_user=user_to_remove
+        )
+        
+        messages.success(request, f"{user_to_remove.get_full_name() or user_to_remove.email} has been removed from the department.")
+        return redirect('projects:department_detail', pk=department_id)

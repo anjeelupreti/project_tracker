@@ -2,23 +2,145 @@
 Project Tracker Custom Styling 
 */
 
-/* Dashboard cards */
-.dashboard-card {
-    border-radius: 10px;
+/* Main Styles */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* Custom colors and utility classes */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, var(--bs-primary) 0%, #4361ee 100%);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, var(--bs-success) 0%, #10b981 100%);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, var(--bs-info) 0%, #0ea5e9 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, var(--bs-warning) 0%, #f59e0b 100%);
+}
+
+.bg-gradient-danger {
+    background: linear-gradient(135deg, var(--bs-danger) 0%, #ef4444 100%);
+}
+
+.bg-primary-subtle {
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+}
+
+.bg-success-subtle {
+    background-color: rgba(var(--bs-success-rgb), 0.1);
+}
+
+.bg-info-subtle {
+    background-color: rgba(var(--bs-info-rgb), 0.1);
+}
+
+.bg-warning-subtle {
+    background-color: rgba(var(--bs-warning-rgb), 0.1);
+}
+
+.bg-danger-subtle {
+    background-color: rgba(var(--bs-danger-rgb), 0.1);
+}
+
+/* Enhanced Card Styles */
+.card {
     border: none;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s, box-shadow 0.2s;
+    border-radius: 0.75rem;
+    box-shadow: 0 0.125rem 0.375rem rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.card-header {
+    background-color: var(--bs-white);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 1.25rem 1.5rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-footer {
+    background-color: var(--bs-light);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 1rem 1.5rem;
+}
+
+/* Stats Card Styles */
+.stats-card {
+    border-radius: 1rem;
+    border: none;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.08);
     height: 100%;
 }
 
-.dashboard-card:hover {
+.stats-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0.75rem 1.5rem rgba(0,0,0,0.15);
+}
+
+.stats-card .card-body {
+    padding: 1.5rem;
+}
+
+.stats-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.stats-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+}
+
+.stats-label {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+}
+
+.stats-trend {
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+}
+
+.stats-trend i {
+    margin-right: 0.25rem;
+}
+
+/* Dashboard cards */
+.dashboard-card {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,0.05);
+    overflow: hidden;
+    height: 100%;
 }
 
 .dashboard-card .card-header {
-    background-color: transparent;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    background-color: var(--bs-white);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    padding: 1.25rem 1.5rem;
     font-weight: 600;
 }
 
@@ -26,9 +148,273 @@ Project Tracker Custom Styling
     padding: 1.5rem;
 }
 
-.dashboard-card .icon {
-    font-size: 2.5rem;
-    opacity: 0.8;
+/* Button Enhancements */
+.btn {
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    box-shadow: 0 0.25rem 0.5rem rgba(var(--bs-primary-rgb), 0.15);
+}
+
+.btn-success {
+    box-shadow: 0 0.25rem 0.5rem rgba(var(--bs-success-rgb), 0.15);
+}
+
+.btn-info {
+    box-shadow: 0 0.25rem 0.5rem rgba(var(--bs-info-rgb), 0.15);
+}
+
+.btn-warning {
+    box-shadow: 0 0.25rem 0.5rem rgba(var(--bs-warning-rgb), 0.15);
+}
+
+.btn-danger {
+    box-shadow: 0 0.25rem 0.5rem rgba(var(--bs-danger-rgb), 0.15);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+.btn-sm {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.125rem;
+}
+
+/* Forms Enhancement */
+.form-control {
+    border-radius: 0.5rem;
+    padding: 0.625rem 1rem;
+    border-color: rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.form-control:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.15);
+}
+
+.form-control-lg {
+    height: calc(3rem + 2px);
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+}
+
+.form-label {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--bs-gray-700);
+}
+
+.form-text {
+    color: var(--bs-gray-600);
+}
+
+.input-group-text {
+    border-radius: 0.5rem;
+    padding: 0.625rem 1rem;
+    background-color: var(--bs-light);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Progress Bars */
+.progress {
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+}
+
+/* Badge Styles */
+.badge {
+    padding: 0.5em 0.75em;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.badge-rounded-pill {
+    border-radius: 50rem;
+}
+
+/* Auth Pages */
+.auth-card {
+    box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.1);
+    border: none;
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+.auth-card .card-header {
+    padding: 1.5rem;
+}
+
+.auth-card .card-body {
+    padding: 2rem;
+}
+
+/* Settings Pages */
+.settings-sidebar {
+    border-right: 1px solid var(--bs-border-color);
+    background-color: var(--bs-light);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    position: sticky;
+    top: 2rem;
+}
+
+.settings-sidebar .nav-link {
+    padding: 0.85rem 1rem;
+    color: var(--bs-body-color);
+    border-radius: 0.375rem;
+    margin: 0.25rem 0;
+    transition: all 0.2s ease;
+}
+
+.settings-sidebar .nav-link:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+    color: var(--bs-primary);
+}
+
+.settings-sidebar .nav-link.active {
+    background-color: var(--bs-primary);
+    color: var(--bs-white);
+    font-weight: 500;
+    box-shadow: 0 4px 8px rgba(var(--bs-primary-rgb), 0.25);
+}
+
+.settings-sidebar .nav-link i {
+    width: 1.5rem;
+    text-align: center;
+    margin-right: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.settings-content {
+    min-height: 600px;
+    padding: 0 1rem;
+}
+
+.section-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+/* Dashboard Container */
+.dashboard-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+/* Activity Timeline */
+.activity-timeline .activity-item {
+    position: relative;
+    padding-bottom: 1.5rem;
+    padding-left: 1.5rem;
+}
+
+.activity-timeline .activity-item:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--bs-primary);
+    margin-left: -7px;
+    z-index: 2;
+    box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), 0.2);
+}
+
+.activity-timeline .activity-item:after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 14px;
+    bottom: 0;
+    width: 2px;
+    background: rgba(var(--bs-primary-rgb), 0.2);
+    margin-left: -1px;
+}
+
+.activity-timeline .activity-item:last-child:after {
+    display: none;
+}
+
+.activity-time {
+    font-size: 0.75rem;
+    color: var(--bs-secondary-color);
+}
+
+/* Project Cards */
+.project-card {
+    border: none;
+    border-radius: 0.75rem;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.project-card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+    transform: translateY(-3px);
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Color Swatch */
+.color-swatch {
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+    border: 3px solid var(--bs-white);
+    box-shadow: 0 0 0 1px var(--bs-border-color);
+    vertical-align: middle;
+}
+
+/* Row Styling */
+.row {
+    margin-right: 0;
+    margin-left: 0;
+    width: 100%;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .stats-card .card-body {
+        padding: 1rem;
+    }
+    
+    .stats-value {
+        font-size: 1.5rem;
+    }
+    
+    .stats-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
 }
 
 /* Task board */
@@ -226,11 +612,6 @@ Project Tracker Custom Styling
 }
 
 /* Progress bars */
-.progress {
-    height: 10px;
-    border-radius: 5px;
-}
-
 .progress-sm {
     height: 5px;
 }

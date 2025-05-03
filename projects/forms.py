@@ -53,6 +53,10 @@ class ProjectForm(forms.ModelForm):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
+        # Make department and lead optional in the form
+        self.fields['department'].required = False
+        self.fields['lead'].required = False
+        
         self.helper = FormHelper()
         self.helper.form_method = 'post'
         self.helper.layout = Layout(
@@ -84,6 +88,10 @@ class ProjectForm(forms.ModelForm):
             is_approved=True
         ).order_by('first_name', 'last_name')
         
+        # Add help text for optional fields
+        self.fields['department'].help_text = "Optional. You can assign a department later."
+        self.fields['lead'].help_text = "Optional. You can assign a project lead later."
+        
         # If user is not admin, restrict department and lead choices
         if self.user and not (self.user.is_admin or self.user.is_superuser):
             if self.user.is_team_lead:
@@ -110,10 +118,17 @@ class ProjectForm(forms.ModelForm):
 class TaskForm(forms.ModelForm):
     """Form for creating and updating tasks"""
     
+    assignees = forms.ModelMultipleChoiceField(
+        queryset=User.objects.none(),
+        required=False,
+        widget=forms.SelectMultiple(attrs={'class': 'select2-assignees'}),
+        help_text="Select one or more assignees for this task"
+    )
+    
     class Meta:
         model = Task
         fields = [
-            'title', 'description', 'project', 'assignee', 'status',
+            'title', 'description', 'project', 'assignee', 'assignees', 'status',
             'priority', 'due_date', 'estimated_hours'
         ]
         widgets = {
@@ -124,6 +139,10 @@ class TaskForm(forms.ModelForm):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
+        # Hide the single assignee field as we'll use the multiple assignees field
+        self.fields['assignee'].widget = forms.HiddenInput()
+        self.fields['assignee'].required = False
+        
         self.helper = FormHelper()
         self.helper.form_method = 'post'
         self.helper.layout = Layout(
@@ -131,7 +150,7 @@ class TaskForm(forms.ModelForm):
             'description',
             Row(
                 Column('project', css_class='form-group col-md-6'),
-                Column('assignee', css_class='form-group col-md-6'),
+                Column('assignees', css_class='form-group col-md-6'),
                 css_class='form-row'
             ),
             Row(
@@ -144,8 +163,9 @@ class TaskForm(forms.ModelForm):
                 Column('estimated_hours', css_class='form-group col-md-6'),
                 css_class='form-row'
             ),
+            'assignee',  # Hidden field
             Div(
-                Submit('submit', 'Save Task', css_class='btn btn-primary'),
+                Submit('submit', 'Save Task', css_class='btn btn-warning'),
                 css_class='text-end'
             )
         )
@@ -161,24 +181,54 @@ class TaskForm(forms.ModelForm):
                 # Regular members can only create tasks for projects they're part of
                 self.fields['project'].queryset = Project.objects.filter(
                     members=self.user
-                ).order_by('name')
+                ).distinct().order_by('name')
             
             # If there's only one project available, select it by default
             if self.fields['project'].queryset.count() == 1:
                 self.fields['project'].initial = self.fields['project'].queryset.first()
-        
-        # Allow selection of users from the project as assignees
+        else:
+            # Admin and superuser can see all projects
+            self.fields['project'].queryset = Project.objects.all().order_by('name')
+            
+        # For assignee field
         if self.instance and self.instance.pk and self.instance.project:
-            self.fields['assignee'].queryset = self.instance.project.members.all().order_by(
+            # For existing task, show project members
+            members = self.instance.project.members.all().order_by(
                 'first_name', 'last_name'
             )
+            self.fields['assignees'].queryset = members
+            
+            # Set initial assignees if task has assignees through TaskAssignee model
+            if hasattr(self.instance, 'task_assignees'):
+                self.fields['assignees'].initial = User.objects.filter(
+                    task_assignees__task=self.instance
+                )
+        elif 'initial' in kwargs and 'project' in kwargs['initial']:
+            # When creating task with pre-selected project
+            project_id = kwargs['initial']['project']
+            try:
+                project = Project.objects.get(id=project_id)
+                self.fields['assignees'].queryset = project.members.all().order_by(
+                    'first_name', 'last_name'
+                )
+            except Project.DoesNotExist:
+                self.fields['assignees'].queryset = User.objects.none()
         else:
-            # Initially, no project selected, so no assignee options
-            self.fields['assignee'].queryset = User.objects.none()
+            # Initially, show all active users for admins, no assignee options for others
+            if self.user and (self.user.is_admin or self.user.is_superuser):
+                self.fields['assignees'].queryset = User.objects.filter(is_active=True).order_by(
+                    'first_name', 'last_name'
+                )
+            else:
+                self.fields['assignees'].queryset = User.objects.none()
             
         # If current user is a member, default assignee to self
         if self.user and self.user.role == User.Role.MEMBER:
-            self.fields['assignee'].initial = self.user
+            self.fields['assignees'].initial = [self.user]
+        
+        # Add a note about choosing a project first if needed
+        if not self.instance or not self.instance.pk:
+            self.fields['assignees'].help_text = "Select a project first to see available assignees"
 
     def clean(self):
         cleaned_data = super().clean()
@@ -188,7 +238,31 @@ class TaskForm(forms.ModelForm):
         if due_date and not self.instance.pk and due_date < timezone.now().date():
             self.add_error('due_date', ValidationError(_('Due date cannot be in the past for new tasks')))
             
+        # If assignees are selected, set the primary assignee to the first one
+        assignees = cleaned_data.get('assignees')
+        if assignees and assignees.exists():
+            cleaned_data['assignee'] = assignees.first()
+            
         return cleaned_data
+    
+    def save(self, commit=True):
+        task = super().save(commit=commit)
+        
+        # Handle multiple assignees - save them through the TaskAssignee model
+        if commit and 'assignees' in self.cleaned_data and self.cleaned_data['assignees']:
+            # First remove any existing assignees
+            if hasattr(task, 'task_assignees'):
+                task.task_assignees.all().delete()
+            
+            # Add new assignees
+            for user in self.cleaned_data['assignees']:
+                TaskAssignee.objects.create(
+                    task=task,
+                    user=user,
+                    assigned_by=self.user if self.user else task.created_by
+                )
+            
+        return task
 
 class TaskAssignForm(forms.ModelForm):
     """Form for assigning tasks to users"""

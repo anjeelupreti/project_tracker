@@ -9,41 +9,62 @@
 <div class="container mt-5">
   <div class="row justify-content-center">
     <div class="col-md-6">
-      <div class="card shadow">
-        <div class="card-header bg-primary text-white">
-          <h3 class="mb-0">{% trans "Confirm Email Address" %}</h3>
+      <div class="card shadow-lg border-0 rounded-lg">
+        <div class="card-header bg-gradient-warning text-white text-center py-4">
+          <h3 class="mb-0 fw-bold">{% trans "Confirm Email" %}</h3>
+          <p class="mb-0 text-white-50">Verify your email address to continue</p>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
           {% if confirmation %}
             {% user_display confirmation.email_address.user as user_display %}
             
-            <p class="mb-4">
-              {% blocktrans with confirmation.email_address.email as email %}
-                Please confirm that <strong>{{ email }}</strong> is an email address for user {{ user_display }}.
-              {% endblocktrans %}
-            </p>
+            <div class="text-center mb-4">
+              <div class="mb-3">
+                <i class="fas fa-envelope-open-text fs-1 text-warning"></i>
+              </div>
+              <p class="mb-3">
+                {% blocktrans with confirmation.email_address.email as email %}
+                  Please confirm that <strong class="text-primary">{{ email }}</strong> is the email address for user <strong>{{ user_display }}</strong>.
+                {% endblocktrans %}
+              </p>
+            </div>
             
             <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
               {% csrf_token %}
               <div class="d-grid gap-2">
-                <button class="btn btn-success" type="submit">{% trans "Confirm" %}</button>
+                <button class="btn btn-warning text-white py-2 fw-bold" type="submit">
+                  <i class="fas fa-check-circle me-2"></i>{% trans "Confirm Email Address" %}
+                </button>
               </div>
             </form>
             
           {% else %}
             {% url 'account_email' as email_url %}
             
-            <div class="alert alert-danger">
-              {% blocktrans %}
-                This email confirmation link has expired or is invalid. Please 
-                <a href="{{ email_url }}" class="alert-link">request a new confirmation email</a>.
-              {% endblocktrans %}
+            <div class="text-center mb-4">
+              <div class="mb-3">
+                <i class="fas fa-exclamation-triangle fs-1 text-danger"></i>
+              </div>
+              <div class="alert alert-danger">
+                {% blocktrans %}
+                  This email confirmation link has expired or is invalid. Please 
+                  <a href="{{ email_url }}" class="alert-link">request a new confirmation email</a>.
+                {% endblocktrans %}
+              </div>
             </div>
             
             <div class="text-center mt-4">
-              <a href="{% url 'account_login' %}" class="btn btn-primary">{% trans "Sign In" %}</a>
+              <a href="{% url 'account_login' %}" class="btn btn-primary">
+                <i class="fas fa-sign-in-alt me-2"></i>{% trans "Back to Sign In" %}
+              </a>
             </div>
           {% endif %}
+        </div>
+        <div class="card-footer bg-light py-3 text-center">
+          <div class="small">
+            <i class="fas fa-shield-alt me-1"></i>
+            Email verification helps protect your account security
+          </div>
         </div>
       </div>
     </div>

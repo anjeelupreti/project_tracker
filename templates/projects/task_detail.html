@@ -24,7 +24,23 @@
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    margin-right: 8px;
+    margin-right: 6px;
+  }
+  
+  .priority-indicator[data-priority="LOW"] {
+    background-color: #6c757d;
+  }
+  
+  .priority-indicator[data-priority="MEDIUM"] {
+    background-color: #0d6efd;
+  }
+  
+  .priority-indicator[data-priority="HIGH"] {
+    background-color: #ffc107;
+  }
+  
+  .priority-indicator[data-priority="URGENT"] {
+    background-color: #dc3545;
   }
   
   .update-card, .comment-card, .attachment-card {
@@ -207,15 +223,41 @@
           </div>
           <div class="col-md-6">
             <div class="mb-3">
-              <h5 class="card-title mb-2">Assignee</h5>
-              <p class="card-text">
-                <i class="fas fa-user me-2 text-primary"></i>
-                {% if task.assignee %}
-                  {{ task.assignee.get_full_name|default:task.assignee.email }}
+              <h5 class="card-title mb-2">Assignees</h5>
+              <div class="card-text">
+                <i class="fas fa-users me-2 text-warning"></i>
+                {% if task.task_assignees.all %}
+                  <div class="d-flex flex-wrap align-items-center mt-2">
+                    {% for assignee_obj in task.task_assignees.all %}
+                      {% with assignee=assignee_obj.user %}
+                        <div class="d-flex align-items-center me-3 mb-2">
+                          {% if assignee.profile_picture %}
+                            <img src="{{ assignee.profile_picture.url }}" alt="{{ assignee.get_full_name }}" class="rounded-circle me-2" width="32" height="32">
+                          {% else %}
+                            <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                              <span class="text-white fw-bold">{{ assignee.get_initials }}</span>
+                            </div>
+                          {% endif %}
+                          <span>{{ assignee.get_full_name|default:assignee.email }}</span>
+                        </div>
+                      {% endwith %}
+                    {% endfor %}
+                  </div>
+                {% elif task.assignee %}
+                  <div class="d-flex align-items-center mt-2">
+                    {% if task.assignee.profile_picture %}
+                      <img src="{{ task.assignee.profile_picture.url }}" alt="{{ task.assignee.get_full_name }}" class="rounded-circle me-2" width="32" height="32">
+                    {% else %}
+                      <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                        <span class="text-white fw-bold">{{ task.assignee.get_initials }}</span>
+                      </div>
+                    {% endif %}
+                    <span>{{ task.assignee.get_full_name|default:task.assignee.email }}</span>
+                  </div>
                 {% else %}
                   <span class="fst-italic text-muted">Not assigned</span>
                 {% endif %}
-              </p>
+              </div>
             </div>
           </div>
         </div>
@@ -226,12 +268,7 @@
               <h5 class="card-title mb-2">Priority</h5>
               <p class="card-text">
                 <span class="priority-indicator" 
-                      style="background-color: 
-                        {% if task.priority == 'LOW' %}#6c757d
-                        {% elif task.priority == 'MEDIUM' %}#0d6efd
-                        {% elif task.priority == 'HIGH' %}#ffc107
-                        {% elif task.priority == 'URGENT' %}#dc3545
-                        {% endif %};">
+                      data-priority="{{ task.priority }}">
                 </span>
                 {{ task.get_priority_display }}
               </p>
@@ -592,4 +629,60 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Get CSRF token from cookie
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+    
+    // Handle task status update forms
+    const statusForms = document.querySelectorAll('form[action*="task_status_update"]');
+    
+    statusForms.forEach(form => {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const csrftoken = getCookie('csrftoken');
+        
+        fetch(form.action, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrftoken
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Reload the page to show the updated status
+            window.location.reload();
+          } else {
+            alert('Error updating task status: ' + (data.error || 'Unknown error'));
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('An error occurred while updating the task status. Please try again.');
+        });
+      });
+    });
+  });
+</script>
 {% endblock %} 

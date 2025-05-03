@@ -57,7 +57,7 @@
         bottom: 0;
         left: 0.6rem;
         width: 2px;
-        background-color: var(--bs-primary);
+        background-color: var(--bs-warning);
         opacity: 0.2;
     }
     
@@ -74,7 +74,7 @@
         width: 12px;
         height: 12px;
         border-radius: 50%;
-        background-color: var(--bs-primary);
+        background-color: var(--bs-warning);
         border: 2px solid var(--bs-body-bg);
     }
     
@@ -84,6 +84,10 @@
     
     .timeline-item:last-child::before {
         content: '';
+    }
+    
+    .progress-value {
+        /* Width will be set via JavaScript */
     }
 </style>
 {% endblock %}
@@ -103,9 +107,14 @@
         </span>
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
-        {% if user == project.lead or user.is_admin or user.is_superuser %}
+        {% if project.lead and user == project.lead or user.is_admin or user.is_superuser %}
             <a href="{% url 'projects:project_update' project.id %}" class="btn btn-sm btn-outline-primary me-2">
                 <i class="fas fa-edit me-1"></i> Edit Project
+            </a>
+        {% endif %}
+        {% if user.is_admin or user.is_superuser or project.lead and user == project.lead %}
+            <a href="{% url 'accounts:notification_create' %}?project={{ project.id }}" class="btn btn-sm btn-outline-primary me-2">
+                <i class="fas fa-bell me-1"></i> Send Notification
             </a>
         {% endif %}
         <a href="{% url 'projects:project_task_create' project.id %}" class="btn btn-sm btn-primary">
@@ -127,7 +136,8 @@
                 <div class="mb-4">
                     <h5 class="card-title mb-3">Progress</h5>
                     <div class="progress mb-2">
-                        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ project.progress }}%;" 
+                        <div class="progress-bar bg-primary progress-value" 
+                             data-value="{{ project.progress }}" 
                              aria-valuenow="{{ project.progress }}" aria-valuemin="0" aria-valuemax="100">
                             {{ project.progress }}%
                         </div>
@@ -147,10 +157,14 @@
                         <div class="mb-3">
                             <h5 class="card-title mb-2">Department</h5>
                             <p class="card-text">
-                                <i class="fas fa-building me-2 text-primary"></i>
-                                <a href="{% url 'projects:department_detail' project.department.id %}" class="text-decoration-none">
-                                    {{ project.department.name }}
-                                </a>
+                                <i class="fas fa-building me-2 text-warning"></i>
+                                {% if project.department %}
+                                    <a href="{% url 'projects:department_detail' project.department.id %}" class="text-decoration-none">
+                                        {{ project.department.name }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">Not assigned</span>
+                                {% endif %}
                             </p>
                         </div>
                     </div>
@@ -158,8 +172,12 @@
                         <div class="mb-3">
                             <h5 class="card-title mb-2">Project Lead</h5>
                             <p class="card-text">
-                                <i class="fas fa-user-tie me-2 text-primary"></i>
-                                {{ project.lead.get_full_name|default:project.lead.email }}
+                                <i class="fas fa-user-tie me-2 text-warning"></i>
+                                {% if project.lead %}
+                                    {{ project.lead.get_full_name|default:project.lead.email }}
+                                {% else %}
+                                    <span class="text-muted">Not assigned</span>
+                                {% endif %}
                             </p>
                         </div>
                     </div>
@@ -175,7 +193,7 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-3">
                     <div class="me-3 text-center" style="width: 40px;">
-                        <i class="fas fa-tasks fs-4 text-primary"></i>
+                        <i class="fas fa-tasks fs-4 text-warning"></i>
                     </div>
                     <div>
                         <h6 class="mb-0">Tasks</h6>
@@ -185,7 +203,7 @@
                 
                 <div class="d-flex align-items-center mb-3">
                     <div class="me-3 text-center" style="width: 40px;">
-                        <i class="fas fa-users fs-4 text-primary"></i>
+                        <i class="fas fa-users fs-4 text-warning"></i>
                     </div>
                     <div>
                         <h6 class="mb-0">Team Members</h6>
@@ -263,22 +281,580 @@
     
     <!-- Team Tab -->
     <div class="tab-pane fade" id="team" role="tabpanel" aria-labelledby="team-tab">
-        <p>Team Members (basic version - will be expanded)</p>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="mb-0">Team Members</h5>
+            {% if user.is_admin or user.is_superuser or project.lead == user %}
+                <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#addMemberModal">
+                    <i class="fas fa-user-plus me-1"></i> Add Member
+                </button>
+            {% endif %}
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col" style="width: 3%">
+                            <div class="form-check">
+                                <input class="form-check-input select-all-members" type="checkbox" value="" id="selectAllMembers">
+                            </div>
+                        </th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Role</th>
+                        <th scope="col">Department</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in members %}
+                        <tr>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input member-checkbox" type="checkbox" value="{{ member.id }}">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if member.profile_picture %}
+                                        <img src="{{ member.profile_picture.url }}" alt="{{ member.get_full_name }}" class="rounded-circle me-2" width="32" height="32">
+                                    {% else %}
+                                        <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                            <span class="text-white fw-bold">{{ member.get_initials }}</span>
+                                        </div>
+                                    {% endif %}
+                                    {{ member.get_full_name|default:member.email }}
+                                </div>
+                            </td>
+                            <td>{{ member.email }}</td>
+                            <td>
+                                {% with membership=member.memberships.get %}
+                                    {{ membership.role|default:member.get_role_display }}
+                                {% endwith %}
+                            </td>
+                            <td>{{ member.department.name|default:"Not assigned" }}</td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="memberActions{{ member.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="memberActions{{ member.id }}">
+                                        <li><a class="dropdown-item" href="{% url 'accounts:user_profile' member.id %}">
+                                            <i class="fas fa-user me-2"></i> View Profile
+                                        </a></li>
+                                        {% if user.is_admin or user.is_superuser or project.lead == user %}
+                                            <li><a class="dropdown-item member-edit" href="#" data-member-id="{{ member.id }}" data-bs-toggle="modal" data-bs-target="#editMemberModal">
+                                                <i class="fas fa-edit me-2"></i> Edit Role
+                                            </a></li>
+                                            {% if member != project.lead %}
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <form method="post" action="{% url 'projects:project_member_remove' project.id member.id %}" class="delete-member-form">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="dropdown-item text-danger">
+                                                            <i class="fas fa-user-minus me-2"></i> Remove
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            {% endif %}
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <i class="fas fa-users text-muted mb-3" style="font-size: 2rem;"></i>
+                                <p class="text-muted mb-0">No team members added to this project yet.</p>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if user.is_admin or user.is_superuser or project.lead == user %}
+            {% if members|length > 1 %}
+                <div class="mt-3">
+                    <button class="btn btn-sm btn-danger" disabled id="removeBatchMembers">
+                        <i class="fas fa-user-minus me-1"></i> Remove Selected Members
+                    </button>
+                </div>
+            {% endif %}
+        {% endif %}
     </div>
     
     <!-- Updates Tab -->
     <div class="tab-pane fade" id="updates" role="tabpanel" aria-labelledby="updates-tab">
-        <p>Project Updates (basic version - will be expanded)</p>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="mb-0">Project Updates</h5>
+            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addUpdateModal">
+                <i class="fas fa-plus-circle me-1"></i> Add Update
+            </button>
+        </div>
+        
+        <div class="updates-container">
+            {% for update in updates %}
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center bg-light">
+                        <div>
+                            <span class="badge 
+                                {% if update.update_type == 'PROGRESS' %}bg-primary
+                                {% elif update.update_type == 'DELAY' %}bg-warning
+                                {% elif update.update_type == 'COMPLETION' %}bg-success
+                                {% elif update.update_type == 'ISSUE' %}bg-danger
+                                {% elif update.update_type == 'GENERAL' %}bg-secondary
+                                {% endif %} me-2">
+                                {{ update.get_update_type_display }}
+                            </span>
+                            <strong>{{ update.title }}</strong>
+                        </div>
+                        <small class="text-muted">{{ update.created_at|timesince }} ago</small>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">{{ update.content }}</p>
+                        {% if update.completion_percentage %}
+                            <div class="mb-2">
+                                <small class="text-muted">Completion:</small>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-primary progress-value" 
+                                         data-value="{{ update.completion_percentage }}" 
+                                         aria-valuenow="{{ update.completion_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    <small class="text-muted">{{ update.completion_percentage }}%</small>
+                                </div>
+                            </div>
+                        {% endif %}
+                        {% if update.new_estimated_date %}
+                            <div class="mt-2">
+                                <small class="text-muted">New estimated completion: {{ update.new_estimated_date|date:"F d, Y" }}</small>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer bg-white">
+                        <small class="text-muted">Posted by {{ update.author.get_full_name|default:update.author.email }}</small>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="text-center py-5">
+                    <i class="fas fa-clipboard-list fa-3x mb-3 text-muted"></i>
+                    <p class="text-muted">No updates have been posted for this project yet.</p>
+                </div>
+            {% endfor %}
+        </div>
+        
+        {% if updates.count > 5 %}
+            <div class="text-center mt-3">
+                <a href="{% url 'projects:project_update_list' project.id %}" class="btn btn-sm btn-warning">
+                    <i class="fas fa-list me-1"></i> View All Updates
+                </a>
+            </div>
+        {% endif %}
     </div>
     
     <!-- Attachments Tab -->
     <div class="tab-pane fade" id="attachments" role="tabpanel" aria-labelledby="attachments-tab">
-        <p>Project Attachments (basic version - will be expanded)</p>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="mb-0">Project Attachments</h5>
+            <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#addAttachmentModal">
+                <i class="fas fa-paperclip me-1"></i> Add Attachment
+            </button>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col" style="width: 3%">
+                            <div class="form-check">
+                                <input class="form-check-input select-all-attachments" type="checkbox" value="" id="selectAllAttachments">
+                            </div>
+                        </th>
+                        <th scope="col">Filename</th>
+                        <th scope="col">Description</th>
+                        <th scope="col">Uploaded By</th>
+                        <th scope="col">Uploaded On</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attachment in attachments %}
+                        <tr>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input attachment-checkbox" type="checkbox" value="{{ attachment.id }}">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-file me-2 text-warning"></i>
+                                    {{ attachment.filename }}
+                                </div>
+                            </td>
+                            <td>{{ attachment.description|default:"No description" }}</td>
+                            <td>{{ attachment.uploaded_by.get_full_name|default:attachment.uploaded_by.email }}</td>
+                            <td>{{ attachment.uploaded_at|date:"F d, Y g:i A" }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ attachment.file.url }}" class="btn btn-sm btn-outline-warning" download="{{ attachment.filename }}">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    {% if user.is_admin or user.is_superuser or project.lead == user or attachment.uploaded_by == user %}
+                                        <button type="button" class="btn btn-sm btn-outline-danger delete-attachment" data-attachment-id="{{ attachment.id }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <i class="fas fa-paperclip text-muted mb-3" style="font-size: 2rem;"></i>
+                                <p class="text-muted mb-0">No attachments have been added to this project yet.</p>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if user.is_admin or user.is_superuser or project.lead == user %}
+            {% if attachments|length > 0 %}
+                <div class="mt-3">
+                    <button class="btn btn-sm btn-danger" disabled id="deleteSelectedAttachments">
+                        <i class="fas fa-trash me-1"></i> Delete Selected Attachments
+                    </button>
+                </div>
+            {% endif %}
+        {% endif %}
     </div>
     
     <!-- Activities Tab -->
     <div class="tab-pane fade" id="activities" role="tabpanel" aria-labelledby="activities-tab">
-        <p>Recent Activities (basic version - will be expanded)</p>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="mb-0">Recent Activities</h5>
+            <div>
+                <select class="form-select form-select-sm" id="activityFilter">
+                    <option value="all">All Activities</option>
+                    <option value="task">Task Activities</option>
+                    <option value="team">Team Activities</option>
+                    <option value="update">Updates</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="timeline-container" style="max-height: 500px; overflow-y: auto;">
+            <div class="timeline">
+                {% for activity in activities|slice:":15" %}
+                    <div class="timeline-item activity-item" data-category="{{ activity.category }}">
+                        <div class="mb-2">
+                            <span class="badge 
+                                {% if activity.action_type == 'CREATE' %}bg-success
+                                {% elif activity.action_type == 'UPDATE' %}bg-warning
+                                {% elif activity.action_type == 'DELETE' %}bg-danger
+                                {% elif activity.action_type == 'COMPLETE' %}bg-success
+                                {% elif activity.action_type == 'ASSIGN' %}bg-info
+                                {% elif activity.action_type == 'COMMENT' %}bg-secondary
+                                {% else %}bg-primary{% endif %}">
+                                {{ activity.get_action_type_display }}
+                            </span>
+                            <small class="text-muted ms-2">{{ activity.timestamp|timesince }} ago</small>
+                        </div>
+                        <p class="mb-1">{{ activity.description }}</p>
+                        <small class="text-muted">By {{ activity.user.get_full_name|default:activity.user.email }}</small>
+                    </div>
+                {% empty %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-history fa-3x mb-3 text-muted"></i>
+                        <p class="text-muted">No activity has been recorded yet.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        {% if activities.count > 15 %}
+            <div class="text-center mt-3">
+                <a href="{% url 'projects:project_activity_list' project.id %}" class="btn btn-sm btn-warning">
+                    <i class="fas fa-list me-1"></i> View All Activities
+                </a>
+            </div>
+        {% endif %}
     </div>
 </div>
-{% endblock %} 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle select all checkboxes
+        const selectAllMembers = document.querySelector('.select-all-members');
+        const memberCheckboxes = document.querySelectorAll('.member-checkbox');
+        const removeBatchBtn = document.getElementById('removeBatchMembers');
+        
+        if (selectAllMembers) {
+            selectAllMembers.addEventListener('change', function() {
+                const isChecked = this.checked;
+                memberCheckboxes.forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                });
+                updateRemoveBatchButton();
+            });
+        }
+        
+        memberCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateRemoveBatchButton);
+        });
+        
+        function updateRemoveBatchButton() {
+            const checkedCount = document.querySelectorAll('.member-checkbox:checked').length;
+            if (removeBatchBtn) {
+                removeBatchBtn.disabled = checkedCount === 0;
+            }
+        }
+        
+        // Handle select all attachments
+        const selectAllAttachments = document.querySelector('.select-all-attachments');
+        const attachmentCheckboxes = document.querySelectorAll('.attachment-checkbox');
+        const deleteSelectedBtn = document.getElementById('deleteSelectedAttachments');
+        
+        if (selectAllAttachments) {
+            selectAllAttachments.addEventListener('change', function() {
+                const isChecked = this.checked;
+                attachmentCheckboxes.forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                });
+                updateDeleteSelectedButton();
+            });
+        }
+        
+        attachmentCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateDeleteSelectedButton);
+        });
+        
+        function updateDeleteSelectedButton() {
+            const checkedCount = document.querySelectorAll('.attachment-checkbox:checked').length;
+            if (deleteSelectedBtn) {
+                deleteSelectedBtn.disabled = checkedCount === 0;
+            }
+        }
+        
+        // Handle activity filtering
+        const activityFilter = document.getElementById('activityFilter');
+        const activityItems = document.querySelectorAll('.activity-item');
+        
+        if (activityFilter) {
+            activityFilter.addEventListener('change', function() {
+                const selectedCategory = this.value;
+                
+                activityItems.forEach(item => {
+                    if (selectedCategory === 'all' || item.dataset.category === selectedCategory) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // Handle delete member confirmation
+        const deleteMemberForms = document.querySelectorAll('.delete-member-form');
+        
+        deleteMemberForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                if (!confirm('Are you sure you want to remove this member from the project?')) {
+                    e.preventDefault();
+                }
+            });
+        });
+        
+        // Handle attachment deletion
+        const deleteAttachmentBtns = document.querySelectorAll('.delete-attachment');
+        
+        deleteAttachmentBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const attachmentId = this.dataset.attachmentId;
+                if (confirm('Are you sure you want to delete this attachment?')) {
+                    // Submit delete request
+                    fetch(`/projects/attachments/${attachmentId}/delete/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken'),
+                        }
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            window.location.reload();
+                        }
+                    });
+                }
+            });
+        });
+        
+        // Utility function to get CSRF token from cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Set progress bar widths from data attributes
+        document.querySelectorAll('.progress-value').forEach(function(el) {
+            el.style.width = el.getAttribute('data-value') + '%';
+        });
+    });
+</script>
+{% endblock %}
+
+<!-- Add Member Modal -->
+<div class="modal fade" id="addMemberModal" tabindex="-1" aria-labelledby="addMemberModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addMemberModalLabel">Add Team Member</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'projects:project_member_add' project.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="user_id" class="form-label">Select User</label>
+                        <select class="form-select" id="user_id" name="user_id" required>
+                            <option value="">Select a user...</option>
+                            {% for user in available_users %}
+                                <option value="{{ user.id }}">{{ user.get_full_name|default:user.email }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role in Project</label>
+                        <input type="text" class="form-control" id="role" name="role" placeholder="e.g., Developer, Designer, Tester">
+                        <div class="form-text">Specify the member's role in this project.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Add Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Member Modal -->
+<div class="modal fade" id="editMemberModal" tabindex="-1" aria-labelledby="editMemberModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editMemberModalLabel">Edit Member Role</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'projects:project_member_edit_role' project.id %}" id="editMemberForm">
+                {% csrf_token %}
+                <input type="hidden" name="user_id" id="editMemberId">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editRole" class="form-label">Role in Project</label>
+                        <input type="text" class="form-control" id="editRole" name="role" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Attachment Modal -->
+<div class="modal fade" id="addAttachmentModal" tabindex="-1" aria-labelledby="addAttachmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAttachmentModalLabel">Add Attachment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'projects:project_attachment_add' project.id %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">File</label>
+                        <input type="file" class="form-control" id="file" name="file" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="filename" class="form-label">Filename (Optional)</label>
+                        <input type="text" class="form-control" id="filename" name="filename">
+                        <div class="form-text">Leave blank to use the original filename.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description (Optional)</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Upload Attachment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Update Modal -->
+<div class="modal fade" id="addUpdateModal" tabindex="-1" aria-labelledby="addUpdateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addUpdateModalLabel">Add Project Update</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'projects:project_update_add' project.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="update_type" class="form-label">Update Type</label>
+                        <select class="form-select" id="update_type" name="update_type" required>
+                            <option value="PROGRESS">Progress Update</option>
+                            <option value="DELAY">Delay Notification</option>
+                            <option value="COMPLETION">Completion Milestone</option>
+                            <option value="ISSUE">Issue Report</option>
+                            <option value="GENERAL">General Update</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="content" class="form-label">Content</label>
+                        <textarea class="form-control" id="content" name="content" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="completion_percentage" class="form-label">Completion Percentage (Optional)</label>
+                        <input type="number" class="form-control" id="completion_percentage" name="completion_percentage" min="0" max="100">
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_estimated_date" class="form-label">New Estimated Date (Optional)</label>
+                        <input type="date" class="form-control" id="new_estimated_date" name="new_estimated_date">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Post Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div> 
