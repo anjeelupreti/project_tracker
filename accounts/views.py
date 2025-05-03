@@ -773,10 +773,24 @@ class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     """
     model = User
     template_name = 'accounts/user_confirm_delete.html'
+    success_url = reverse_lazy('accounts:user_list')
     
     def test_func(self):
         return self.request.user.is_admin or self.request.user.is_superuser
     
     def get_success_url(self):
-        messages.success(self.request, f"User has been deleted successfully.")
-        return reverse('accounts:user_list')
+        messages.success(self.request, f"User '{self.object.email}' has been successfully deleted.")
+        return self.success_url
+    
+    def delete(self, request, *args, **kwargs):
+        user = self.get_object()
+        
+        # Log the activity
+        ActivityLog.objects.create(
+            user=self.request.user,
+            category=ActivityLog.Category.SYSTEM,
+            action_type=ActivityLog.ActionType.DELETE,
+            description=f"Deleted user: {user.email}"
+        )
+        
+        return super().delete(request, *args, **kwargs)

@@ -8,35 +8,56 @@ A comprehensive Django-based project management system with user role management
   - Email verification using django-allauth
   - Role-based access control (Admin, Team Lead, Member)
   - Designation request system with approval workflow
+  - Modern, responsive authentication UI with gradient backgrounds
+  - Password strength indicators and security features
 
 - **Project Management**
   - Create and manage departments
   - Assign team leads and members to projects
   - Track project progress and deadlines
+  - Visualize project progress with interactive charts
 
 - **Task Management**
   - Create, assign, and update tasks
   - Track task status and deadlines
   - Add comments and attachments to tasks
+  - Scrollable activity timeline for better UX
+
+- **Communication & Notifications**
+  - In-app notification system with multiple notification types
+  - File attachment support for notifications
+  - Email notifications for important events
+  - Custom email templates for better readability
 
 - **Dashboards**
   - Admin dashboard with comprehensive overview
   - Team lead dashboard for team management
   - Member dashboard for assigned tasks and upcoming deadlines
+  - Responsive card-based UI with theme support
+  - Data visualization with interactive charts
 
 - **Self-Service**
   - Profile management
   - Leave request system with approval workflow
   - Theme preferences (light/dark mode)
+  - Personalized settings for notifications and UI preferences
+
+- **UI/UX Features**
+  - Responsive, mobile-friendly design
+  - Smooth animations and transitions
+  - Light/dark theme toggle with persistent preferences
+  - Modern error pages with helpful navigation options
+  - Consistent styling across all application components
 
 ## Technology Stack
 
 - **Backend**: Django 5.2
-- **Frontend**: Bootstrap 5, Chart.js
+- **Frontend**: Bootstrap 5, Chart.js, Select2
 - **Database**: SQLite (default), easily configurable for PostgreSQL/MySQL
 - **Authentication**: django-allauth
 - **History Tracking**: django-simple-history
 - **Forms**: django-crispy-forms with Bootstrap 5
+- **Icons**: Font Awesome 6
 
 ## Demo Screenshots
 
@@ -114,6 +135,7 @@ EMAIL_USE_TLS=True
 - Approve designation requests
 - Manage leave requests
 - View comprehensive dashboards
+- Send system-wide notifications with file attachments
 
 ### For Team Leads
 
@@ -121,6 +143,7 @@ EMAIL_USE_TLS=True
 - Create and assign tasks
 - Track team progress
 - Review team member performance
+- Send team notifications
 
 ### For Members
 
@@ -128,6 +151,7 @@ EMAIL_USE_TLS=True
 - Update task status
 - Request designations
 - Request leave
+- Personalize account settings
 
 ## Project Structure
 
@@ -137,6 +161,16 @@ The project is organized into several Django apps:
 - **core**: Core functionality and landing pages
 - **projects**: Project and task management
 - **dashboard**: Dashboard views for different user roles
+
+## UI Design Principles
+
+The application follows these design principles:
+
+1. **Consistency**: Uniform styling across all pages
+2. **Accessibility**: Readable fonts, contrasting colors, and sensible tab ordering
+3. **Responsiveness**: Works on devices of all sizes
+4. **Performance**: Optimized assets and minimal page load times
+5. **Feedback**: Visual indicators for all user actions
 
 ## Contributing
 
@@ -154,4 +188,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Django and its community for the excellent web framework
 - Bootstrap team for the responsive frontend components
+- Font Awesome for the comprehensive icon library
 - All contributors who have helped shape this project 

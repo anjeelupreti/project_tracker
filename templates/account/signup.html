@@ -23,10 +23,11 @@
     
     .auth-container {
         min-height: calc(100vh - var(--navbar-height));
+        height: calc(100vh - var(--navbar-height));
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 2rem 1rem;
+        padding: 1rem;
     }
     
     .auth-card {
@@ -39,7 +40,10 @@
         transform: translateY(0);
         transition: all 0.3s ease;
         width: 100%;
-        max-width: 500px;
+        max-width: 450px;
+        max-height: calc(100vh - var(--navbar-height) - 2rem);
+        display: flex;
+        flex-direction: column;
     }
     
     [data-bs-theme="dark"] .auth-card {
@@ -53,9 +57,10 @@
     
     .auth-header {
         background: var(--theme-color);
-        padding: 2rem;
+        padding: 1.5rem;
         text-align: center;
         color: white;
+        flex-shrink: 0;
     }
     
     .auth-header h3 {
@@ -69,11 +74,13 @@
     }
     
     .auth-body {
-        padding: 2rem;
+        padding: 1.5rem;
+        overflow-y: auto;
+        flex-grow: 1;
     }
     
     .form-group {
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.25rem;
     }
     
     .form-control {
@@ -116,7 +123,7 @@
     
     .separator {
         text-align: center;
-        margin: 1.5rem 0;
+        margin: 1.25rem 0;
         position: relative;
         color: #6c757d;
     }
@@ -142,7 +149,7 @@
         display: flex;
         justify-content: center;
         gap: 1rem;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.25rem;
     }
     
     .social-btn {
@@ -174,8 +181,8 @@
     
     .auth-footer {
         text-align: center;
-        margin-top: 1.5rem;
-        padding-top: 1.5rem;
+        margin-top: 1.25rem;
+        padding-top: 1.25rem;
         border-top: 1px solid #dee2e6;
     }
     
@@ -207,8 +214,8 @@
     .info-box {
         background-color: #e3f2fd;
         border-radius: 0.5rem;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
     }
     
     [data-bs-theme="dark"] .info-box {
@@ -216,8 +223,58 @@
     }
     
     .terms-check {
-        margin-top: 1.5rem;
-        margin-bottom: 1.5rem;
+        margin-top: 1rem;
+        margin-bottom: 1.25rem;
+    }
+    
+    /* Responsive adjustments for smaller screens */
+    @media (max-height: 700px) {
+        .auth-header {
+            padding: 1rem;
+        }
+        
+        .auth-body {
+            padding: 1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 0.75rem;
+        }
+        
+        .form-control {
+            padding: 0.5rem 0.75rem;
+        }
+        
+        .btn-primary {
+            padding: 0.5rem 1rem;
+        }
+        
+        .terms-check {
+            margin-top: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+    }
+    
+    /* Responsive adjustments for very small screens */
+    @media (max-height: 550px) {
+        .auth-header h3 {
+            font-size: 1.25rem;
+        }
+        
+        .auth-header p {
+            font-size: 0.875rem;
+        }
+        
+        /* Compress the crispy forms a bit */
+        .form-group label {
+            margin-bottom: 0.25rem;
+            font-size: 0.875rem;
+        }
+        
+        .form-text {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
     }
 </style>
 {% endblock %}
@@ -247,19 +304,25 @@
                 </div>
                 
                 <button type="submit" class="btn btn-primary w-100">{% trans "Sign Up" %}</button>
-                
-                <div class="separator">or sign up with</div>
-                
-                <div class="social-login">
-                    <a href="#" class="social-btn google"><i class="fab fa-google"></i></a>
-                    <a href="#" class="social-btn facebook"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" class="social-btn twitter"><i class="fab fa-twitter"></i></a>
-                </div>
-                
-                <div class="auth-footer">
-                    <p>Already have an account? <a href="{% url 'account_login' %}" class="link-animated">{% trans "Sign In" %}</a></p>
-                </div>
             </form>
+            
+            <div class="separator">or</div>
+            
+            <div class="social-login">
+                <a href="#" class="social-btn google">
+                    <i class="fab fa-google"></i>
+                </a>
+                <a href="#" class="social-btn facebook">
+                    <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="#" class="social-btn twitter">
+                    <i class="fab fa-twitter"></i>
+                </a>
+            </div>
+            
+            <div class="auth-footer">
+                <p class="mb-0">{% trans "Already have an account?" %} <a href="{{ login_url }}" class="link-animated">{% trans "Sign In" %}</a></p>
+            </div>
         </div>
     </div>
 </div>

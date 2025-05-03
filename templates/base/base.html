@@ -48,6 +48,14 @@
             right: 0;
             left: 0;
             z-index: 1030;
+            display: flex;
+            flex-wrap: nowrap;
+        }
+        
+        .navbar-brand {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+            white-space: nowrap;
         }
         
         .navbar-nav .dropdown-menu {
@@ -62,11 +70,13 @@
             bottom: 0;
             left: 0;
             width: var(--sidebar-width);
-            z-index: 100;
+            z-index: 1040;
             padding: 0;
             box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
             height: calc(100vh - var(--navbar-height));
             overflow-y: auto;
+            transition: transform 0.3s ease;
+            background-color: #212529; /* Ensure background color is explicitly set */
         }
         
         .sidebar-sticky {
@@ -82,24 +92,50 @@
             padding-top: 1.5rem; /* Add padding to prevent content from being hidden */
         }
         
+        /* Mobile sidebar styles */
         @media (max-width: 768px) {
             .sidebar {
-                margin-left: -280px;
-                transition: margin-left 0.3s ease;
-                position: fixed;
-                top: 56px; /* Navbar height */
+                transform: translateX(-100%);
+                width: 280px; /* Fixed width for mobile */
+                box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+                overflow-y: auto;
                 bottom: 0;
-                z-index: 1031;
-                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+                left: 0;
+                top: var(--navbar-height);
+                position: fixed;
+                z-index: 1040;
+                background-color: #212529;
+                height: calc(100vh - var(--navbar-height));
             }
             
             .sidebar.active {
-                margin-left: 0;
+                transform: translateX(0);
+                display: block !important;
+                visibility: visible !important;
             }
             
             .main-content {
-                margin-left: 0;
-                transition: margin-left 0.3s ease;
+                margin-left: 0 !important;
+                width: 100%;
+                padding: 1rem;
+            }
+            
+            /* More compact navbar on small screens */
+            .navbar {
+                padding: 0 0.5rem;
+            }
+            
+            .navbar-brand {
+                font-size: 1rem;
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+            
+            /* Hide text on very small screens */
+            @media (max-width: 360px) {
+                .navbar-brand span {
+                    display: none;
+                }
             }
         }
         
@@ -386,7 +422,7 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1030;
+            z-index: 1039;
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
@@ -416,6 +452,30 @@
         .bd-mode-toggle {
             z-index: 9999 !important; /* Ensure theme toggler is always on top */
             position: fixed !important;
+        }
+        
+        /* Hamburger button styling */
+        .navbar-toggler {
+            z-index: 1050; /* Higher than sidebar */
+            padding: 0.5rem;
+            border: none;
+            background-color: transparent;
+            cursor: pointer;
+        }
+        
+        .navbar-toggler:focus {
+            outline: none;
+            box-shadow: none;
+        }
+        
+        .navbar-toggler-icon {
+            display: inline-block;
+            width: 1.5em;
+            height: 1.5em;
+            vertical-align: middle;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 100%;
         }
     </style>
     
@@ -473,101 +533,105 @@
     
     <!-- Navbar -->
     <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap shadow">
-        <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6" href="{% url 'core:home' %}">
-            <i class="fas fa-tasks me-2"></i>Project Tracker
-        </a>
-        <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="navbar-nav flex-row ms-auto me-3 align-items-center">
-            {% if user.is_authenticated %}
-                <!-- Notifications Dropdown -->
-                <div class="nav-item text-nowrap dropdown me-3">
-                    <a class="nav-link px-3 position-relative" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-bell"></i>
-                        {% if unread_notification_count > 0 %}
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.5rem;">
-                                {{ unread_notification_count }}
-                                <span class="visually-hidden">unread notifications</span>
-                            </span>
-                        {% endif %}
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-end shadow notification-dropdown" aria-labelledby="notificationsDropdown" style="width: 320px; max-height: 400px; overflow-y: auto;">
-                        <div class="d-flex justify-content-between align-items-center p-3">
-                            <h6 class="dropdown-header p-0">Notifications</h6>
-                            <a href="{% url 'accounts:notification_list' %}" class="text-muted text-decoration-none" style="font-size: 0.8rem;">View All</a>
+        <div class="d-flex align-items-center justify-content-between w-100">
+            <div class="d-flex align-items-center">
+                <button class="navbar-toggler d-md-none me-2" type="button" id="sidebarToggle" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6" href="{% url 'core:home' %}">
+                    <i class="fas fa-tasks me-2"></i><span>Project Tracker</span>
+                </a>
+            </div>
+            <div class="navbar-nav flex-row ms-auto me-3 align-items-center">
+                {% if user.is_authenticated %}
+                    <!-- Notifications Dropdown -->
+                    <div class="nav-item text-nowrap dropdown me-3">
+                        <a class="nav-link px-3 position-relative" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-bell"></i>
+                            {% if unread_notification_count > 0 %}
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.5rem;">
+                                    {{ unread_notification_count }}
+                                    <span class="visually-hidden">unread notifications</span>
+                                </span>
+                            {% endif %}
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end shadow notification-dropdown" aria-labelledby="notificationsDropdown" style="width: 320px; max-height: 400px; overflow-y: auto;">
+                            <div class="d-flex justify-content-between align-items-center p-3">
+                                <h6 class="dropdown-header p-0">Notifications</h6>
+                                <a href="{% url 'accounts:notification_list' %}" class="text-muted text-decoration-none" style="font-size: 0.8rem;">View All</a>
+                            </div>
+                            <div class="dropdown-divider my-0"></div>
+                            
+                            {% with notifications=request.user.notifications.all|slice:":5" %}
+                                {% if notifications %}
+                                    {% for notification in notifications %}
+                                        <a href="{% url 'accounts:mark_notification_as_read' notification.id %}" class="dropdown-item d-flex py-2 {% if not notification.is_read %}bg-body-tertiary{% endif %}">
+                                            <div style="flex: 0 0 40px; text-align: center;">
+                                                {% if notification.notification_type == 'INFO' %}
+                                                    <i class="fas fa-info-circle text-primary"></i>
+                                                {% elif notification.notification_type == 'WARNING' %}
+                                                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                                                {% elif notification.notification_type == 'SUCCESS' %}
+                                                    <i class="fas fa-check-circle text-success"></i>
+                                                {% elif notification.notification_type == 'DANGER' %}
+                                                    <i class="fas fa-exclamation-circle text-danger"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div class="ms-2">
+                                                <div class="fw-semibold">{{ notification.title }}</div>
+                                                <div class="text-truncate" style="max-width: 240px;">{{ notification.message }}</div>
+                                                <small class="text-muted">{{ notification.created_at|timesince }} ago</small>
+                                            </div>
+                                        </a>
+                                    {% endfor %}
+                                    <div class="dropdown-divider my-0"></div>
+                                    <div class="text-center p-2">
+                                        <a href="{% url 'accounts:notification_list' %}" class="btn btn-sm btn-primary w-100">View All Notifications</a>
+                                    </div>
+                                {% else %}
+                                    <div class="d-flex flex-column align-items-center p-4">
+                                        <i class="fas fa-bell-slash text-muted mb-3" style="font-size: 2rem;"></i>
+                                        <p class="text-muted text-center mb-0">No notifications yet.</p>
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
                         </div>
-                        <div class="dropdown-divider my-0"></div>
-                        
-                        {% with notifications=request.user.notifications.all|slice:":5" %}
-                            {% if notifications %}
-                                {% for notification in notifications %}
-                                    <a href="{% url 'accounts:mark_notification_as_read' notification.id %}" class="dropdown-item d-flex py-2 {% if not notification.is_read %}bg-body-tertiary{% endif %}">
-                                        <div style="flex: 0 0 40px; text-align: center;">
-                                            {% if notification.notification_type == 'INFO' %}
-                                                <i class="fas fa-info-circle text-primary"></i>
-                                            {% elif notification.notification_type == 'WARNING' %}
-                                                <i class="fas fa-exclamation-triangle text-warning"></i>
-                                            {% elif notification.notification_type == 'SUCCESS' %}
-                                                <i class="fas fa-check-circle text-success"></i>
-                                            {% elif notification.notification_type == 'DANGER' %}
-                                                <i class="fas fa-exclamation-circle text-danger"></i>
-                                            {% endif %}
-                                        </div>
-                                        <div class="ms-2">
-                                            <div class="fw-semibold">{{ notification.title }}</div>
-                                            <div class="text-truncate" style="max-width: 240px;">{{ notification.message }}</div>
-                                            <small class="text-muted">{{ notification.created_at|timesince }} ago</small>
-                                        </div>
-                                    </a>
-                                {% endfor %}
-                                <div class="dropdown-divider my-0"></div>
-                                <div class="text-center p-2">
-                                    <a href="{% url 'accounts:notification_list' %}" class="btn btn-sm btn-primary w-100">View All Notifications</a>
-                                </div>
+                    </div>
+                    
+                    <!-- User Dropdown -->
+                    <div class="nav-item text-nowrap dropdown">
+                        <a class="nav-link px-3 dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            {% if user.profile_picture %}
+                                <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}" class="rounded-circle me-2" width="32" height="32">
                             {% else %}
-                                <div class="d-flex flex-column align-items-center p-4">
-                                    <i class="fas fa-bell-slash text-muted mb-3" style="font-size: 2rem;"></i>
-                                    <p class="text-muted text-center mb-0">No notifications yet.</p>
+                                <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                    <span class="text-white fw-bold">{{ user.get_initials }}</span>
                                 </div>
                             {% endif %}
-                        {% endwith %}
+                            <span class="d-none d-sm-inline">{{ user.get_full_name|default:user.email }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                                <i class="fas fa-user me-2"></i>Profile
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:settings' %}">
+                                <i class="fas fa-cog me-2"></i>Settings
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'account_logout' %}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Log Out
+                            </a></li>
+                        </ul>
                     </div>
-                </div>
-                
-                <!-- User Dropdown -->
-                <div class="nav-item text-nowrap dropdown">
-                    <a class="nav-link px-3 dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        {% if user.profile_picture %}
-                            <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}" class="rounded-circle me-2" width="32" height="32">
-                        {% else %}
-                            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
-                                <span class="text-white fw-bold">{{ user.get_initials }}</span>
-                            </div>
-                        {% endif %}
-                        <span class="d-none d-sm-inline">{{ user.get_full_name|default:user.email }}</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">
-                            <i class="fas fa-user me-2"></i>Profile
-                        </a></li>
-                        <li><a class="dropdown-item" href="{% url 'accounts:settings' %}">
-                            <i class="fas fa-cog me-2"></i>Settings
-                        </a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{% url 'account_logout' %}">
-                            <i class="fas fa-sign-out-alt me-2"></i>Log Out
-                        </a></li>
-                    </ul>
-                </div>
-            {% else %}
-                <div class="nav-item text-nowrap">
-                    <a class="nav-link px-3" href="{% url 'account_login' %}">Log In</a>
-                </div>
-                <div class="nav-item text-nowrap">
-                    <a class="nav-link px-3" href="{% url 'account_signup' %}">Sign Up</a>
-                </div>
-            {% endif %}
+                {% else %}
+                    <div class="nav-item text-nowrap">
+                        <a class="nav-link px-3" href="{% url 'account_login' %}">Log In</a>
+                    </div>
+                    <div class="nav-item text-nowrap">
+                        <a class="nav-link px-3" href="{% url 'account_signup' %}">Sign Up</a>
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </header>
     
@@ -575,7 +639,7 @@
         <div class="row">
             {% if user.is_authenticated %}
                 <!-- Sidebar -->
-                <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">
+                <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar">
                     <div class="sidebar-sticky pt-3">
                         <div class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none ms-3 pt-2">
                             <span class="fs-5">Navigation</span>
@@ -798,58 +862,73 @@
             })
         });
 
-        // Mobile sidebar toggle
-        document.addEventListener('DOMContentLoaded', function() {
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            const sidebar = document.querySelector('.sidebar');
-            const backdrop = document.createElement('div');
+        // Add click event directly to hamburger button after DOM is loaded
+        window.addEventListener('DOMContentLoaded', function() {
+            var sidebarToggle = document.getElementById('sidebarToggle');
+            var sidebar = document.querySelector('.sidebar');
             
-            backdrop.className = 'sidebar-backdrop';
-            document.body.appendChild(backdrop);
-            
-            // Function to open sidebar
-            function openSidebar() {
-                sidebar.classList.add('active');
-                backdrop.classList.add('show');
-                document.body.classList.add('sidebar-open');
-            }
-            
-            // Function to close sidebar
-            function closeSidebar() {
-                sidebar.classList.remove('active');
-                backdrop.classList.remove('show');
-                document.body.classList.remove('sidebar-open');
-            }
-            
-            // Toggle sidebar on hamburger click
-            sidebarToggle.addEventListener('click', function(e) {
-                e.stopPropagation();
-                if (sidebar.classList.contains('active')) {
-                    closeSidebar();
-                } else {
-                    openSidebar();
+            if (sidebarToggle && sidebar) {
+                // Create backdrop if it doesn't exist
+                var backdrop = document.querySelector('.sidebar-backdrop');
+                if (!backdrop) {
+                    backdrop = document.createElement('div');
+                    backdrop.className = 'sidebar-backdrop';
+                    document.body.appendChild(backdrop);
                 }
-            });
-            
-            // Close sidebar when clicking on backdrop
-            backdrop.addEventListener('click', closeSidebar);
-            
-            // Close sidebar when clicking on an item in mobile view
-            const sidebarItems = document.querySelectorAll('.sidebar .nav-link');
-            sidebarItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    if (window.innerWidth <= 768) {
-                        closeSidebar();
+                
+                // Direct click handler for hamburger
+                sidebarToggle.onclick = function(e) {
+                    e.preventDefault();
+                    console.log('Direct hamburger click');
+                    
+                    if (sidebar.classList.contains('active')) {
+                        // Close sidebar
+                        sidebar.style.transform = 'translateX(-100%)';
+                        sidebar.classList.remove('active');
+                        backdrop.classList.remove('show');
+                        document.body.classList.remove('sidebar-open');
+                    } else {
+                        // Open sidebar
+                        sidebar.style.transform = 'translateX(0)';
+                        sidebar.classList.add('active');
+                        backdrop.classList.add('show');
+                        document.body.classList.add('sidebar-open');
+                    }
+                };
+                
+                // Close sidebar when clicking backdrop
+                backdrop.onclick = function() {
+                    sidebar.style.transform = 'translateX(-100%)';
+                    sidebar.classList.remove('active');
+                    backdrop.classList.remove('show');
+                    document.body.classList.remove('sidebar-open');
+                };
+                
+                // Close sidebar when clicking nav links on mobile
+                var navLinks = sidebar.querySelectorAll('.nav-link');
+                navLinks.forEach(function(link) {
+                    link.addEventListener('click', function() {
+                        if (window.innerWidth < 768) {
+                            sidebar.style.transform = 'translateX(-100%)';
+                            sidebar.classList.remove('active');
+                            backdrop.classList.remove('show');
+                            document.body.classList.remove('sidebar-open');
+                        }
+                    });
+                });
+                
+                // Handle window resize
+                window.addEventListener('resize', function() {
+                    if (window.innerWidth >= 768) {
+                        sidebar.style.transform = '';
+                        if (sidebar.classList.contains('active')) {
+                            sidebar.classList.remove('active');
+                            backdrop.classList.remove('show');
+                            document.body.classList.remove('sidebar-open');
+                        }
                     }
                 });
-            });
-            
-            // Close sidebar when window is resized to desktop size
-            window.addEventListener('resize', function() {
-                if (window.innerWidth > 768 && sidebar.classList.contains('active')) {
-                    closeSidebar();
-                }
-            });
+            }
         });
     </script>
     

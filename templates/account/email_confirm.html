@@ -2,186 +2,240 @@
 {% load static %}
 {% load i18n %}
 {% load account %}
-{% load crispy_forms_tags %}
 
-{% block title %}{% trans "Confirm Email" %}{% endblock %}
+{% block title %}{% trans "Confirm E-mail Address" %}{% endblock %}
 
 {% block extra_css %}
 <style>
-  .auth-container {
-    min-height: calc(100vh - var(--navbar-height));
-    background: linear-gradient(135deg, #4158D0, #C850C0, #FFCC70);
-    background-size: 300% 300%;
-    animation: gradient-animation 15s ease infinite;
-    padding: 2rem 1rem;
-  }
-  
-  @keyframes gradient-animation {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-  
-  .auth-card {
-    border: none;
-    border-radius: 1rem;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
-    background: rgba(255, 255, 255, 0.9);
-    transform: translateY(0);
-    transition: all 0.3s ease;
-  }
-  
-  .auth-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-  }
-  
-  .auth-header {
-    background: linear-gradient(to right, #00B4DB, #0083B0);
-    padding: 2.5rem 2rem;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .auth-header::before {
-    content: '';
-    position: absolute;
-    width: 300px;
-    height: 300px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    top: -150px;
-    right: -150px;
-  }
-  
-  .auth-header::after {
-    content: '';
-    position: absolute;
-    width: 200px;
-    height: 200px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    bottom: -100px;
-    left: -100px;
-  }
-  
-  .auth-header h3 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-    color: white;
-    position: relative;
-    z-index: 1;
-  }
-  
-  .auth-header p {
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 1rem;
-    margin-bottom: 0;
-    position: relative;
-    z-index: 1;
-  }
-  
-  .auth-body {
-    padding: 2.5rem;
-  }
-  
-  .auth-btn {
-    padding: 0.8rem 1rem;
-    font-weight: 600;
-    font-size: 1rem;
-    border-radius: 0.5rem;
-    background: linear-gradient(to right, #00B4DB, #0083B0);
-    border: none;
-    color: white;
-    transition: all 0.3s ease;
-  }
-  
-  .auth-btn:hover {
-    background: linear-gradient(to right, #00A1C4, #00729C);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 180, 219, 0.3);
-  }
-  
-  .auth-footer {
-    background-color: rgba(0, 0, 0, 0.03);
-    padding: 1.5rem;
-    text-align: center;
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
-  }
-  
-  .info-box {
-    background-color: rgba(0, 180, 219, 0.1);
-    border-left: 4px solid #00B4DB;
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-    margin-bottom: 2rem;
-  }
-  
-  .email-icon {
-    display: block;
-    margin: 0 auto 2rem;
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background: rgba(0, 180, 219, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 3rem;
-    color: #00B4DB;
-  }
+    body {
+        background: linear-gradient(135deg, #4158D0, #2370e2, #4158D0);
+        background-size: 400% 400%;
+        animation: gradient-animation 15s ease infinite;
+        min-height: 100vh;
+    }
+    
+    @keyframes gradient-animation {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    .auth-container {
+        min-height: calc(100vh - var(--navbar-height));
+        height: calc(100vh - var(--navbar-height));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+    
+    .auth-card {
+        border: none;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.95);
+        transform: translateY(0);
+        transition: all 0.3s ease;
+        width: 100%;
+        max-width: 450px;
+        max-height: calc(100vh - var(--navbar-height) - 2rem);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    [data-bs-theme="dark"] .auth-card {
+        background: rgba(33, 37, 41, 0.95);
+    }
+    
+    .auth-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    }
+    
+    .auth-header {
+        background: var(--theme-color);
+        padding: 1.5rem;
+        text-align: center;
+        color: white;
+        flex-shrink: 0;
+    }
+    
+    .auth-header h3 {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .auth-header p {
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+    
+    .auth-body {
+        padding: 1.5rem;
+        overflow-y: auto;
+        flex-grow: 1;
+    }
+    
+    .btn-primary {
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        border-radius: 0.5rem;
+        background: var(--theme-color);
+        border: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(13, 110, 253, 0.4);
+    }
+    
+    .auth-footer {
+        text-align: center;
+        margin-top: 1.25rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid #dee2e6;
+    }
+    
+    .link-animated {
+        color: var(--theme-color);
+        text-decoration: none;
+        position: relative;
+        font-weight: 500;
+    }
+    
+    .link-animated::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 2px;
+        bottom: -2px;
+        left: 0;
+        background-color: var(--theme-color);
+        transform: scaleX(0);
+        transform-origin: right;
+        transition: transform 0.3s ease;
+    }
+    
+    .link-animated:hover::after {
+        transform: scaleX(1);
+        transform-origin: left;
+    }
+    
+    .icon-container {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+    }
+    
+    .icon-container.success {
+        background-color: rgba(25, 135, 84, 0.1);
+        color: #198754;
+    }
+    
+    .icon-container.warning {
+        background-color: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+    }
+    
+    .icon-container.primary {
+        background-color: rgba(13, 110, 253, 0.1);
+        color: var(--theme-color);
+    }
+    
+    /* Responsive adjustments for smaller screens */
+    @media (max-height: 700px) {
+        .auth-header {
+            padding: 1rem;
+        }
+        
+        .auth-body {
+            padding: 1rem;
+        }
+        
+        .btn-primary {
+            padding: 0.5rem 1rem;
+        }
+        
+        .icon-container {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 1rem;
+        }
+    }
+    
+    /* Responsive adjustments for very small screens */
+    @media (max-height: 550px) {
+        .auth-header h3 {
+            font-size: 1.25rem;
+        }
+        
+        .auth-header p {
+            font-size: 0.875rem;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="auth-container d-flex align-items-center justify-content-center">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-md-10 col-lg-8 col-xl-6">
-        <div class="auth-card">
-          <div class="auth-header">
-            <h3>{% trans "Confirm Email" %}</h3>
-            <p>{% trans "Verify your email address" %}</p>
-          </div>
-          <div class="auth-body">
-            <div class="text-center">
-              <div class="email-icon">
-                <i class="fas fa-envelope"></i>
-              </div>
-            </div>
-            
-            {% user_display email_address.user as user_display %}
-            
-            <div class="info-box">
-              <h5 class="mb-3">{% trans "Almost there!" %}</h5>
-              <p class="mb-0">
-                {% blocktrans with confirmation.email_address.email as email %}
-                  Please confirm that <strong>{{ email }}</strong> is your email address to complete the registration.
-                {% endblocktrans %}
-              </p>
-            </div>
-            
-            <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
-              {% csrf_token %}
-              <button class="btn auth-btn w-100" type="submit">
-                {% trans "Confirm Email Address" %}
-              </button>
-            </form>
-          </div>
-          <div class="auth-footer">
-            <p>
-              {% blocktrans %}
-                If you did not request this confirmation, you can safely ignore this email.
-              {% endblocktrans %}
-            </p>
-          </div>
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h3>{% trans "Confirm E-mail Address" %}</h3>
+            <p>{% trans "Verify your email to activate your account" %}</p>
         </div>
-      </div>
+        <div class="auth-body">
+            <div class="text-center mb-4">
+                {% if confirmation %}
+                <div class="icon-container primary">
+                    <i class="fas fa-envelope-open-text fa-2x"></i>
+                </div>
+                <h5 class="mb-3">{% trans "Confirm Your Email" %}</h5>
+                <p class="mb-4">
+                    {% blocktrans with confirmation.email_address.email as email %}
+                    Please confirm that <strong>{{ email }}</strong> is your email address by clicking the button below.
+                    {% endblocktrans %}
+                </p>
+                <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-check-circle me-2"></i>{% trans "Confirm" %}
+                        </button>
+                    </div>
+                </form>
+                {% else %}
+                <div class="icon-container warning">
+                    <i class="fas fa-exclamation-triangle fa-2x"></i>
+                </div>
+                <h5 class="mb-3">{% trans "Invalid Confirmation Link" %}</h5>
+                <p class="mb-4">
+                    {% blocktrans %}
+                    This confirmation link has expired or is invalid. Please request a new confirmation email by signing in.
+                    {% endblocktrans %}
+                </p>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'account_login' %}" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt me-2"></i>{% trans "Sign In" %}
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="auth-footer">
+                <p class="mb-0">
+                    <a href="{% url 'account_login' %}" class="link-animated">
+                        <i class="fas fa-arrow-left me-1"></i>{% trans "Back to Sign In" %}
+                    </a>
+                </p>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 {% endblock %} 
