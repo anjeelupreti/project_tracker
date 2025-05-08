@@ -365,7 +365,12 @@
                             <tbody>
                                 {% for task in upcoming_deadlines %}
                                 <tr>
-                                    <td><a href="{% url 'projects:task_detail' task.id %}" class="text-decoration-none">{{ task.title }}</a></td>
+                                    <td>
+                                        <a href="{% url 'projects:task_detail' task.id %}" class="text-decoration-none fw-bold">{{ task.title }}</a>
+                                        <a href="{% url 'projects:task_detail' task.id %}" class="btn btn-sm btn-primary ms-2" title="View task details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
                                     <td>{{ task.project.name }}</td>
                                     <td>{{ task.due_date|date:"M d, Y" }}</td>
                                     <td>
@@ -416,7 +421,12 @@
                             <tbody>
                                 {% for task in overdue_tasks %}
                                 <tr>
-                                    <td><a href="{% url 'projects:task_detail' task.id %}" class="text-decoration-none">{{ task.title }}</a></td>
+                                    <td>
+                                        <a href="{% url 'projects:task_detail' task.id %}" class="text-decoration-none fw-bold">{{ task.title }}</a>
+                                        <a href="{% url 'projects:task_detail' task.id %}" class="btn btn-sm btn-primary ms-2" title="View task details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
                                     <td>{{ task.project.name }}</td>
                                     <td class="text-danger">{{ task.due_date|date:"M d, Y" }}</td>
                                     <td>

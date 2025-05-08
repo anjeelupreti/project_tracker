@@ -16,17 +16,24 @@
         :root {
             --navbar-height: 60px;
             --sidebar-width: 280px;
-            --theme-color: #0d6efd; /* Revert to blue as primary color */
+            --theme-color: #4361ee;
+            --theme-gradient: linear-gradient(135deg, #4361ee, #3a0ca3);
+            --text-color: #f8f9fa;
+            --text-muted: rgba(248, 249, 250, 0.7);
+            --border-radius: 0.75rem;
+            --transition-speed: 0.3s;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
         
         body {
             min-height: 100vh;
-            overflow-x: hidden;  /* Prevent horizontal scrolling */
-            padding-top: var(--navbar-height); /* Add padding for fixed navbar */
+            overflow-x: hidden;
+            padding-top: var(--navbar-height);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         }
         
         html {
-            overflow-y: scroll;  /* Always show vertical scrollbar to prevent layout shifts */
+            overflow-y: scroll;
         }
         
         .container-fluid {
@@ -40,9 +47,10 @@
             width: 100%;
         }
         
+        /* Navbar Styles */
         .navbar {
             height: var(--navbar-height);
-            padding: 0 1.25rem;
+            padding: 0 1.5rem;
             position: fixed;
             top: 0;
             right: 0;
@@ -50,29 +58,61 @@
             z-index: 1030;
             display: flex;
             flex-wrap: nowrap;
-            box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.15);
-            background: linear-gradient(to right, #212529, #343a40);
+            box-shadow: var(--box-shadow);
+            background: var(--theme-gradient);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
         }
         
         .navbar-brand {
-            padding-top: 0.75rem;
-            padding-bottom: 0.75rem;
+            padding: 0.75rem 0;
             white-space: nowrap;
             font-weight: 600;
             letter-spacing: 0.5px;
             font-size: 1.25rem;
-            color: #fff !important;
+            color: var(--text-color) !important;
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-brand i {
+            margin-right: 0.5rem;
+            font-size: 1.4rem;
+            vertical-align: middle;
+            transition: transform 0.3s ease;
+        }
+        
+        .navbar-brand:hover i {
+            transform: rotate(15deg);
         }
         
         .navbar-nav .nav-link {
             padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            transition: all 0.3s;
+            border-radius: var(--border-radius);
+            transition: all var(--transition-speed);
             margin: 0 0.25rem;
+            color: var(--text-color);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .navbar-nav .nav-link:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            transform: scale(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .navbar-nav .nav-link:hover:before {
+            transform: scale(1);
         }
         
         .navbar-nav .nav-link:hover {
-            background-color: rgba(255, 255, 255, 0.1);
             transform: translateY(-2px);
         }
         
@@ -80,12 +120,12 @@
             border: none;
             background-color: transparent;
             padding: 0.5rem;
-            border-radius: 0.5rem;
+            border-radius: var(--border-radius);
             transition: all 0.2s;
         }
         
         .navbar-toggler:hover {
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.15);
         }
         
         .navbar-toggler:focus {
@@ -97,22 +137,39 @@
             position: absolute;
             right: 0;
             left: auto;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            border: none;
+            margin-top: 0.5rem;
+            animation: fadeInDown 0.3s ease;
         }
         
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Sidebar Styles */
         .sidebar {
             position: fixed;
-            top: var(--navbar-height); /* Start below navbar */
+            top: var(--navbar-height);
             bottom: 0;
             left: 0;
             width: var(--sidebar-width);
             z-index: 1040;
             padding: 0;
-            box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.15);
+            box-shadow: var(--box-shadow);
             height: calc(100vh - var(--navbar-height));
             overflow-y: auto;
-            transition: all 0.3s ease;
-            background-color: #212529;
-            background-image: linear-gradient(135deg, #1a1e21, #2c3137);
+            transition: all var(--transition-speed) ease;
+            background: linear-gradient(180deg, #1a1c23, #26282e);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
         }
         
         .sidebar-sticky {
@@ -123,25 +180,18 @@
         
         .main-content {
             margin-left: var(--sidebar-width);
-            transition: all 0.3s;
+            transition: all var(--transition-speed);
             min-height: calc(100vh - var(--navbar-height));
-            padding-top: 1.5rem; /* Add padding to prevent content from being hidden */
+            padding: 1.5rem;
+            background-color: var(--bs-body-bg);
         }
         
         /* Mobile sidebar styles */
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
-                width: 280px; /* Fixed width for mobile */
-                box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-                overflow-y: auto;
-                bottom: 0;
-                left: 0;
-                top: var(--navbar-height);
-                position: fixed;
-                z-index: 1040;
-                background-color: #212529;
-                height: calc(100vh - var(--navbar-height));
+                width: 280px;
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
             }
             
             .sidebar.active {
@@ -156,9 +206,8 @@
                 padding: 1rem;
             }
             
-            /* More compact navbar on small screens */
             .navbar {
-                padding: 0 0.5rem;
+                padding: 0 0.75rem;
             }
             
             .navbar-brand {
@@ -167,7 +216,6 @@
                 padding-right: 0.5rem;
             }
             
-            /* Hide text on very small screens */
             @media (max-width: 360px) {
                 .navbar-brand span {
                     display: none;
@@ -177,28 +225,46 @@
         
         .sidebar .nav-link {
             padding: 0.85rem 1.5rem;
-            margin: 0.5rem 1.25rem;
-            border-radius: 0.75rem;
+            margin: 0.7rem 1rem;
+            border-radius: var(--border-radius);
             font-weight: 500;
-            color: rgba(255, 255, 255, 0.8);
-            transition: all 0.3s ease;
+            color: var(--text-muted);
+            transition: all var(--transition-speed) ease;
             display: flex;
             align-items: center;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: none;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+        
+        .sidebar .nav-link:before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 100%;
+            left: 0;
+            top: 0;
+            background: linear-gradient(90deg, rgba(255,255,255,0.1), transparent);
+            z-index: -1;
+            transition: width 0.3s ease;
+        }
+        
+        .sidebar .nav-link:hover:before {
+            width: 100%;
         }
         
         .sidebar .nav-link:hover {
-            color: #ffffff;
-            background-color: rgba(255, 255, 255, 0.1);
-            transform: translateX(8px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            color: var(--text-color);
+            transform: translateX(5px);
         }
         
         .sidebar .nav-link.active {
             color: #fff;
-            background: linear-gradient(to right, var(--bs-primary), #0b5ed7);
-            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.35);
-            transform: translateX(8px);
+            background: var(--theme-gradient);
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.35);
+            transform: translateX(5px);
+            font-weight: 600;
         }
         
         .sidebar .nav-link i {
@@ -206,6 +272,12 @@
             width: 1.5rem;
             text-align: center;
             font-size: 1.1rem;
+            opacity: 0.85;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar .nav-link:hover i {
+            transform: translateY(-2px);
             opacity: 1;
         }
         
@@ -216,19 +288,26 @@
             font-weight: 600;
             padding: 1.25rem 1.5rem 0.5rem;
             color: rgba(255, 255, 255, 0.5);
+            margin-left: 0.5rem;
         }
         
+        /* Dashboard Card Styles */
         .dashboard-card {
-            border-radius: 1rem !important;
+            border-radius: var(--border-radius) !important;
             border: none !important;
-            box-shadow: 0 0.35rem 1.25rem rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
+            box-shadow: var(--box-shadow);
+            transition: all var(--transition-speed) ease;
             margin-bottom: 1.5rem;
             background-color: var(--bs-body-bg) !important;
             overflow: hidden;
             opacity: 1 !important;
             display: block !important;
             visibility: visible !important;
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
         }
         
         /* Keep color cards visible when using dark theme */
@@ -244,57 +323,49 @@
         
         /* Ensure proper color contrast in dark mode */
         [data-bs-theme="dark"] .dashboard-card.bg-primary {
-            background-color: #0d6efd !important;
+            background-color: var(--theme-color) !important;
         }
         
-        [data-bs-theme="dark"] .dashboard-card.bg-success {
-            background-color: #198754 !important;
+        /* Custom scrollbar for sidebar */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
         }
         
-        [data-bs-theme="dark"] .dashboard-card.bg-info {
-            background-color: #0dcaf0 !important;
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
         }
         
-        [data-bs-theme="dark"] .dashboard-card.bg-warning {
-            background-color: #ffc107 !important;
+        .sidebar::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
         }
         
-        [data-bs-theme="dark"] .dashboard-card.bg-danger {
-            background-color: #dc3545 !important;
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(255, 255, 255, 0.3);
         }
         
-        [data-bs-theme="dark"] .dashboard-card.bg-secondary {
-            background-color: #6c757d !important;
+        /* User profile in sidebar */
+        .user-profile {
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
         }
         
-        /* Ensure light mode cards are also properly colored */
-        [data-bs-theme="light"] .dashboard-card.bg-primary {
-            background-color: #0d6efd !important;
+        .profile-image {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            margin-right: 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            flex-shrink: 0;
         }
         
-        [data-bs-theme="light"] .dashboard-card.bg-success {
-            background-color: #198754 !important;
-        }
-        
-        [data-bs-theme="light"] .dashboard-card.bg-info {
-            background-color: #0dcaf0 !important;
-        }
-        
-        [data-bs-theme="light"] .dashboard-card.bg-warning {
-            background-color: #ffc107 !important;
-        }
-        
-        [data-bs-theme="light"] .dashboard-card.bg-danger {
-            background-color: #dc3545 !important;
-        }
-        
-        [data-bs-theme="light"] .dashboard-card.bg-secondary {
-            background-color: #6c757d !important;
-        }
-        
-        .dashboard-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 0.75rem 1.75rem rgba(0, 0, 0, 0.15);
+        .profile-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
         
         .dashboard-card .card-header {
@@ -523,6 +594,71 @@
             background-position: center;
             background-size: 100%;
         }
+
+        /* Notification styles */
+        .notification-icon-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .notification-item {
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .notification-item:hover {
+            background-color: rgba(var(--bs-primary-rgb), 0.05) !important;
+        }
+        
+        .empty-state-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--bs-secondary);
+        }
+        
+        /* Pulse animation for notification badge */
+        .badge.pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.6);
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(220, 53, 69, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+            }
+        }
+
+        .pulse-animation {
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 0 rgba(66, 133, 244, 0.4);
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 15px rgba(66, 133, 244, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(66, 133, 244, 0);
+            }
+        }
     </style>
     
     <!-- Additional CSS -->
@@ -545,6 +681,20 @@
             <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
         </symbol>
     </svg>
+    
+    {% if request.path == '/' %}
+    <!-- Floating Feedback Button -->
+    <div class="position-fixed bottom-0 start-0 mb-3 ms-3" style="z-index: 1030;">
+        <button 
+            type="button" 
+            class="btn btn-primary shadow rounded-pill" 
+            data-bs-toggle="modal" 
+            data-bs-target="#feedbackModal"
+            style="padding: 0.6rem 1.8rem;">
+            <i class="fas fa-comment-dots me-2"></i> Feedback
+        </button>
+    </div>
+    {% endif %}
     
     <!-- Theme Switcher -->
     <div class="dropdown position-fixed bottom-0 end-0 mb-3 me-3 bd-mode-toggle">
@@ -577,6 +727,82 @@
         </ul>
     </div>
     
+    <!-- Feedback Modal -->
+    <div class="modal fade" id="feedbackModal" tabindex="-1" aria-labelledby="feedbackModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow" style="border-radius: 1rem; overflow: hidden;">
+                <div class="modal-header bg-primary text-white" style="border-bottom: none;">
+                    <h5 class="modal-title" id="feedbackModalLabel">
+                        <i class="fas fa-comment-dots me-2"></i>Send Feedback
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted mb-4">Your feedback helps us improve. Please let us know your thoughts, suggestions, or report any issues you've encountered.</p>
+                    
+                    <form action="{% url 'core:submit_feedback' %}" method="post" id="feedbackForm">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <p class="form-label fw-bold mb-2">Feedback Type</p>
+                            <div class="d-flex flex-wrap gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="feedback_type" id="feedbackTypeGeneral" value="FEEDBACK" checked>
+                                    <label class="form-check-label" for="feedbackTypeGeneral">General</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="feedback_type" id="feedbackTypeQuery" value="QUERY">
+                                    <label class="form-check-label" for="feedbackTypeQuery">Query</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="feedback_type" id="feedbackTypeReport" value="REPORT">
+                                    <label class="form-check-label" for="feedbackTypeReport">Report</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="feedback_type" id="feedbackTypeSuggestion" value="SUGGESTION">
+                                    <label class="form-check-label" for="feedbackTypeSuggestion">Suggestion</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <label for="first_name" class="form-label fw-bold">First Name</label>
+                                <input type="text" class="form-control form-control-lg rounded-3" id="first_name" name="first_name" placeholder="First name" {% if user.is_authenticated %}value="{{ user.first_name }}"{% endif %}>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="last_name" class="form-label fw-bold">Last Name</label>
+                                <input type="text" class="form-control form-control-lg rounded-3" id="last_name" name="last_name" placeholder="Last name" {% if user.is_authenticated %}value="{{ user.last_name }}"{% endif %}>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label fw-bold">Email</label>
+                                <input type="email" class="form-control form-control-lg rounded-3" id="email" name="email" placeholder="your@email.com" {% if user.is_authenticated %}value="{{ user.email }}"{% endif %} required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="phone_number" class="form-label fw-bold">Phone Number</label>
+                                <input type="tel" class="form-control form-control-lg rounded-3" id="phone_number" name="phone_number" placeholder="Your phone number" {% if user.is_authenticated and user.phone_number %}value="{{ user.phone_number }}"{% endif %}>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="message" class="form-label fw-bold">Message</label>
+                            <textarea class="form-control form-control-lg rounded-3" id="message" name="message" rows="4" placeholder="Your message..." required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-0 bg-light p-3">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="feedbackForm" class="btn btn-primary rounded-pill px-4">
+                        <i class="fas fa-paper-plane me-2"></i>Submit Feedback
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Navbar -->
     <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap shadow">
         <div class="d-flex align-items-center justify-content-between w-100">
@@ -590,58 +816,82 @@
             </div>
             <div class="navbar-nav flex-row ms-auto me-3 align-items-center">
                 {% if user.is_authenticated %}
+                    <!-- Dashboard Link -->
+                    <div class="nav-item text-nowrap me-3">
+                        <a class="nav-link px-3" href="{% url 'dashboard:dashboard_router' %}">
+                            <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                        </a>
+                    </div>
+                    
                     <!-- Notifications Dropdown -->
                     <div class="nav-item text-nowrap dropdown me-3">
                         <a class="nav-link px-3 position-relative" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-bell"></i>
                             {% if unread_notification_count > 0 %}
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.5rem;">
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger pulse" style="font-size: 0.5rem;">
                                     {{ unread_notification_count }}
                                     <span class="visually-hidden">unread notifications</span>
                                 </span>
                             {% endif %}
                         </a>
-                        <div class="dropdown-menu dropdown-menu-end shadow notification-dropdown" aria-labelledby="notificationsDropdown" style="width: 320px; max-height: 400px; overflow-y: auto;">
-                            <div class="d-flex justify-content-between align-items-center p-3">
-                                <h6 class="dropdown-header p-0">Notifications</h6>
-                                <a href="{% url 'accounts:notification_list' %}" class="text-muted text-decoration-none" style="font-size: 0.8rem;">View All</a>
+                        <div class="dropdown-menu dropdown-menu-end shadow notification-dropdown" aria-labelledby="notificationsDropdown" style="width: 340px; max-height: 450px; overflow-y: auto; border-radius: 0.75rem; border: none; padding: 0;">
+                            <div class="d-flex justify-content-between align-items-center p-3 sticky-top bg-body border-bottom">
+                                <h6 class="dropdown-header p-0 fw-bold m-0">Notifications</h6>
+                                <a href="{% url 'accounts:notification_list' %}" class="text-decoration-none text-primary" style="font-size: 0.85rem;">View All</a>
                             </div>
-                            <div class="dropdown-divider my-0"></div>
                             
                             {% with notifications=request.user.notifications.all|slice:":5" %}
                                 {% if notifications %}
                                     {% for notification in notifications %}
-                                        <a href="{% url 'accounts:mark_notification_as_read' notification.id %}" class="dropdown-item d-flex py-2 {% if not notification.is_read %}bg-body-tertiary{% endif %}">
-                                            <div style="flex: 0 0 40px; text-align: center;">
+                                        <a href="{% url 'accounts:mark_notification_as_read' notification.id %}" class="dropdown-item d-flex py-3 {% if not notification.is_read %}bg-body-tertiary border-start border-4 border-primary{% endif %} notification-item" style="transition: all 0.2s ease;">
+                                            <div class="notification-icon">
                                                 {% if notification.notification_type == 'INFO' %}
-                                                    <i class="fas fa-info-circle text-primary"></i>
+                                                    <div class="notification-icon-circle bg-primary-subtle" style="width: 45px; height: 45px; border-radius: 12px;">
+                                                        <i class="fas fa-info text-primary"></i>
+                                                    </div>
                                                 {% elif notification.notification_type == 'WARNING' %}
-                                                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                                                    <div class="notification-icon-circle bg-warning-subtle" style="width: 45px; height: 45px; border-radius: 12px;">
+                                                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                                                    </div>
                                                 {% elif notification.notification_type == 'SUCCESS' %}
-                                                    <i class="fas fa-check-circle text-success"></i>
-                                                {% elif notification.notification_type == 'DANGER' %}
-                                                    <i class="fas fa-exclamation-circle text-danger"></i>
+                                                    <div class="notification-icon-circle bg-success-subtle" style="width: 45px; height: 45px; border-radius: 12px;">
+                                                        <i class="fas fa-check-circle text-success"></i>
+                                                    </div>
+                                                {% elif notification.notification_type == 'ERROR' %}
+                                                    <div class="notification-icon-circle bg-danger-subtle" style="width: 45px; height: 45px; border-radius: 12px;">
+                                                        <i class="fas fa-times-circle text-danger"></i>
+                                                    </div>
+                                                {% else %}
+                                                    <div class="notification-icon-circle bg-secondary-subtle" style="width: 45px; height: 45px; border-radius: 12px;">
+                                                        <i class="fas fa-bell text-secondary"></i>
+                                                    </div>
                                                 {% endif %}
                                             </div>
-                                            <div class="ms-2">
-                                                <div class="fw-semibold">{{ notification.title }}</div>
-                                                <div class="text-truncate" style="max-width: 240px;">{{ notification.message }}</div>
-                                                <small class="text-muted">{{ notification.created_at|timesince }} ago</small>
+                                            <div class="ms-3">
+                                                <h6 class="dropdown-item-title mb-1 fw-bold">{{ notification.title }}</h6>
+                                                <p class="mb-1 small" style="line-height: 1.4;">{{ notification.message|truncatechars:100 }}</p>
+                                                <div class="small text-muted">{{ notification.created_at|timesince }} ago</div>
                                             </div>
                                         </a>
                                     {% endfor %}
-                                    <div class="dropdown-divider my-0"></div>
-                                    <div class="text-center p-2">
-                                        <a href="{% url 'accounts:notification_list' %}" class="btn btn-sm btn-primary w-100">View All Notifications</a>
-                                    </div>
                                 {% else %}
-                                    <div class="d-flex flex-column align-items-center p-4">
-                                        <i class="fas fa-bell-slash text-muted mb-3" style="font-size: 2rem;"></i>
-                                        <p class="text-muted text-center mb-0">No notifications yet.</p>
+                                    <div class="text-center py-4">
+                                        <div class="empty-state-icon mx-auto mb-2">
+                                            <i class="fas fa-bell-slash"></i>
+                                        </div>
+                                        <p class="text-muted text-center mb-2">No notifications yet</p>
+                                        <small class="text-center text-body-secondary">You're all caught up!</small>
                                     </div>
                                 {% endif %}
                             {% endwith %}
                         </div>
+                    </div>
+                    
+                    <!-- Logout Link -->
+                    <div class="nav-item text-nowrap me-3">
+                        <a class="nav-link px-3" href="{% url 'account_logout' %}">
+                            <i class="fas fa-sign-out-alt me-1"></i> Logout
+                        </a>
                     </div>
                     
                     <!-- User Dropdown -->
@@ -671,10 +921,14 @@
                     </div>
                 {% else %}
                     <div class="nav-item text-nowrap">
-                        <a class="nav-link px-3" href="{% url 'account_login' %}">Log In</a>
+                        <a class="nav-link px-3" href="{% url 'account_login' %}">
+                            <i class="fas fa-sign-in-alt me-1"></i> Log In
+                        </a>
                     </div>
                     <div class="nav-item text-nowrap">
-                        <a class="nav-link px-3" href="{% url 'account_signup' %}">Sign Up</a>
+                        <a class="nav-link px-3" href="{% url 'account_signup' %}">
+                            <i class="fas fa-user-plus me-1"></i> Sign Up
+                        </a>
                     </div>
                 {% endif %}
             </div>
@@ -685,100 +939,103 @@
         <div class="row">
             {% if user.is_authenticated %}
                 <!-- Sidebar -->
-                <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar">
-                    <div class="sidebar-sticky pt-3">
-                        <div class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none ms-3 pt-2">
-                            <span class="fs-5">Navigation</span>
+                <div class="sidebar collapse d-md-block" id="sidebarMenu">
+                    <div class="sidebar-sticky pt-0">
+                        {% if user.is_authenticated %}
+                        <!-- User Profile -->
+                        <div class="user-profile">
+                            <div class="profile-image">
+                                {% if user.profile_picture %}
+                                    <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}" class="img-fluid">
+                                {% else %}
+                                    {{ user.get_initials }}
+                                {% endif %}
+                            </div>
+                            <div class="sidebar-profile-info">
+                                <div class="sidebar-profile-name">{{ user.get_full_name }}</div>
+                                <div class="sidebar-profile-role">{{ user.role_display }}</div>
+                            </div>
                         </div>
-                        <hr class="text-white-50">
+                        {% endif %}
+
+                        <!-- Main Navigation -->
                         <ul class="nav flex-column">
                             <li class="nav-item">
-                                <a class="nav-link {% if request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'admin_dashboard' or request.resolver_match.url_name == 'team_lead_dashboard' or request.resolver_match.url_name == 'member_dashboard' %}active{% endif %}" 
-                                   href="{% url 'core:home' %}">
-                                    <i class="fas fa-home"></i>
+                                <a class="nav-link {% if request.resolver_match.namespace == 'dashboard' and request.resolver_match.url_name == 'dashboard_router' %}active{% endif %}" href="{% url 'dashboard:dashboard_router' %}">
+                                    <i class="fas fa-tachometer-alt"></i>
                                     Dashboard
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {% if 'project_list' in request.resolver_match.url_name %}active{% endif %}" 
-                                   href="{% url 'projects:project_list' %}">
+                                <a class="nav-link {% if request.resolver_match.namespace == 'projects' and 'project' in request.resolver_match.url_name and 'task' not in request.resolver_match.url_name %}active{% endif %}" href="{% url 'projects:project_list' %}">
                                     <i class="fas fa-project-diagram"></i>
                                     Projects
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {% if 'task_list' in request.resolver_match.url_name %}active{% endif %}" 
-                                   href="{% url 'projects:task_list' %}">
+                                <a class="nav-link {% if request.resolver_match.namespace == 'projects' and 'task' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'projects:task_list' %}">
                                     <i class="fas fa-tasks"></i>
                                     Tasks
                                 </a>
                             </li>
-                        </ul>
-                        
-                        {% if user.is_team_lead or user.is_admin or user.is_superuser %}
-                            <div class="d-flex align-items-center mt-4 mb-1 ms-3">
-                                <span class="text-white-50 text-uppercase fs-6">Management</span>
+                            {% if user.is_authenticated and user.is_admin or user.is_superuser %}
+                            <div class="sidebar-heading">
+                                Administration
                             </div>
-                            <hr class="text-white-50">
-                            <ul class="nav flex-column">
-                                {% if user.is_admin or user.is_superuser %}
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'projects:department_list' %}">
-                                            <i class="fas fa-building"></i>
-                                            Departments
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if 'user_list' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'accounts:user_list' %}">
-                                            <i class="fas fa-users"></i>
-                                            Users
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'accounts:designation_request_list' %}">
-                                            <i class="fas fa-user-tag"></i>
-                                            Role Requests
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'accounts:leave_request_list' %}">
-                                            <i class="fas fa-calendar-alt"></i>
-                                            Leave Requests
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'admin:index' %}">
-                                            <i class="fas fa-cogs"></i>
-                                            Admin Site
-                                        </a>
-                                    </li>
-                                {% endif %}
-                            </ul>
-                        {% endif %}
-                        
-                        <div class="d-flex align-items-center mt-4 mb-1 ms-3">
-                            <span class="text-white-50 text-uppercase fs-6">Personal</span>
-                        </div>
-                        <hr class="text-white-50">
-                        <ul class="nav flex-column mb-2">
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'accounts:leave_request_create' %}">
-                                    <i class="fas fa-calendar-plus"></i>
-                                    Request Leave
+                                <a class="nav-link {% if request.resolver_match.namespace == 'projects' and 'department' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'projects:department_list' %}">
+                                    <i class="fas fa-building"></i>
+                                    Departments
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.namespace == 'accounts' and 'user' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'accounts:user_list' %}">
+                                    <i class="fas fa-users"></i>
+                                    Users
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.namespace == 'core' and 'feedback' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'core:feedback_list' %}">
+                                    <i class="fas fa-comment-dots"></i>
+                                    Feedback
+                                    {% if unread_feedback_count > 0 %}
+                                    <span class="badge bg-danger rounded-pill ms-1">{{ unread_feedback_count }}</span>
+                                    {% endif %}
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            <div class="sidebar-heading">
+                                Account
+                            </div>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.namespace == 'accounts' and request.resolver_match.url_name == 'profile' %}active{% endif %}" href="{% url 'accounts:profile' %}">
+                                    <i class="fas fa-user-circle"></i>
+                                    My Profile
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'account_logout' %}">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    Logout
                                 </a>
                             </li>
                             
-                            {% if not user.is_approved or user.role == 'MEMBER' %}
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{% url 'accounts:designation_request_create' %}">
-                                        <i class="fas fa-user-plus"></i>
-                                        Request Role
-                                    </a>
-                                </li>
+                            {% if user.is_authenticated and user.is_admin or user.is_superuser %}
+                            <div class="mt-auto"></div>
+                            <div class="sidebar-heading mt-5">
+                                System
+                            </div>
+                            <li class="nav-item">
+                                <a class="nav-link text-danger" href="{% url 'admin:index' %}">
+                                    <i class="fas fa-tools"></i>
+                                    Django Admin
+                                </a>
+                            </li>
                             {% endif %}
                         </ul>
                     </div>
-                </nav>
+                </div>
             {% endif %}
             
             <!-- Main Content -->
@@ -786,12 +1043,38 @@
                 {% if messages %}
                     <div class="mt-3">
                         {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                {{ message }}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0 rounded-3" role="alert">
+                                <div class="d-flex align-items-center">
+                                    {% if message.tags == 'success' %}
+                                        <i class="fas fa-check-circle me-2 fs-5"></i>
+                                    {% elif message.tags == 'info' %}
+                                        <i class="fas fa-info-circle me-2 fs-5"></i>
+                                    {% elif message.tags == 'warning' %}
+                                        <i class="fas fa-exclamation-circle me-2 fs-5"></i>
+                                    {% elif message.tags == 'error' %}
+                                        <i class="fas fa-times-circle me-2 fs-5"></i>
+                                    {% endif %}
+                                    <div>{{ message }}</div>
+                                </div>
                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
                         {% endfor %}
                     </div>
+                    
+                    <!-- Auto dismiss alerts after 5 seconds -->
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const alerts = document.querySelectorAll('.alert');
+                            alerts.forEach(function(alert) {
+                                setTimeout(function() {
+                                    var closeButton = alert.querySelector('.btn-close');
+                                    if (closeButton) {
+                                        closeButton.click();
+                                    }
+                                }, 5000); // Dismiss after 5 seconds
+                            });
+                        });
+                    </script>
                 {% endif %}
                 
                 {% block content %}{% endblock %}
@@ -980,5 +1263,24 @@
     
     <!-- Additional JS -->
     {% block extra_js %}{% endblock %}
+
+    <!-- UI enhancements -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Make all form inputs have rounded corners
+            document.querySelectorAll('input, select, textarea').forEach(function(element) {
+                if (!element.classList.contains('rounded-3')) {
+                    element.classList.add('rounded-3');
+                }
+            });
+            
+            // Make all buttons have rounded corners
+            document.querySelectorAll('.btn').forEach(function(button) {
+                if (!button.classList.contains('rounded-pill') && !button.classList.contains('rounded-3')) {
+                    button.classList.add('rounded-3');
+                }
+            });
+        });
+    </script>
 </body>
 </html> 

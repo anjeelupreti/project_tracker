@@ -154,15 +154,45 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         project = self.get_object()
         
-        # Get tasks grouped by status
-        context['todo_tasks'] = project.tasks.filter(status=Task.Status.TODO).order_by('due_date')
-        context['in_progress_tasks'] = project.tasks.filter(status=Task.Status.IN_PROGRESS).order_by('due_date')
-        context['review_tasks'] = project.tasks.filter(status=Task.Status.REVIEW).order_by('due_date')
-        context['completed_tasks'] = project.tasks.filter(status=Task.Status.COMPLETED).order_by('-completed_at')[:5]
-        context['blocked_tasks'] = project.tasks.filter(status=Task.Status.BLOCKED).order_by('due_date')
+        # Ensure project progress is up-to-date
+        project.calculate_progress
+        
+        # Get tasks by status
+        context['todo_tasks'] = project.tasks.filter(status=Task.Status.TODO)
+        context['in_progress_tasks'] = project.tasks.filter(status=Task.Status.IN_PROGRESS)
+        context['review_tasks'] = project.tasks.filter(status=Task.Status.REVIEW)
+        context['completed_tasks'] = project.tasks.filter(status=Task.Status.COMPLETED)
+        context['blocked_tasks'] = project.tasks.filter(status=Task.Status.BLOCKED)
+        
+        # Task counts and statistics
+        context['total_tasks'] = project.tasks.count()
+        context['completed_count'] = context['completed_tasks'].count()
+        context['in_progress_count'] = context['in_progress_tasks'].count()
+        context['todo_count'] = context['todo_tasks'].count()
+        context['blocked_count'] = context['blocked_tasks'].count()
+        context['review_count'] = context['review_tasks'].count()
+        
+        # Calculate % of tasks in each status for visual indicators
+        if context['total_tasks'] > 0:
+            context['completed_percent'] = round((context['completed_count'] / context['total_tasks']) * 100)
+            context['in_progress_percent'] = round((context['in_progress_count'] / context['total_tasks']) * 100)
+            context['todo_percent'] = round((context['todo_count'] / context['total_tasks']) * 100)
+            context['blocked_percent'] = round((context['blocked_count'] / context['total_tasks']) * 100)
+            context['review_percent'] = round((context['review_count'] / context['total_tasks']) * 100)
+        else:
+            context['completed_percent'] = context['in_progress_percent'] = context['todo_percent'] = context['blocked_percent'] = context['review_percent'] = 0
+        
+        # Get project updates
+        context['recent_updates'] = project.updates.all()[:5]
         
         # Get project members
-        context['members'] = project.members.all()
+        context['members'] = project.projectmembership_set.select_related('user').all()
+        
+        # Check if user is a member of the project
+        context['is_member'] = project.members.filter(id=self.request.user.id).exists()
+        
+        # Check permissions
+        context['can_manage_members'] = self.request.user.is_admin or self.request.user.is_superuser or project.lead == self.request.user
         
         # Get recent activities
         context['activities'] = ActivityLog.objects.filter(
@@ -530,7 +560,7 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
         user = self.request.user
         
         # Admin/superuser can create tasks in any project
-        if not (user.is_admin or user.is_superuser):
+        if project and not (user.is_admin or user.is_superuser):
             # Project lead can create tasks for their projects
             if project.lead and project.lead != user:
                 # Check if user is member of the project
@@ -541,14 +571,19 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
         response = super().form_valid(form)
         
         # Log activity
-        ActivityLog.objects.create(
-            user=self.request.user,
-            category=ActivityLog.Category.TASK,
-            action_type=ActivityLog.ActionType.CREATE,
-            description=f"Created task: {form.instance.title}",
-            project=form.instance.project,
-            task=form.instance
-        )
+        activity_data = {
+            'user': self.request.user,
+            'category': ActivityLog.Category.TASK,
+            'action_type': ActivityLog.ActionType.CREATE,
+            'description': f"Created task: {form.instance.title}",
+            'task': form.instance
+        }
+        
+        # Only add project to activity log if task has a project
+        if form.instance.project:
+            activity_data['project'] = form.instance.project
+            
+        ActivityLog.objects.create(**activity_data)
         
         messages.success(self.request, f"Task '{form.instance.title}' has been created.")
         return response
@@ -564,8 +599,24 @@ class TaskUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def test_func(self):
         task = self.get_object()
         user = self.request.user
-        return (user.is_admin or user.is_superuser or 
-                task.project.lead == user)
+        
+        # Admin/superuser can update any task
+        if user.is_admin or user.is_superuser:
+            return True
+            
+        # Project lead can update project tasks
+        if task.project and task.project.lead == user:
+            return True
+            
+        # Task creator can update their own tasks
+        if task.created_by == user:
+            return True
+            
+        # Assignee can update their tasks
+        if task.assignee == user:
+            return True
+            
+        return False
     
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -659,20 +710,36 @@ class TaskStatusUpdateView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
         task = get_object_or_404(Task, pk=self.kwargs.get('pk'))
         user = self.request.user
-        return (user.is_admin or user.is_superuser or 
-                task.project.lead == user or 
-                task.assignee == user)
+        
+        # Admin/superuser can update any task
+        if user.is_admin or user.is_superuser:
+            return True
+            
+        # Assignee can update their tasks
+        if task.assignee == user:
+            return True
+            
+        # Project lead can update project tasks
+        if task.project and task.project.lead == user:
+            return True
+            
+        return False
     
     def post(self, request, *args, **kwargs):
         try:
             task = get_object_or_404(Task, pk=kwargs.get('pk'))
             
-            # Store body content as variable before parsing to prevent multiple reads
-            body_content = request.body.decode('utf-8')
-            data = json.loads(body_content)
-            new_status = data.get('status')
+            # Handle both form data and JSON data
+            if request.content_type == 'application/json':
+                # Parse JSON data
+                body_content = request.body.decode('utf-8')
+                data = json.loads(body_content)
+                new_status = data.get('status')
+            else:
+                # Parse form data
+                new_status = request.POST.get('status')
             
-            if new_status not in dict(Task.Status.choices):
+            if not new_status or new_status not in dict(Task.Status.choices):
                 return JsonResponse({'success': False, 'error': 'Invalid status'})
             
             old_status = task.status
@@ -699,7 +766,13 @@ class TaskStatusUpdateView(LoginRequiredMixin, UserPassesTestMixin, View):
                 task=task
             )
             
-            return JsonResponse({'success': True})
+            # For AJAX requests, return JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': True})
+            
+            # For regular form submissions, redirect back to the task detail page
+            messages.success(request, f"Task status updated to {task.get_status_display()}.")
+            return HttpResponseRedirect(reverse('projects:task_detail', kwargs={'pk': task.id}))
             
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'error': 'Invalid JSON data'})
@@ -708,10 +781,29 @@ class TaskStatusUpdateView(LoginRequiredMixin, UserPassesTestMixin, View):
     
     def update_project_progress(self, project):
         """Update project progress based on completed tasks"""
+        if project is None:
+            return
+            
         total_tasks = project.tasks.count()
         if total_tasks > 0:
+            # Count tasks by status and weight them
+            todo_tasks = project.tasks.filter(status=Task.Status.TODO).count()
+            in_progress_tasks = project.tasks.filter(status=Task.Status.IN_PROGRESS).count()
+            review_tasks = project.tasks.filter(status=Task.Status.REVIEW).count()
             completed_tasks = project.tasks.filter(status=Task.Status.COMPLETED).count()
-            project.progress = int(completed_tasks / total_tasks * 100)
+            
+            # Apply weights: Completed=100%, Review=75%, In Progress=50%, Todo=0%
+            weighted_sum = (completed_tasks * 1.0) + (review_tasks * 0.75) + (in_progress_tasks * 0.5)
+            
+            # Calculate progress percentage
+            progress = int((weighted_sum / total_tasks) * 100)
+            
+            # Update the progress field
+            project.progress = progress
+            project.save(update_fields=['progress'])
+        else:
+            # If no tasks, set progress to 0
+            project.progress = 0
             project.save(update_fields=['progress'])
 
 class TaskAssignView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):

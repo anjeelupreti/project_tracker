@@ -4,28 +4,35 @@
 {% block title %}Delete User - {{ object.get_full_name }}{% endblock %}
 
 {% block content %}
-<div class="container py-4">
+<div class="container py-5">
   <div class="row justify-content-center">
     <div class="col-md-8">
-      <div class="card border-0 shadow-sm">
-        <div class="card-header bg-danger text-white">
-          <h3 class="mb-0">Confirm User Deletion</h3>
+      <div class="card border-0 shadow">
+        <div class="card-header bg-danger text-white p-4">
+          <h3 class="mb-0 fw-bold">Confirm User Deletion</h3>
         </div>
         <div class="card-body p-4">
-          <div class="alert alert-warning">
-            <h5><i class="fas fa-exclamation-triangle me-2"></i> Warning!</h5>
-            <p>You are about to permanently delete user <strong>{{ object.get_full_name }}</strong> ({{ object.email }}).</p>
-            <p>This action cannot be undone. All user data will be permanently removed.</p>
+          <div class="alert alert-warning border-0 shadow-sm">
+            <div class="d-flex align-items-center">
+              <div class="p-3 rounded-circle bg-warning bg-opacity-25 me-3">
+                <i class="fas fa-exclamation-triangle text-warning fa-2x"></i>
+              </div>
+              <div>
+                <h5 class="fw-bold">Warning!</h5>
+                <p class="mb-1">You are about to permanently delete user <strong>{{ object.get_full_name }}</strong> ({{ object.email }}).</p>
+                <p class="mb-0">This action cannot be undone. All user data will be permanently removed.</p>
+              </div>
+            </div>
           </div>
 
-          <form method="post">
+          <form method="post" class="mt-4">
             {% csrf_token %}
-            <div class="d-flex justify-content-between">
-              <a href="{% url 'accounts:user_list' %}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left me-1"></i> Cancel
+            <div class="d-flex justify-content-between gap-3">
+              <a href="{% url 'accounts:user_list' %}" class="btn btn-lg btn-outline-secondary w-100">
+                <i class="fas fa-arrow-left me-2"></i> Cancel
               </a>
-              <button type="submit" class="btn btn-danger">
-                <i class="fas fa-trash-alt me-1"></i> Delete User
+              <button type="submit" class="btn btn-lg btn-danger w-100">
+                <i class="fas fa-trash-alt me-2"></i> Delete User
               </button>
             </div>
           </form>

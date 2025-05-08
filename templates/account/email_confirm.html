@@ -39,10 +39,12 @@
         transform: translateY(0);
         transition: all 0.3s ease;
         width: 100%;
-        max-width: 450px;
+        max-width: 500px;
         max-height: calc(100vh - var(--navbar-height) - 2rem);
         display: flex;
         flex-direction: column;
+        margin-right: auto;
+        margin-left: auto;
     }
     
     [data-bs-theme="dark"] .auth-card {
@@ -55,7 +57,7 @@
     }
     
     .auth-header {
-        background: var(--theme-color);
+        background: var(--theme-gradient);
         padding: 1.5rem;
         text-align: center;
         color: white;
@@ -73,16 +75,16 @@
     }
     
     .auth-body {
-        padding: 1.5rem;
+        padding: 2rem;
         overflow-y: auto;
         flex-grow: 1;
     }
     
     .btn-primary {
-        padding: 0.75rem 1.5rem;
+        padding: 0.85rem 1.5rem;
         font-weight: 500;
         border-radius: 0.5rem;
-        background: var(--theme-color);
+        background: var(--theme-gradient);
         border: none;
         transition: all 0.3s ease;
     }
@@ -125,28 +127,29 @@
     }
     
     .icon-container {
-        width: 80px;
-        height: 80px;
+        width: 90px;
+        height: 90px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         margin: 0 auto 1.5rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     }
     
     .icon-container.success {
-        background-color: rgba(25, 135, 84, 0.1);
-        color: #198754;
+        background: linear-gradient(135deg, #29BB89, #1D8A6E);
+        color: white;
     }
     
     .icon-container.warning {
-        background-color: rgba(255, 193, 7, 0.1);
-        color: #ffc107;
+        background: linear-gradient(135deg, #FFAB4A, #FB8500);
+        color: white;
     }
     
     .icon-container.primary {
-        background-color: rgba(13, 110, 253, 0.1);
-        color: var(--theme-color);
+        background: var(--theme-gradient);
+        color: white;
     }
     
     /* Responsive adjustments for smaller screens */
@@ -194,7 +197,7 @@
             <div class="text-center mb-4">
                 {% if confirmation %}
                 <div class="icon-container primary">
-                    <i class="fas fa-envelope-open-text fa-2x"></i>
+                    <i class="fas fa-envelope-open-text fa-3x"></i>
                 </div>
                 <h5 class="mb-3">{% trans "Confirm Your Email" %}</h5>
                 <p class="mb-4">
@@ -212,7 +215,7 @@
                 </form>
                 {% else %}
                 <div class="icon-container warning">
-                    <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    <i class="fas fa-exclamation-triangle fa-3x"></i>
                 </div>
                 <h5 class="mb-3">{% trans "Invalid Confirmation Link" %}</h5>
                 <p class="mb-4">

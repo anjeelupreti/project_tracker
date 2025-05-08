@@ -146,6 +146,49 @@
     background-color: var(--bs-primary);
     border-color: var(--bs-primary);
   }
+  
+  .users-table-container {
+    max-height: calc(100vh - 300px);
+    overflow-y: auto;
+  }
+  
+  .filter-button {
+    border-radius: 50px;
+    padding: 0.375rem 1rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+  }
+  
+  .table-container th {
+    position: sticky;
+    top: 0;
+    background-color: var(--bs-body-bg);
+    z-index: 10;
+  }
+  
+  .sortable {
+    cursor: pointer;
+  }
+  
+  .sortable:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+  }
+  
+  .sortable::after {
+    content: "↕";
+    opacity: 0.3;
+    margin-left: 5px;
+  }
+  
+  .sortable.asc::after {
+    content: "↑";
+    opacity: 1;
+  }
+  
+  .sortable.desc::after {
+    content: "↓";
+    opacity: 1;
+  }
 </style>
 {% endblock %}
 
@@ -158,18 +201,95 @@
         </button>
     </div>
 
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-filter me-2"></i> Filters</h5>
+            <button class="btn btn-link p-0 toggle-filters">
+                Show Advanced <i class="fas fa-chevron-down ms-1"></i>
+            </button>
+        </div>
+        <div class="card-body">
+            <form id="filter-form" method="get">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label for="search" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="search" name="search" placeholder="Name or email" value="{{ request.GET.search }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="role" class="form-label">Role</label>
+                        <select class="form-select" id="role" name="role">
+                            <option value="">All Roles</option>
+                            <option value="ADMIN" {% if request.GET.role == 'ADMIN' %}selected{% endif %}>Admin</option>
+                            <option value="TEAM_LEAD" {% if request.GET.role == 'TEAM_LEAD' %}selected{% endif %}>Team Lead</option>
+                            <option value="MEMBER" {% if request.GET.role == 'MEMBER' %}selected{% endif %}>Member</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="department" class="form-label">Department</label>
+                        <select class="form-select" id="department" name="department">
+                            <option value="">All Departments</option>
+                            {% for dept in departments %}
+                                <option value="{{ dept.id }}" {% if request.GET.department == dept.id|stringformat:"s" %}selected{% endif %}>{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">All Statuses</option>
+                            <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+                            <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="advanced-filters mt-3 pt-3 border-top">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label for="date_joined_from" class="form-label">Joined After</label>
+                            <input type="date" class="form-control" id="date_joined_from" name="date_joined_from" value="{{ request.GET.date_joined_from }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="date_joined_to" class="form-label">Joined Before</label>
+                            <input type="date" class="form-control" id="date_joined_to" name="date_joined_to" value="{{ request.GET.date_joined_to }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="sort_by" class="form-label">Sort By</label>
+                            <select class="form-select" id="sort_by" name="sort_by">
+                                <option value="name_asc" {% if request.GET.sort_by == 'name_asc' %}selected{% endif %}>Name (A-Z)</option>
+                                <option value="name_desc" {% if request.GET.sort_by == 'name_desc' %}selected{% endif %}>Name (Z-A)</option>
+                                <option value="date_joined_asc" {% if request.GET.sort_by == 'date_joined_asc' %}selected{% endif %}>Date Joined (Oldest)</option>
+                                <option value="date_joined_desc" {% if request.GET.sort_by == 'date_joined_desc' %}selected{% endif %}>Date Joined (Newest)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end mt-3">
+                    <a href="{% url 'accounts:user_list' %}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-undo me-1"></i> Reset
+                    </a>
+                    <button type="submit" class="btn btn-primary filter-button">
+                        <i class="fas fa-filter me-1"></i> Apply Filters
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Users Table -->
     <div class="card">
         <div class="card-body">
-            <div class="table-responsive">
+            <div class="users-table-container">
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Department</th>
-                            <th>Status</th>
+                            <th class="sortable" data-sort="name">Name</th>
+                            <th class="sortable" data-sort="email">Email</th>
+                            <th class="sortable" data-sort="role">Role</th>
+                            <th class="sortable" data-sort="department">Department</th>
+                            <th class="sortable" data-sort="status">Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -221,48 +341,58 @@
 
 <!-- Add User Modal -->
 <div class="modal fade" id="addUserModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Add New User</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow border-0" style="border-radius: 1rem; overflow: hidden;">
+            <div class="modal-header bg-primary text-white py-3">
+                <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Add New User</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" action="{% url 'accounts:user_create' %}">
                 {% csrf_token %}
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email Address</label>
-                        <input type="email" class="form-control" id="email" name="email" required>
+                <div class="modal-body p-4">
+                    <div class="mb-4">
+                        <label for="email" class="form-label fw-bold">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fas fa-envelope"></i></span>
+                            <input type="email" class="form-control form-control-lg" id="email" name="email" placeholder="email@example.com" required>
+                        </div>
+                        <small class="text-muted">User will receive a welcome email with login instructions</small>
                     </div>
-                    <div class="mb-3">
-                        <label for="first_name" class="form-label">First Name</label>
-                        <input type="text" class="form-control" id="first_name" name="first_name">
+                    
+                    <div class="row mb-4">
+                        <div class="col">
+                            <label for="first_name" class="form-label fw-bold">First Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fas fa-user"></i></span>
+                                <input type="text" class="form-control form-control-lg" id="first_name" name="first_name" placeholder="First name">
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label for="last_name" class="form-label fw-bold">Last Name</label>
+                            <input type="text" class="form-control form-control-lg" id="last_name" name="last_name" placeholder="Last name">
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="last_name" class="form-label">Last Name</label>
-                        <input type="text" class="form-control" id="last_name" name="last_name">
-                    </div>
-                    <div class="mb-3">
-                        <label for="role" class="form-label">Role</label>
-                        <select class="form-select" id="role" name="role" required>
-                            <option value="MEMBER">Member</option>
-                            <option value="TEAM_LEAD">Team Lead</option>
-                            <option value="ADMIN">Admin</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="department" class="form-label">Department</label>
-                        <select class="form-select" id="department" name="department">
-                            <option value="">Select Department</option>
-                            {% for dept in departments %}
-                            <option value="{{ dept.id }}">{{ dept.name }}</option>
-                            {% endfor %}
-                        </select>
+                    
+                    <div class="mb-4">
+                        <label for="role" class="form-label fw-bold">Role</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fas fa-user-tag"></i></span>
+                            <select class="form-select form-select-lg" id="role" name="role" required>
+                                <option value="" selected disabled>Select a role</option>
+                                <option value="MEMBER">Member</option>
+                                <option value="TEAM_LEAD">Team Lead</option>
+                                <option value="ADMIN">Admin</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add User</button>
+                <div class="modal-footer border-0 bg-light p-3">
+                    <button type="button" class="btn btn-outline-secondary btn-lg rounded-pill px-4" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-lg rounded-pill px-4">
+                        <i class="fas fa-user-plus me-2"></i>Create User
+                    </button>
                 </div>
             </form>
         </div>
@@ -273,97 +403,73 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-function resendWelcomeEmail(userId) {
-    if (confirm('Are you sure you want to resend the welcome email?')) {
-        fetch(`/accounts/users/${userId}/resend-welcome/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showToast('Success', 'Welcome email has been resent.', 'success');
+    $(document).ready(function() {
+        // Toggle advanced filters
+        $('.toggle-filters').on('click', function() {
+            $('.advanced-filters').toggleClass('show');
+            const icon = $(this).find('i');
+            const text = $(this).text().trim().split(' ')[0];
+            
+            if ($('.advanced-filters').hasClass('show')) {
+                $(this).html(`Hide Advanced <i class="fas fa-chevron-up ms-1"></i>`);
             } else {
-                showToast('Error', data.error || 'Failed to resend welcome email.', 'error');
+                $(this).html(`Show Advanced <i class="fas fa-chevron-down ms-1"></i>`);
             }
         });
-    }
-}
-
-function toggleUserStatus(userId) {
-    if (confirm('Are you sure you want to change this user\'s status?')) {
-        fetch(`/accounts/users/${userId}/toggle-status/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Get the current row
-                const btn = document.querySelector(`.toggle-status-btn[data-user-id="${userId}"]`);
-                const row = btn.closest('tr');
-                
-                // Get the status badge
-                const statusBadge = row.querySelector('.badge');
-                
-                // Toggle status badge
-                if (statusBadge.textContent.trim() === 'Active') {
-                    statusBadge.textContent = 'Inactive';
-                    statusBadge.classList.remove('bg-success');
-                    statusBadge.classList.add('bg-danger');
-                    
-                    // Update button
-                    btn.classList.remove('btn-outline-danger');
-                    btn.classList.add('btn-outline-success');
-                    btn.setAttribute('data-action', 'activate');
-                    
-                    // Update icon
-                    btn.querySelector('i').classList.remove('fa-user-slash');
-                    btn.querySelector('i').classList.add('fa-user-check');
-                } else {
-                    statusBadge.textContent = 'Active';
-                    statusBadge.classList.remove('bg-danger');
-                    statusBadge.classList.add('bg-success');
-                    
-                    // Update button
-                    btn.classList.remove('btn-outline-success');
-                    btn.classList.add('btn-outline-danger');
-                    btn.setAttribute('data-action', 'deactivate');
-                    
-                    // Update icon
-                    btn.querySelector('i').classList.remove('fa-user-check');
-                    btn.querySelector('i').classList.add('fa-user-slash');
-                }
-                
-                showToast('Success', 'User status updated successfully.', 'success');
-            } else {
-                showToast('Error', data.error || 'Failed to update user status.', 'error');
+        
+        // Initialize Select2
+        $('#department, #role, #status, #sort_by').select2({
+            theme: 'bootstrap-5'
+        });
+        
+        // Toggle user status
+        $('.toggle-status-btn').on('click', function() {
+            const userId = $(this).data('user-id');
+            const action = $(this).data('action');
+            
+            if (confirm(`Are you sure you want to ${action} this user?`)) {
+                $.ajax({
+                    url: `/accounts/users/${userId}/toggle-status/`,
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            window.location.reload();
+                        } else {
+                            alert('Error: ' + response.error);
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred. Please try again.');
+                    }
+                });
             }
         });
-    }
-}
-
-$(document).ready(function() {
-    // Initialize Select2
-    $('.select2').select2({
-        theme: 'bootstrap-5'
+        
+        // Sortable columns
+        $('.sortable').on('click', function() {
+            const sort = $(this).data('sort');
+            const currentSort = $('#sort_by').val();
+            let newSort;
+            
+            if (currentSort === `${sort}_asc`) {
+                newSort = `${sort}_desc`;
+            } else {
+                newSort = `${sort}_asc`;
+            }
+            
+            $('#sort_by').val(newSort).trigger('change');
+            $('#filter-form').submit();
+        });
+        
+        // Highlight current sort column
+        const currentSort = $('#sort_by').val();
+        if (currentSort) {
+            const [field, direction] = currentSort.split('_');
+            $(`.sortable[data-sort="${field}"]`).addClass(direction);
+        }
     });
-    
-    // Handle toggle status buttons
-    $('.toggle-status-btn').on('click', function() {
-        const userId = $(this).data('user-id');
-        toggleUserStatus(userId);
-    });
-    
-    // Handle resend welcome email buttons
-    $('.resend-welcome-btn').on('click', function() {
-        const userId = $(this).data('user-id');
-        resendWelcomeEmail(userId);
-    });
-});
 </script>
 {% endblock %} 

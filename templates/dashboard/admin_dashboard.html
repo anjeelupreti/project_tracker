@@ -230,7 +230,7 @@
                         </div>
                     </div>
                     <div class="mt-3">
-                        <a href="{% url 'admin:accounts_user_changelist' %}" class="text-white">Manage users <i class="fas fa-arrow-right ms-1"></i></a>
+                        <a href="{% url 'accounts:user_list' %}" class="text-white">Manage users <i class="fas fa-arrow-right ms-1"></i></a>
                     </div>
                 </div>
             </div>
@@ -408,6 +408,9 @@
                                         <tr>
                                             <td>
                                                 <a href="{% url 'projects:project_detail' project.id %}">{{ project.name }}</a>
+                                                <a href="{% url 'projects:project_detail' project.id %}" class="btn btn-sm btn-primary ms-2" title="View project details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
                                             </td>
                                             <td>{% if project.department %}{{ project.department.name }}{% else %}No Department{% endif %}</td>
                                             <td class="text-danger">{{ project.end_date }}</td>
@@ -446,6 +449,9 @@
                                         <tr>
                                             <td>
                                                 <a href="{% url 'projects:task_detail' task.id %}">{{ task.title }}</a>
+                                                <a href="{% url 'projects:task_detail' task.id %}" class="btn btn-sm btn-primary ms-2" title="View task details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
                                             </td>
                                             <td>{% if task.project %}{{ task.project.name }}{% else %}No Project{% endif %}</td>
                                             <td class="text-danger">{{ task.due_date }}</td>

@@ -10,7 +10,7 @@
     }
     
     .settings-sidebar {
-        background-color: var(--bs-white);
+        background-color: var(--bs-card-bg);
         border-radius: 0.75rem;
         padding: 1.5rem;
         position: sticky;
@@ -72,7 +72,7 @@
     
     .section-header h3 {
         font-weight: 700;
-        color: var(--bs-gray-800);
+        color: var(--bs-body-color);
     }
     
     .card {
@@ -82,6 +82,7 @@
         border-radius: 0.75rem;
         overflow: hidden;
         transition: all 0.3s ease;
+        background-color: var(--bs-card-bg);
     }
     
     .card:hover {
@@ -90,10 +91,11 @@
     }
     
     .card-header {
-        background-color: var(--bs-white);
-        border-bottom: 1px solid rgba(var(--bs-primary-rgb), 0.1);
+        background-color: var(--bs-card-bg);
+        border-bottom: 1px solid var(--bs-border-color);
         padding: 1rem 1.25rem;
         font-weight: 600;
+        color: var(--bs-body-color);
     }
     
     .card-body {
@@ -121,7 +123,7 @@
         height: 1.5rem;
         border-radius: 50%;
         margin-right: 0.5rem;
-        border: 3px solid var(--bs-white);
+        border: 3px solid var(--bs-card-bg);
         box-shadow: 0 0 0 1px var(--bs-border-color);
         vertical-align: middle;
     }
@@ -134,9 +136,11 @@
     .form-control, .form-select {
         padding: 0.75rem 1rem;
         border-radius: 0.75rem;
-        border: 2px solid rgba(0, 0, 0, 0.08);
+        border: 2px solid var(--bs-border-color);
         font-size: 1rem;
         transition: all 0.3s ease;
+        background-color: var(--bs-form-control-bg);
+        color: var(--bs-body-color);
     }
     
     .form-control:focus, .form-select:focus {
@@ -146,9 +150,10 @@
     
     .input-group-text {
         border-radius: 0.75rem 0 0 0.75rem;
-        border: 2px solid rgba(0, 0, 0, 0.08);
+        border: 2px solid var(--bs-border-color);
         border-right: none;
-        background-color: rgba(var(--bs-primary-rgb), 0.05);
+        background-color: var(--bs-tertiary-bg);
+        color: var(--bs-body-color);
     }
     
     .input-group .form-control {
@@ -158,7 +163,7 @@
     .form-label {
         font-weight: 600;
         margin-bottom: 0.5rem;
-        color: var(--bs-gray-700);
+        color: var(--bs-body-color);
     }
     
     .btn-save {
@@ -285,21 +290,21 @@
                                     <label class="form-label fw-medium mb-3">Theme Mode</label>
                                     <div class="d-flex gap-4 mb-3">
                                         <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="theme_preference" id="theme_light" value="light" {% if user.theme_preference == 'light' %}checked{% endif %}>
+                                            <input class="form-check-input theme-toggle" type="radio" name="theme_preference" id="theme_light" value="light" {% if user.theme_preference == 'light' %}checked{% endif %}>
                                             <label class="form-check-label d-flex align-items-center" for="theme_light">
                                                 <div class="color-swatch bg-white"></div>
                                                 <i class="fas fa-sun me-2 text-warning"></i> Light
                                             </label>
                                         </div>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="theme_preference" id="theme_dark" value="dark" {% if user.theme_preference == 'dark' %}checked{% endif %}>
+                                            <input class="form-check-input theme-toggle" type="radio" name="theme_preference" id="theme_dark" value="dark" {% if user.theme_preference == 'dark' %}checked{% endif %}>
                                             <label class="form-check-label d-flex align-items-center" for="theme_dark">
                                                 <div class="color-swatch bg-dark"></div>
                                                 <i class="fas fa-moon me-2 text-primary"></i> Dark
                                             </label>
                                         </div>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="theme_preference" id="theme_auto" value="auto" {% if user.theme_preference == 'auto' %}checked{% endif %}>
+                                            <input class="form-check-input theme-toggle" type="radio" name="theme_preference" id="theme_auto" value="auto" {% if user.theme_preference == 'auto' %}checked{% endif %}>
                                             <label class="form-check-label d-flex align-items-center" for="theme_auto">
                                                 <div class="color-swatch" style="background: linear-gradient(135deg, #fff 50%, #212529 50%)"></div>
                                                 <i class="fas fa-adjust me-2 text-secondary"></i> Auto (System)
@@ -512,6 +517,25 @@
                 targetLink.click();
             }
         }
+        
+        // Auto-submit theme preference when radio button changes
+        const themeToggles = document.querySelectorAll('.theme-toggle');
+        themeToggles.forEach(function(toggle) {
+            toggle.addEventListener('change', function() {
+                const form = this.closest('form');
+                if (form) {
+                    // Show a temporary indicator
+                    const saveBtn = form.querySelector('.btn-save');
+                    const originalText = saveBtn.innerHTML;
+                    
+                    saveBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin me-2"></i> Saving...';
+                    saveBtn.disabled = true;
+                    
+                    // Submit the form
+                    form.submit();
+                }
+            });
+        });
     });
 </script>
 {% endblock %}

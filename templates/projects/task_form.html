@@ -7,15 +7,69 @@
 
 {% block extra_css %}
 <style>
+  .form-card {
+    border-radius: 1rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    border: none;
+  }
+  
+  .form-card .card-header {
+    background: linear-gradient(135deg, #4a6cf7, #2a41c5);
+    color: white;
+    border-bottom: none;
+    padding: 1.5rem;
+  }
+  
+  .field-icon {
+    color: #4a6cf7;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(74, 108, 247, 0.1);
+    border-radius: 8px;
+    margin-right: 15px;
+    margin-bottom: 0;
+  }
+  
+  .field-group {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+  }
+  
+  .field-group .field-content {
+    flex: 1;
+  }
+  
+  .field-group label {
+    font-weight: 600;
+    color: #344767;
+    margin-bottom: 0.5rem;
+  }
+  
   .help-text {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #6c757d;
     margin-top: 0.25rem;
   }
   
-  .form-card {
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #344767;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .form-submit-area {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-top: 1px solid #eee;
+    margin-top: 1rem;
   }
 </style>
 {% endblock %}
@@ -45,24 +99,194 @@
 <div class="row">
   <div class="col-md-10 col-lg-8 mx-auto">
     <div class="card form-card">
-      <div class="card-body">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas {% if form.instance.id %}fa-edit{% else %}fa-plus-circle{% endif %} me-2"></i>
+          {% if form.instance.id %}
+            Edit Task Details
+          {% else %}
+            Task Information
+          {% endif %}
+        </h5>
+      </div>
+      <div class="card-body p-4">
         <form method="post" enctype="multipart/form-data">
           {% csrf_token %}
-          {{ form|crispy }}
           
-          {% if form.instance.id %}
-            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-              <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save me-1"></i> Update Task
-              </button>
+          <div class="row">
+            <div class="col-12">
+              <h6 class="section-title">
+                <i class="fas fa-info-circle me-2"></i>Basic Information
+              </h6>
             </div>
-          {% else %}
-            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-              <button type="submit" class="btn btn-primary">
-                <i class="fas fa-plus-circle me-1"></i> Create Task
-              </button>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-12">
+              <div class="field-group">
+                <div class="field-icon">
+                  <i class="fas fa-heading"></i>
+                </div>
+                <div class="field-content">
+                  {{ form.title|as_crispy_field }}
+                </div>
+              </div>
             </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-12">
+              <div class="field-group">
+                <div class="field-icon">
+                  <i class="fas fa-align-left"></i>
+                </div>
+                <div class="field-content">
+                  {{ form.description|as_crispy_field }}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-12">
+              <h6 class="section-title">
+                <i class="fas fa-project-diagram me-2"></i>Project & Assignment
+              </h6>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="field-group">
+                <div class="field-icon">
+                  <i class="fas fa-folder-open"></i>
+                </div>
+                <div class="field-content">
+                  {{ form.project|as_crispy_field }}
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="field-group">
+                <div class="field-icon">
+                  <i class="fas fa-user-check"></i>
+                </div>
+                <div class="field-content">
+                  {{ form.assignees|as_crispy_field }}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-12">
+              <h6 class="section-title">
+                <i class="fas fa-calendar-alt me-2"></i>Timeline & Priority
+              </h6>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="field-group">
+                <div class="field-icon">
+                  <i class="fas fa-hourglass-start"></i>
+                </div>
+                <div class="field-content">
+                  {{ form.start_date|as_crispy_field }}
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="field-group">
+                <div class="field-icon">
+                  <i class="fas fa-hourglass-end"></i>
+                </div>
+                <div class="field-content">
+                  {{ form.due_date|as_crispy_field }}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="field-group">
+                <div class="field-icon">
+                  <i class="fas fa-flag"></i>
+                </div>
+                <div class="field-content">
+                  {{ form.priority|as_crispy_field }}
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="field-group">
+                <div class="field-icon">
+                  <i class="fas fa-tasks"></i>
+                </div>
+                <div class="field-content">
+                  {{ form.status|as_crispy_field }}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="field-group">
+                <div class="field-icon">
+                  <i class="fas fa-clock"></i>
+                </div>
+                <div class="field-content">
+                  {{ form.estimated_hours|as_crispy_field }}
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <!-- Hidden assignee field -->
+              {{ form.assignee }}
+            </div>
+          </div>
+          
+          {% if form.attachments %}
+          <div class="row">
+            <div class="col-12">
+              <h6 class="section-title">
+                <i class="fas fa-paperclip me-2"></i>Attachments
+              </h6>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-12">
+              <div class="field-group">
+                <div class="field-icon">
+                  <i class="fas fa-file-upload"></i>
+                </div>
+                <div class="field-content">
+                  {{ form.attachments|as_crispy_field }}
+                </div>
+              </div>
+            </div>
+          </div>
           {% endif %}
+          
+          <div class="form-submit-area">
+            {% if form.instance.id %}
+              <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <button type="submit" class="btn btn-primary btn-lg">
+                  <i class="fas fa-save me-2"></i> Update Task
+                </button>
+              </div>
+            {% else %}
+              <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <button type="submit" class="btn btn-primary btn-lg">
+                  <i class="fas fa-plus-circle me-2"></i> Create Task
+                </button>
+              </div>
+            {% endif %}
+          </div>
         </form>
       </div>
     </div>

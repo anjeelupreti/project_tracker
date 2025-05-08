@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column, Div
 
-from .models import Department, Project, Task, TaskComment, TaskAttachment, ProjectAttachment, ProjectUpdate, TaskUpdate, ChatMessage
+from .models import Department, Project, Task, TaskComment, TaskAttachment, ProjectAttachment, ProjectUpdate, TaskUpdate, ChatMessage, TaskAssignee
 from accounts.models import User
 
 class DepartmentForm(forms.ModelForm):
@@ -143,6 +143,9 @@ class TaskForm(forms.ModelForm):
         self.fields['assignee'].widget = forms.HiddenInput()
         self.fields['assignee'].required = False
         
+        # Make project field optional
+        self.fields['project'].required = False
+        
         self.helper = FormHelper()
         self.helper.form_method = 'post'
         self.helper.layout = Layout(
@@ -192,7 +195,7 @@ class TaskForm(forms.ModelForm):
             
         # For assignee field
         if self.instance and self.instance.pk and self.instance.project:
-            # For existing task, show project members
+            # For existing task with project, show project members
             members = self.instance.project.members.all().order_by(
                 'first_name', 'last_name'
             )
@@ -212,15 +215,15 @@ class TaskForm(forms.ModelForm):
                     'first_name', 'last_name'
                 )
             except Project.DoesNotExist:
-                self.fields['assignees'].queryset = User.objects.none()
-        else:
-            # Initially, show all active users for admins, no assignee options for others
-            if self.user and (self.user.is_admin or self.user.is_superuser):
+                # If project doesn't exist, show all active users
                 self.fields['assignees'].queryset = User.objects.filter(is_active=True).order_by(
                     'first_name', 'last_name'
                 )
-            else:
-                self.fields['assignees'].queryset = User.objects.none()
+        else:
+            # Initially, show all active users
+            self.fields['assignees'].queryset = User.objects.filter(is_active=True).order_by(
+                'first_name', 'last_name'
+            )
             
         # If current user is a member, default assignee to self
         if self.user and self.user.role == User.Role.MEMBER:
@@ -228,7 +231,8 @@ class TaskForm(forms.ModelForm):
         
         # Add a note about choosing a project first if needed
         if not self.instance or not self.instance.pk:
-            self.fields['assignees'].help_text = "Select a project first to see available assignees"
+            self.fields['project'].help_text = "Optional. You can leave this blank for tasks not associated with any project."
+            self.fields['assignees'].help_text = "Select one or more assignees for this task"
 
     def clean(self):
         cleaned_data = super().clean()

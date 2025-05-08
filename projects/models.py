@@ -87,35 +87,69 @@ class Project(models.Model):
         null=True,
         related_name='created_projects'
     )
+    progress = models.PositiveSmallIntegerField(default=0, validators=[MaxValueValidator(100)])
     
     # Track history of changes
     history = HistoricalRecords()
     
     def __str__(self):
-        return f"{self.name} ({self.get_status_display()})"
+        return self.name
     
     def get_absolute_url(self):
         return reverse('projects:project_detail', kwargs={'pk': self.pk})
     
     @property
-    def progress(self):
-        """Calculate project progress as percentage of completed tasks"""
-        tasks = self.tasks.all()
-        if not tasks:
+    def calculate_progress(self):
+        """Calculate project progress based on weighted task completion"""
+        total_tasks = self.tasks.count()
+        if total_tasks == 0:
             return 0
-        completed_tasks = tasks.filter(status=Task.Status.COMPLETED).count()
-        return int((completed_tasks / tasks.count()) * 100)
+            
+        # Count tasks by status and weight them
+        todo_tasks = self.tasks.filter(status=Task.Status.TODO).count()
+        in_progress_tasks = self.tasks.filter(status=Task.Status.IN_PROGRESS).count()
+        review_tasks = self.tasks.filter(status=Task.Status.REVIEW).count()
+        completed_tasks = self.tasks.filter(status=Task.Status.COMPLETED).count()
+        
+        # Apply weights: Completed=100%, Review=75%, In Progress=50%, Todo=0%
+        weighted_sum = (completed_tasks * 1.0) + (review_tasks * 0.75) + (in_progress_tasks * 0.5)
+        
+        # Calculate progress percentage
+        progress = int((weighted_sum / total_tasks) * 100)
+        
+        # Only update if different from current progress
+        current_progress = getattr(self, 'progress', None)
+        if current_progress is None or current_progress != progress:
+            self.progress = progress
+            self.save(update_fields=['progress'])
+            
+        return progress
+    
+    @property
+    def progress_color(self):
+        """Return Bootstrap color class based on progress percentage"""
+        progress = getattr(self, 'progress', 0)
+        if progress < 25:
+            return "danger"
+        elif progress < 50:
+            return "warning"
+        elif progress < 75:
+            return "info"
+        else:
+            return "success"
     
     @property
     def is_overdue(self):
-        """Check if project is overdue"""
-        return timezone.now().date() > self.end_date and self.status != self.Status.COMPLETED
+        """Return whether project is overdue"""
+        if self.status != self.Status.COMPLETED:
+            return self.end_date < timezone.now().date()
+        return False
     
     class Meta:
         ordering = ['-created_at']
         permissions = [
-            ("can_change_project_lead", "Can change project lead"),
-            ("can_change_project_status", "Can change project status"),
+            ("view_project_dashboard", "Can view project dashboard"),
+            ("manage_project_members", "Can manage project members"),
         ]
 
 class ProjectMembership(models.Model):
@@ -159,7 +193,9 @@ class Task(models.Model):
     project = models.ForeignKey(
         Project,
         on_delete=models.CASCADE,
-        related_name='tasks'
+        related_name='tasks',
+        null=True,
+        blank=True
     )
     assignee = models.ForeignKey(
         settings.AUTH_USER_MODEL,

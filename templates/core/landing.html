@@ -4,52 +4,286 @@
 
 {% block extra_css %}
 <style>
+    /* Hero Section */
     .hero-section {
-        background: linear-gradient(135deg, #007bff, #6610f2);
+        background: linear-gradient(135deg, #4361ee, #3a0ca3);
         color: white;
-        padding: 6rem 0;
+        padding: 8rem 0 6rem;
         margin-top: -1.5rem;
+        position: relative;
+        overflow: hidden;
     }
     
-    .feature-icon {
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('data:image/svg+xml,%3Csvg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z" fill="rgba(255,255,255,0.05)" fill-rule="evenodd"/%3E%3C/svg%3E');
+        opacity: 0.5;
+    }
+    
+    .hero-section .container {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        margin-bottom: 1.5rem;
+        line-height: 1.2;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.25rem;
+        line-height: 1.6;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+    }
+    
+    .hero-image {
+        transform: perspective(1000px) rotateY(-10deg);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        transition: all 0.5s ease;
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+    
+    .hero-image:hover {
+        transform: perspective(1000px) rotateY(0);
+    }
+    
+    /* Features Section */
+    .features-section {
+        padding: 6rem 0;
+    }
+    
+    .section-title {
         font-size: 2.5rem;
-        color: #007bff;
+        font-weight: 700;
         margin-bottom: 1rem;
+    }
+    
+    .section-subtitle {
+        font-size: 1.25rem;
+        color: var(--bs-secondary);
+        margin-bottom: 3rem;
     }
     
     .feature-card {
         padding: 2rem;
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-        transition: transform 0.3s, box-shadow 0.3s;
+        border-radius: 1rem;
+        background-color: var(--bs-card-bg);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
         height: 100%;
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: linear-gradient(to right, #4361ee, #3a0ca3);
+        opacity: 0;
+        transition: all 0.3s ease;
     }
     
     .feature-card:hover {
         transform: translateY(-10px);
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
     }
     
-    .testimonial {
-        background-color: #f8f9fa;
-        border-radius: 10px;
-        padding: 2rem;
+    .feature-card:hover::before {
+        opacity: 1;
+    }
+    
+    .feature-icon {
+        width: 70px;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        border-radius: 20px;
         margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.1), rgba(58, 12, 163, 0.1));
+        color: #4361ee;
+    }
+    
+    .feature-card h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    /* How It Works Section */
+    .how-it-works {
+        padding: 5rem 0;
+        background-color: var(--bs-light);
+    }
+    
+    .step-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 auto 1.5rem;
+        background: linear-gradient(135deg, #4361ee, #3a0ca3);
+        color: white;
+        box-shadow: 0 10px 20px rgba(67, 97, 238, 0.2);
+    }
+    
+    .step-card {
+        text-align: center;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .step-card h4 {
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .step-connector {
+        position: relative;
+    }
+    
+    .step-connector::after {
+        content: '';
+        position: absolute;
+        top: 40px;
+        right: -50%;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(to right, #4361ee, #3a0ca3);
+        z-index: 0;
+    }
+    
+    .step-card:last-child .step-connector::after {
+        display: none;
+    }
+    
+    /* Testimonials Section */
+    .testimonials-section {
+        padding: 6rem 0;
+        background-color: var(--bs-card-bg);
+    }
+    
+    .testimonial-card {
+        padding: 2rem;
+        border-radius: 1rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        margin-bottom: 2rem;
+        position: relative;
+        background-color: var(--bs-body-bg);
+        border: none;
+    }
+    
+    .testimonial-card::before {
+        content: '"';
+        position: absolute;
+        top: -20px;
+        left: 20px;
+        font-size: 10rem;
+        color: rgba(0, 0, 0, 0.03);
+        font-family: serif;
+        line-height: 1;
+    }
+    
+    .testimonial-content {
+        font-style: italic;
+        margin-bottom: 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .testimonial-author {
+        display: flex;
+        align-items: center;
     }
     
     .testimonial-avatar {
         width: 60px;
         height: 60px;
         border-radius: 50%;
-        object-fit: cover;
+        overflow: hidden;
         margin-right: 1rem;
     }
     
+    .testimonial-info h5 {
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+    
+    .testimonial-info p {
+        margin-bottom: 0;
+        color: var(--bs-secondary);
+        font-size: 0.875rem;
+    }
+    
+    /* CTA Section */
     .cta-section {
-        background: linear-gradient(135deg, #6610f2, #007bff);
+        background: linear-gradient(135deg, #4361ee, #3a0ca3);
+        padding: 5rem 0;
+        border-radius: 1rem;
         color: white;
-        padding: 4rem 0;
-        border-radius: 10px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .cta-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('data:image/svg+xml,%3Csvg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z" fill="rgba(255,255,255,0.05)" fill-rule="evenodd"/%3E%3C/svg%3E');
+        opacity: 0.3;
+    }
+    
+    .cta-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .cta-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+    }
+    
+    .cta-subtitle {
+        font-size: 1.25rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+    }
+    
+    .btn-cta {
+        padding: 0.75rem 2rem;
+        font-size: 1.125rem;
+        font-weight: 600;
+        border-radius: 50rem;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cta:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
     }
 </style>
 {% endblock %}
@@ -60,26 +294,32 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-6">
-                    <h1 class="display-4 fw-bold mb-4">Project Tracking Made Simple</h1>
-                    <p class="lead mb-4">A comprehensive project management solution for teams of all sizes. Track progress, manage tasks, and collaborate effortlessly.</p>
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-start">
-                        <a href="{% url 'account_signup' %}" class="btn btn-light btn-lg px-4 me-md-2">Get Started</a>
-                        <a href="{% url 'core:about' %}" class="btn btn-outline-light btn-lg px-4">Learn More</a>
+                    <h1 class="hero-title">Project Management Simplified</h1>
+                    <p class="hero-subtitle">A powerful yet intuitive project tracking solution designed for modern teams. Coordinate tasks, track progress, and achieve your goals with ease.</p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="{% url 'account_signup' %}" class="btn btn-light btn-lg px-4 fw-semibold">
+                            <i class="fas fa-rocket me-2"></i> Get Started Free
+                        </a>
+                        <a href="{% url 'account_login' %}" class="btn btn-outline-light btn-lg px-4">
+                            <i class="fas fa-sign-in-alt me-2"></i> Sign In
+                        </a>
                     </div>
                 </div>
-                <div class="col-lg-6 d-none d-lg-block">
-                    <img src="https://placehold.co/600x400/007bff/white?text=Project+Tracker" alt="Project Management" class="img-fluid rounded shadow">
+                <div class="col-lg-6 d-none d-lg-block mt-5 mt-lg-0">
+                    <div class="hero-image">
+                        <img src="https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1176&q=80" alt="Project Management Dashboard" class="img-fluid rounded shadow-lg">
+                    </div>
                 </div>
             </div>
         </div>
     </section>
     
     <!-- Features Section -->
-    <section class="py-5 my-5">
+    <section class="features-section">
         <div class="container">
             <div class="text-center mb-5">
-                <h2 class="display-5 fw-bold">Powerful Features</h2>
-                <p class="lead text-muted">Everything you need to manage your projects efficiently</p>
+                <h2 class="section-title">Powerful Features</h2>
+                <p class="section-subtitle">Everything you need to manage your projects efficiently</p>
             </div>
             
             <div class="row g-4">
@@ -89,7 +329,7 @@
                             <i class="fas fa-tasks"></i>
                         </div>
                         <h3>Task Management</h3>
-                        <p class="text-muted">Create, assign, and track tasks with ease. Set priorities, deadlines, and monitor progress.</p>
+                        <p class="text-muted">Create, assign, and track tasks with ease. Set priorities, deadlines, and monitor progress in real-time.</p>
                     </div>
                 </div>
                 
@@ -99,7 +339,7 @@
                             <i class="fas fa-users"></i>
                         </div>
                         <h3>Team Collaboration</h3>
-                        <p class="text-muted">Collaborate seamlessly with your team. Assign team members to projects and tasks.</p>
+                        <p class="text-muted">Collaborate seamlessly with your team. Assign team members to projects and tasks, share files, and communicate efficiently.</p>
                     </div>
                 </div>
                 
@@ -109,7 +349,7 @@
                             <i class="fas fa-chart-line"></i>
                         </div>
                         <h3>Progress Tracking</h3>
-                        <p class="text-muted">Track project progress with visual indicators and detailed analytics.</p>
+                        <p class="text-muted">Track project progress with visual indicators, progress bars, and detailed analytics to keep everything on schedule.</p>
                     </div>
                 </div>
                 
@@ -119,17 +359,17 @@
                             <i class="fas fa-calendar-alt"></i>
                         </div>
                         <h3>Deadline Management</h3>
-                        <p class="text-muted">Never miss a deadline again. Set due dates and get timely notifications.</p>
+                        <p class="text-muted">Never miss a deadline again. Set due dates for projects and tasks with automated reminders and notifications.</p>
                     </div>
                 </div>
                 
                 <div class="col-md-4">
                     <div class="feature-card">
                         <div class="feature-icon">
-                            <i class="fas fa-file-alt"></i>
+                            <i class="fas fa-comments"></i>
                         </div>
-                        <h3>Detailed Reporting</h3>
-                        <p class="text-muted">Generate comprehensive reports to track team performance and project status.</p>
+                        <h3>Integrated Chat</h3>
+                        <p class="text-muted">Discuss projects and tasks in context with integrated chat and file sharing capabilities.</p>
                     </div>
                 </div>
                 
@@ -139,7 +379,7 @@
                             <i class="fas fa-shield-alt"></i>
                         </div>
                         <h3>Role-Based Access</h3>
-                        <p class="text-muted">Control access to projects and features based on user roles and permissions.</p>
+                        <p class="text-muted">Control access to projects and features based on user roles and permissions for enhanced security.</p>
                     </div>
                 </div>
             </div>
@@ -147,51 +387,108 @@
     </section>
     
     <!-- How It Works Section -->
-    <section class="py-5 bg-light">
+    <section class="how-it-works">
         <div class="container">
             <div class="text-center mb-5">
-                <h2 class="display-5 fw-bold">How It Works</h2>
-                <p class="lead text-muted">Simple steps to streamline your project management</p>
+                <h2 class="section-title">How It Works</h2>
+                <p class="section-subtitle">Get started in just a few simple steps</p>
             </div>
             
             <div class="row">
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="text-center">
-                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
-                            <h3 class="mb-0">1</h3>
+                <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                    <div class="step-card">
+                        <div class="step-connector">
+                            <div class="step-circle">1</div>
                         </div>
                         <h4>Sign Up</h4>
-                        <p class="text-muted">Create your account and verify your email address</p>
+                        <p class="text-muted">Create your account and verify your email address to get started</p>
                     </div>
                 </div>
                 
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="text-center">
-                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
-                            <h3 class="mb-0">2</h3>
+                <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                    <div class="step-card">
+                        <div class="step-connector">
+                            <div class="step-circle">2</div>
                         </div>
                         <h4>Create Projects</h4>
-                        <p class="text-muted">Set up your projects with detailed information</p>
+                        <p class="text-muted">Set up your projects with detailed information and invite team members</p>
                     </div>
                 </div>
                 
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="text-center">
-                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
-                            <h3 class="mb-0">3</h3>
+                <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                    <div class="step-card">
+                        <div class="step-connector">
+                            <div class="step-circle">3</div>
                         </div>
-                        <h4>Assign Tasks</h4>
-                        <p class="text-muted">Break down projects into manageable tasks</p>
+                        <h4>Add Tasks</h4>
+                        <p class="text-muted">Break down projects into manageable tasks and assign them to team members</p>
                     </div>
                 </div>
                 
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="text-center">
-                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
-                            <h3 class="mb-0">4</h3>
+                <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                    <div class="step-card">
+                        <div class="step-connector">
+                            <div class="step-circle">4</div>
                         </div>
                         <h4>Track Progress</h4>
-                        <p class="text-muted">Monitor progress and keep everything on schedule</p>
+                        <p class="text-muted">Monitor progress, update statuses, and keep everything on schedule</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Testimonials Section -->
+    <section class="testimonials-section">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="section-title">What Our Users Say</h2>
+                <p class="section-subtitle">Join thousands of satisfied teams using Project Tracker</p>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-4 col-md-6">
+                    <div class="testimonial-card">
+                        <p class="testimonial-content">"Project Tracker has transformed how our team manages projects. The intuitive interface and powerful features have improved our productivity significantly."</p>
+                        <div class="testimonial-author">
+                            <div class="testimonial-avatar">
+                                <img src="https://randomuser.me/api/portraits/women/45.jpg" alt="Sarah Johnson" class="img-fluid">
+                            </div>
+                            <div class="testimonial-info">
+                                <h5>Sarah Johnson</h5>
+                                <p>Project Manager, TechCorp</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="testimonial-card">
+                        <p class="testimonial-content">"The task management system is incredibly flexible. We've been able to adapt it perfectly to our agile workflow, which has streamlined our development process."</p>
+                        <div class="testimonial-author">
+                            <div class="testimonial-avatar">
+                                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Michael Chen" class="img-fluid">
+                            </div>
+                            <div class="testimonial-info">
+                                <h5>Michael Chen</h5>
+                                <p>Lead Developer, Innovate Solutions</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="testimonial-card">
+                        <p class="testimonial-content">"As a small business owner, I needed something powerful yet simple. Project Tracker has been the perfect solution for keeping my team organized and on track."</p>
+                        <div class="testimonial-author">
+                            <div class="testimonial-avatar">
+                                <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Jessica Rodriguez" class="img-fluid">
+                            </div>
+                            <div class="testimonial-info">
+                                <h5>Jessica Rodriguez</h5>
+                                <p>Founder, Creative Studios</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -199,12 +496,16 @@
     </section>
     
     <!-- Call to Action -->
-    <section class="py-5 my-5">
+    <section class="my-5 py-5">
         <div class="container">
-            <div class="cta-section text-center">
-                <h2 class="display-5 fw-bold mb-4">Ready to Get Started?</h2>
-                <p class="lead mb-4">Join thousands of teams who have improved their project management with our platform.</p>
-                <a href="{% url 'account_signup' %}" class="btn btn-light btn-lg px-5">Sign Up for Free</a>
+            <div class="cta-section">
+                <div class="cta-content text-center">
+                    <h2 class="cta-title">Ready to Transform Your Project Management?</h2>
+                    <p class="cta-subtitle">Join thousands of teams who have improved their productivity with our platform.</p>
+                    <a href="{% url 'account_signup' %}" class="btn btn-light btn-lg btn-cta">
+                        <i class="fas fa-rocket me-2"></i> Start Your Free Account
+                    </a>
+                </div>
             </div>
         </div>
     </section>

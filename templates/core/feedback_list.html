@@ -1,0 +1,285 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Manage Feedback{% endblock %}
+
+{% block extra_css %}
+<style>
+    .feedback-card {
+        border-radius: 0.75rem;
+        border: none;
+        box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.08);
+        transition: all 0.2s;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+    
+    .feedback-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
+    }
+    
+    .feedback-card .card-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .feedback-card .card-body {
+        padding: 1.25rem;
+    }
+    
+    .feedback-tags {
+        position: absolute;
+        top: 0;
+        right: 0;
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.75rem;
+    }
+    
+    .message-text {
+        font-size: 1rem;
+        line-height: 1.6;
+        white-space: pre-line;
+    }
+    
+    .feedback-filters {
+        background-color: rgba(var(--bs-primary-rgb), 0.03);
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .feedback-list {
+        max-height: 800px;
+        overflow-y: auto;
+        padding-right: 0.5rem;
+    }
+    
+    .feedback-list::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .feedback-list::-webkit-scrollbar-thumb {
+        background-color: rgba(var(--bs-primary-rgb), 0.2);
+        border-radius: 3px;
+    }
+    
+    .feedback-list::-webkit-scrollbar-track {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .feedback-type-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+    }
+    
+    .no-feedback {
+        text-align: center;
+        padding: 3rem 2rem;
+    }
+    
+    .no-feedback i {
+        font-size: 3rem;
+        color: #ccc;
+        margin-bottom: 1rem;
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">
+            <i class="fas fa-comment-dots me-2 text-primary"></i>Feedback Management
+        </h1>
+        <div>
+            <button type="button" class="btn btn-outline-primary" id="refreshFeedback">
+                <i class="fas fa-sync-alt me-1"></i> Refresh
+            </button>
+        </div>
+    </div>
+    
+    <!-- Filters and Stats -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="feedback-filters">
+                <form id="feedbackFilterForm" method="get">
+                    <div class="row g-3">
+                        <div class="col-lg-3 col-md-6">
+                            <label for="feedbackType" class="form-label">Type</label>
+                            <select class="form-select" id="feedbackType" name="type">
+                                <option value="all" {% if not request.GET.type or request.GET.type == 'all' %}selected{% endif %}>All Types</option>
+                                <option value="FEEDBACK" {% if request.GET.type == 'FEEDBACK' %}selected{% endif %}>General Feedback</option>
+                                <option value="BUG" {% if request.GET.type == 'BUG' %}selected{% endif %}>Bug Reports</option>
+                                <option value="SUGGESTION" {% if request.GET.type == 'SUGGESTION' %}selected{% endif %}>Suggestions</option>
+                                <option value="QUERY" {% if request.GET.type == 'QUERY' %}selected{% endif %}>Questions</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <label for="feedbackStatus" class="form-label">Status</label>
+                            <select class="form-select" id="feedbackStatus" name="status">
+                                <option value="all" {% if not request.GET.status or request.GET.status == 'all' %}selected{% endif %}>All Status</option>
+                                <option value="unread" {% if request.GET.status == 'unread' %}selected{% endif %}>Unread</option>
+                                <option value="read" {% if request.GET.status == 'read' %}selected{% endif %}>Read</option>
+                                <option value="resolved" {% if request.GET.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <label for="feedbackSearch" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="feedbackSearch" name="search" 
+                                   placeholder="Email, name or message..." value="{{ request.GET.search|default:'' }}">
+                        </div>
+                        <div class="col-lg-2 col-md-6 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-filter me-1"></i> Filter
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="row">
+                <div class="col-6">
+                    <div class="card feedback-card h-100">
+                        <div class="card-body p-3 text-center">
+                            <h6 class="text-muted mb-2">Unread</h6>
+                            <h3 class="mb-0">{{ unread_count }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card feedback-card h-100">
+                        <div class="card-body p-3 text-center">
+                            <h6 class="text-muted mb-2">Total</h6>
+                            <h3 class="mb-0">{{ feedback_list|length }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Feedback List -->
+    <div class="feedback-list">
+        {% if feedback_list %}
+            {% for feedback in feedback_list %}
+                <div class="feedback-card position-relative {% if not feedback.is_read %}border-start border-4 border-primary{% endif %}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <div>
+                                {% if feedback.feedback_type == 'FEEDBACK' %}
+                                    <span class="feedback-type-indicator bg-primary"></span>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary">General Feedback</span>
+                                {% elif feedback.feedback_type == 'BUG' %}
+                                    <span class="feedback-type-indicator bg-danger"></span>
+                                    <span class="badge bg-danger bg-opacity-10 text-danger">Bug Report</span>
+                                {% elif feedback.feedback_type == 'SUGGESTION' %}
+                                    <span class="feedback-type-indicator bg-success"></span>
+                                    <span class="badge bg-success bg-opacity-10 text-success">Suggestion</span>
+                                {% elif feedback.feedback_type == 'QUERY' %}
+                                    <span class="feedback-type-indicator bg-info"></span>
+                                    <span class="badge bg-info bg-opacity-10 text-info">Question</span>
+                                {% endif %}
+                            </div>
+                            <div class="mt-2">
+                                <span class="fw-bold">{{ feedback.email }}</span>
+                                {% if feedback.first_name or feedback.last_name %}
+                                    <span class="text-muted mx-1">|</span>
+                                    <span>{{ feedback.first_name }} {{ feedback.last_name }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-muted small">
+                            {{ feedback.created_at|date:"M d, Y h:i A" }}
+                        </div>
+                    </div>
+                    <div class="feedback-tags">
+                        {% if feedback.is_resolved %}
+                            <span class="badge bg-success">Resolved</span>
+                        {% elif feedback.is_read %}
+                            <span class="badge bg-secondary">Read</span>
+                        {% else %}
+                            <span class="badge bg-primary">New</span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <p class="message-text mb-3">{{ feedback.message }}</p>
+                        
+                        {% if feedback.phone_number %}
+                            <div class="small text-muted mb-2">
+                                <i class="fas fa-phone me-1"></i> {{ feedback.phone_number }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-end mt-3">
+                            {% if not feedback.is_read %}
+                                <form method="post" action="{% url 'core:mark_feedback_read' feedback.id %}" class="me-2">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-check me-1"></i> Mark as Read
+                                    </button>
+                                </form>
+                            {% endif %}
+                            
+                            {% if not feedback.is_resolved %}
+                                <form method="post" action="{% url 'core:mark_feedback_resolved' feedback.id %}" class="me-2">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-check-double me-1"></i> Mark as Resolved
+                                    </button>
+                                </form>
+                            {% endif %}
+                            
+                            <a href="mailto:{{ feedback.email }}" class="btn btn-sm btn-outline-info me-2">
+                                <i class="fas fa-reply me-1"></i> Reply
+                            </a>
+                            
+                            <form method="post" action="{% url 'core:delete_feedback' feedback.id %}" onsubmit="return confirm('Are you sure you want to delete this feedback?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-trash me-1"></i> Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-feedback">
+                <i class="fas fa-inbox"></i>
+                <h4>No feedback found</h4>
+                <p class="text-muted">There are no feedback messages matching your criteria.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-refresh feedback list every 5 minutes
+        let refreshTimer = setInterval(function() {
+            location.reload();
+        }, 5 * 60 * 1000); // 5 minutes
+        
+        // Manual refresh button
+        document.getElementById('refreshFeedback').addEventListener('click', function() {
+            location.reload();
+        });
+        
+        // Clear timer when user interacts with the page
+        document.addEventListener('click', function() {
+            clearInterval(refreshTimer);
+            refreshTimer = setInterval(function() {
+                location.reload();
+            }, 5 * 60 * 1000);
+        });
+    });
+</script>
+{% endblock %} 

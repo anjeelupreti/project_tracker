@@ -210,9 +210,15 @@
         </li>
       </ul>
     </div>
+    {% if task.project %}
     <a href="{% url 'projects:project_detail' task.project.id %}" class="btn btn-sm btn-outline-secondary">
       <i class="fas fa-arrow-left me-1"></i> Back to Project
     </a>
+    {% else %}
+    <a href="{% url 'projects:task_list' %}" class="btn btn-sm btn-outline-secondary">
+      <i class="fas fa-arrow-left me-1"></i> Back to Tasks
+    </a>
+    {% endif %}
   </div>
 </div>
 
@@ -231,9 +237,13 @@
               <h5 class="card-title mb-2">Project</h5>
               <p class="card-text">
                 <i class="fas fa-project-diagram me-2 text-primary"></i>
+                {% if task.project %}
                 <a href="{% url 'projects:project_detail' task.project.id %}" class="text-decoration-none">
                   {{ task.project.name }}
                 </a>
+                {% else %}
+                <span class="text-muted">No project</span>
+                {% endif %}
               </p>
             </div>
           </div>
@@ -668,39 +678,59 @@
     
     // Handle task status update forms
     const statusForms = document.querySelectorAll('.task-status-form');
+    const csrftoken = getCookie('csrftoken');
     
     statusForms.forEach(form => {
       form.addEventListener('submit', function(e) {
         e.preventDefault();
         
-        const formData = new FormData(form);
-        const csrftoken = getCookie('csrftoken');
+        // Show a loading indicator on the button
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+        submitBtn.disabled = true;
         
+        // Get form data
+        const formData = new FormData(form);
+        
+        // Send AJAX request
         fetch(form.action, {
           method: 'POST',
           body: formData,
           headers: {
             'X-Requested-With': 'XMLHttpRequest',
             'X-CSRFToken': csrftoken
-          }
+          },
+          // Don't set Content-Type when sending FormData
+          // The browser will set it correctly with the proper boundary
+          credentials: 'same-origin'
         })
         .then(response => {
-          if (response.ok) {
-            return response.json();
+          if (!response.ok) {
+            throw new Error(`Network response was not ok: ${response.status}`);
           }
-          throw new Error('Network response was not ok');
+          return response.json();
         })
         .then(data => {
           if (data.success) {
-            // Reload the page to show the updated status
-            window.location.reload();
+            // Success! Force a hard refresh of the page with a cache-busting parameter
+            window.location.href = window.location.pathname + '?refresh=' + new Date().getTime();
           } else {
+            // Server returned an error
+            console.error('Error updating task status:', data.error);
             alert('Error updating task status: ' + (data.error || 'Unknown error'));
+            // Reset button
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
           }
         })
         .catch(error => {
+          // Network or other error
           console.error('Error:', error);
           alert('An error occurred while updating the task status. Please try again.');
+          // Reset button
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
         });
       });
     });

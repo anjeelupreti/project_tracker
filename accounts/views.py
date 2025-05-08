@@ -742,7 +742,7 @@ Please login at {login_url} and change your password.
 class ForcePasswordChangeView(LoginRequiredMixin, UpdateView):
     template_name = 'accounts/force_password_change.html'
     form_class = PasswordChangeForm
-    success_url = reverse_lazy('dashboard:index')
+    success_url = reverse_lazy('dashboard:dashboard_router')
     
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

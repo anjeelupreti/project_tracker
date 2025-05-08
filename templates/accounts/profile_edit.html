@@ -4,52 +4,335 @@
 
 {% block title %}Edit Profile{% endblock %}
 
+{% block extra_css %}
+<style>
+  .profile-header {
+    background: linear-gradient(135deg, #4361ee, #3a0ca3);
+    color: white;
+    padding: 3rem 0;
+    border-radius: 1rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(67, 97, 238, 0.2);
+  }
+  
+  .profile-picture-container {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    margin: 0 auto 1.5rem;
+  }
+  
+  .profile-picture {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 5px solid white;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    background-color: #f8f9fa;
+  }
+  
+  .profile-picture-placeholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    color: white;
+    font-weight: 700;
+    border: 5px solid white;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  }
+  
+  .profile-picture-edit {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background-color: #fff;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .profile-picture-edit:hover {
+    background-color: #4361ee;
+    color: white;
+  }
+  
+  .input-file-hidden {
+    display: none;
+  }
+  
+  .profile-card {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.08);
+    transition: all 0.3s;
+    margin-bottom: 2rem;
+    overflow: hidden;
+  }
+  
+  .profile-card:hover {
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1);
+    transform: translateY(-5px);
+  }
+  
+  .profile-card .card-header {
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+    border-bottom: 1px solid rgba(var(--bs-primary-rgb), 0.1);
+    padding: 1.25rem 1.5rem;
+  }
+  
+  .profile-card .card-body {
+    padding: 1.5rem;
+  }
+  
+  .profile-field {
+    position: relative;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    transition: all 0.2s;
+  }
+  
+  .profile-field:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.03);
+  }
+  
+  .profile-field-label {
+    font-size: 0.85rem;
+    color: var(--bs-secondary-color);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+  
+  .form-floating > .form-control:focus ~ label::after,
+  .form-floating > .form-control:not(:placeholder-shown) ~ label::after,
+  .form-floating > .form-select ~ label::after {
+    background-color: transparent;
+  }
+  
+  .form-control, .form-select {
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-color: rgba(var(--bs-primary-rgb), 0.2);
+    box-shadow: none;
+  }
+  
+  .form-control:focus, .form-select:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.15);
+  }
+  
+  .save-btn {
+    border-radius: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    box-shadow: 0 0.25rem 0.75rem rgba(var(--bs-primary-rgb), 0.2);
+    transition: all 0.3s;
+  }
+  
+  .save-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0.5rem 1rem rgba(var(--bs-primary-rgb), 0.3);
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-  <div class="row">
-    <div class="col-lg-8 mx-auto">
-      <div class="card">
-        <div class="card-header">
-          <h4 class="mb-0">Edit Profile</h4>
-        </div>
-        <div class="card-body">
-          <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            
+<div class="container py-4">
+  <form method="post" enctype="multipart/form-data" id="profile-form">
+    {% csrf_token %}
+    
+    <!-- Profile Header with Picture -->
+    <div class="profile-header">
+      <div class="profile-picture-container">
+        {% if user.profile_picture %}
+          <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}" class="profile-picture" id="profile-preview">
+        {% else %}
+          <div class="profile-picture-placeholder" id="profile-placeholder">
+            {{ user.get_initials|default:"U" }}
+          </div>
+          <img src="" alt="" class="profile-picture d-none" id="profile-preview">
+        {% endif %}
+        <label for="{{ form.profile_picture.id_for_label }}" class="profile-picture-edit">
+          <i class="fas fa-camera"></i>
+        </label>
+        <input type="file" name="profile_picture" id="{{ form.profile_picture.id_for_label }}" class="input-file-hidden" accept="image/*">
+      </div>
+      <h1 class="h3 mb-1">{{ user.get_full_name|default:user.email }}</h1>
+      <p class="mb-0">{{ user.email }}</p>
+    </div>
+    
+    <div class="row">
+      <!-- Left Column -->
+      <div class="col-lg-6">
+        <!-- Personal Information -->
+        <div class="card profile-card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="h5 mb-0"><i class="fas fa-user me-2"></i> Personal Information</h3>
+            <span class="badge bg-primary bg-opacity-10 text-primary">Editable</span>
+          </div>
+          <div class="card-body">
             <div class="row">
               <div class="col-md-6">
-                {{ form.first_name|as_crispy_field }}
+                <div class="profile-field">
+                  <label class="profile-field-label">First Name</label>
+                  {{ form.first_name }}
+                </div>
               </div>
               <div class="col-md-6">
-                {{ form.last_name|as_crispy_field }}
+                <div class="profile-field">
+                  <label class="profile-field-label">Last Name</label>
+                  {{ form.last_name }}
+                </div>
               </div>
             </div>
-            
-            {{ form.email|as_crispy_field }}
-            {{ form.username|as_crispy_field }}
-            
-            <div class="form-group mb-3">
-              <label for="{{ form.profile_picture.id_for_label }}">Profile Picture</label>
-              {% if user.profile_picture %}
-                <div class="mb-2">
-                  <img src="{{ user.profile_picture.url }}" alt="Current profile picture" style="max-width: 100px; border-radius: 50%;">
-                  <p class="text-muted small">Current profile picture</p>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="profile-field">
+                  <label class="profile-field-label">Email Address</label>
+                  {{ form.email }}
                 </div>
-              {% endif %}
-              {{ form.profile_picture }}
+              </div>
+              <div class="col-md-6">
+                <div class="profile-field">
+                  <label class="profile-field-label">Phone Number</label>
+                  {{ form.phone_number }}
+                </div>
+              </div>
             </div>
-            
-            {{ form.bio|as_crispy_field }}
-            {{ form.phone_number|as_crispy_field }}
-            
-            <div class="d-flex justify-content-between mt-4">
-              <a href="{% url 'accounts:profile' %}" class="btn btn-secondary">Cancel</a>
-              <button type="submit" class="btn btn-primary">Update Profile</button>
+          </div>
+        </div>
+        
+        <!-- Account Information -->
+        <div class="card profile-card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="h5 mb-0"><i class="fas fa-shield-alt me-2"></i> Account Information</h3>
+            <span class="badge bg-primary bg-opacity-10 text-primary">Editable</span>
+          </div>
+          <div class="card-body">
+            <div class="profile-field">
+              <label class="profile-field-label">Username</label>
+              {{ form.username }}
             </div>
-          </form>
+            <div class="alert alert-info border-0 shadow-sm d-flex align-items-center p-3">
+              <i class="fas fa-info-circle me-3 fa-lg text-primary"></i>
+              <p class="mb-0">
+                To change your password, please use the <a href="{% url 'account_change_password' %}" class="fw-bold">Change Password</a> page.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right Column -->
+      <div class="col-lg-6">
+        <!-- Professional Information -->
+        <div class="card profile-card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="h5 mb-0"><i class="fas fa-briefcase me-2"></i> Professional Information</h3>
+            <span class="badge bg-primary bg-opacity-10 text-primary">Editable</span>
+          </div>
+          <div class="card-body">
+            <div class="profile-field">
+              <label class="profile-field-label">Bio</label>
+              {{ form.bio }}
+              <small class="text-muted mt-2 d-block">
+                <i class="fas fa-lightbulb me-1"></i>
+                Tell others about yourself, your skills, and your experience.
+              </small>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Role & Department -->
+        <div class="card profile-card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="h5 mb-0"><i class="fas fa-id-badge me-2"></i> Role & Department</h3>
+            <span class="badge bg-secondary bg-opacity-10 text-secondary">View Only</span>
+          </div>
+          <div class="card-body">
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <div class="profile-field bg-light">
+                  <label class="profile-field-label">Current Role</label>
+                  <input type="text" class="form-control" value="{{ user.get_role_display }}" disabled>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="profile-field bg-light">
+                  <label class="profile-field-label">Department</label>
+                  <input type="text" class="form-control" value="{{ user.department.name|default:'Not Assigned' }}" disabled>
+                </div>
+              </div>
+            </div>
+            <div class="alert alert-light border d-flex align-items-center p-3">
+              <i class="fas fa-info-circle me-3 fa-lg text-secondary"></i>
+              <p class="mb-0">
+                Role and department changes require administrator approval.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+    
+    <!-- Form Actions -->
+    <div class="d-flex justify-content-between mt-4 mb-4">
+      <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary btn-lg px-4">
+        <i class="fas fa-arrow-left me-2"></i> Cancel
+      </a>
+      <button type="submit" class="btn btn-primary btn-lg px-5 save-btn">
+        <i class="fas fa-save me-2"></i> Save Changes
+      </button>
+    </div>
+  </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const profileInput = document.getElementById('{{ form.profile_picture.id_for_label }}');
+    const profilePreview = document.getElementById('profile-preview');
+    const profilePlaceholder = document.getElementById('profile-placeholder');
+    
+    // Handle file input change
+    profileInput.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+          profilePreview.src = e.target.result;
+          profilePreview.classList.remove('d-none');
+          
+          if (profilePlaceholder) {
+            profilePlaceholder.classList.add('d-none');
+          }
+        }
+        
+        reader.readAsDataURL(this.files[0]);
+      }
+    });
+    
+    // Prevent form submission on Enter key
+    document.getElementById('profile-form').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+      }
+    });
+  });
+</script>
 {% endblock %} 

@@ -2,6 +2,7 @@
 {% load static %}
 {% load i18n %}
 {% load account %}
+{% load socialaccount %}
 {% load crispy_forms_tags %}
 
 {% block title %}{% trans "Sign In" %}{% endblock %}
@@ -26,15 +27,15 @@
         height: calc(100vh - var(--navbar-height));
         display: flex;
         align-items: center;
-        justify-content: center;
-        padding: 1rem;
+        justify-content: flex-end;
+        padding: 2rem;
     }
     
     .auth-card {
         border: none;
-        border-radius: 1rem;
+        border-radius: 1.25rem;
         overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
         backdrop-filter: blur(10px);
         background: rgba(255, 255, 255, 0.95);
         transform: translateY(0);
@@ -44,6 +45,7 @@
         max-height: calc(100vh - var(--navbar-height) - 2rem);
         display: flex;
         flex-direction: column;
+        margin-right: 5%;
     }
     
     [data-bs-theme="dark"] .auth-card {
@@ -52,12 +54,12 @@
     
     .auth-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
     }
     
     .auth-header {
-        background: var(--theme-color);
-        padding: 1.5rem;
+        background: var(--theme-gradient);
+        padding: 1.75rem;
         text-align: center;
         color: white;
         flex-shrink: 0;
@@ -66,29 +68,32 @@
     .auth-header h3 {
         font-weight: 600;
         margin-bottom: 0.5rem;
+        font-size: 1.75rem;
     }
     
     .auth-header p {
         opacity: 0.9;
         margin-bottom: 0;
+        font-size: 1rem;
     }
     
     .auth-body {
-        padding: 1.5rem;
+        padding: 2rem;
         overflow-y: auto;
         flex-grow: 1;
     }
     
     .form-group {
-        margin-bottom: 1.25rem;
+        margin-bottom: 1.5rem;
     }
     
     .form-control {
         border-radius: 0.5rem;
-        padding: 0.75rem 1rem;
+        padding: 0.85rem 1rem;
         font-size: 1rem;
         border: 1px solid #dee2e6;
         background-color: #f8f9fa;
+        transition: all 0.3s ease;
     }
     
     [data-bs-theme="dark"] .form-control {
@@ -100,6 +105,7 @@
     .form-control:focus {
         border-color: var(--theme-color);
         box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        transform: translateY(-2px);
     }
     
     .form-label {
@@ -108,22 +114,22 @@
     }
     
     .btn-primary {
-        padding: 0.75rem 1.5rem;
+        padding: 0.85rem 1.5rem;
         font-weight: 500;
         border-radius: 0.5rem;
-        background: var(--theme-color);
+        background: var(--theme-gradient);
         border: none;
         transition: all 0.3s ease;
     }
     
     .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(13, 110, 253, 0.4);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(13, 110, 253, 0.4);
     }
     
     .separator {
         text-align: center;
-        margin: 1.25rem 0;
+        margin: 1.5rem 0;
         position: relative;
         color: #6c757d;
     }
@@ -149,22 +155,23 @@
         display: flex;
         justify-content: center;
         gap: 1rem;
-        margin-bottom: 1.25rem;
+        margin-bottom: 1.5rem;
     }
     
     .social-btn {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 40px;
-        height: 40px;
+        width: 48px;
+        height: 48px;
         border-radius: 50%;
         color: white;
         transition: all 0.3s ease;
     }
     
     .social-btn:hover {
-        transform: translateY(-2px);
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     }
     
     .social-btn.google {
@@ -181,8 +188,8 @@
     
     .auth-footer {
         text-align: center;
-        margin-top: 1.25rem;
-        padding-top: 1.25rem;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
         border-top: 1px solid #dee2e6;
     }
     
@@ -222,37 +229,77 @@
         background-color: #343a40;
     }
     
+    /* Brand text on the left */
+    .brand-text {
+        position: absolute;
+        left: 8%;
+        top: 50%;
+        transform: translateY(-50%);
+        color: white;
+        max-width: 40%;
+    }
+    
+    .brand-text h1 {
+        font-size: 3.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    .brand-text p {
+        font-size: 1.25rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+        .auth-container {
+            justify-content: center;
+            padding: 1rem;
+        }
+        
+        .auth-card {
+            margin-right: 0;
+        }
+        
+        .brand-text {
+            display: none;
+        }
+    }
+    
     /* Responsive adjustments for smaller screens */
     @media (max-height: 700px) {
         .auth-header {
-            padding: 1rem;
+            padding: 1.25rem;
         }
         
         .auth-body {
-            padding: 1rem;
+            padding: 1.5rem;
         }
         
         .form-group {
-            margin-bottom: 0.75rem;
+            margin-bottom: 1rem;
         }
         
         .form-control {
-            padding: 0.5rem 0.75rem;
+            padding: 0.65rem 0.85rem;
         }
         
         .btn-primary {
-            padding: 0.5rem 1rem;
+            padding: 0.65rem 1.25rem;
         }
     }
     
     /* Responsive adjustments for very small screens */
     @media (max-height: 550px) {
         .auth-header h3 {
-            font-size: 1.25rem;
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
         }
         
         .auth-header p {
-            font-size: 0.875rem;
+            font-size: 0.9rem;
         }
     }
 </style>
@@ -260,60 +307,99 @@
 
 {% block content %}
 <div class="auth-container">
+    <!-- Brand text on the left -->
+    <div class="brand-text">
+        <h1>Project Tracker</h1>
+        <p>The ultimate solution for managing your projects and tasks efficiently. Stay organized, collaborate with your team, and track progress in real-time.</p>
+    </div>
+
     <div class="auth-card">
         <div class="auth-header">
-            <h3>{% trans "Welcome Back" %}</h3>
-            <p>Sign in to your account to continue</p>
+            <h3>{% trans "Sign In" %}</h3>
+            <p>{% trans "Welcome back! Please sign in to continue" %}</p>
         </div>
         <div class="auth-body">
-            {% if user.is_authenticated %}
-                <div class="info-box">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-info-circle me-3 text-primary fs-4"></i>
-                        <div>
-                            <h5 class="mb-1">{% trans "Already Logged In" %}</h5>
-                            <p class="mb-1">You are authenticated as {{ user.email }}</p>
-                            <a href="{% url 'account_logout' %}" class="btn btn-sm btn-outline-primary mt-2">{% trans "Sign Out" %}</a>
-                        </div>
-                    </div>
+            <form class="login" method="POST" action="{% url 'account_login' %}">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">
+                    {% for error in form.non_field_errors %}
+                    {{ error }}
+                    {% endfor %}
                 </div>
-            {% else %}
-                <form class="login" method="POST" action="{% url 'account_login' %}">
-                    {% csrf_token %}
-                    {{ form|crispy }}
-                    {% if redirect_field_value %}
-                        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
-                    {% endif %}
-                    
-                    <div class="d-flex justify-content-between align-items-center mt-3">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="checkbox" id="remember-me">
-                            <label class="form-check-label" for="remember-me">Remember me</label>
-                        </div>
-                        <a href="{% url 'account_reset_password' %}" class="link-animated">Forgot password?</a>
+                {% endif %}
+                
+                <div class="form-group">
+                    <label for="id_login" class="form-label">{% trans "Email" %}</label>
+                    <input type="email" name="login" placeholder="{% trans 'Email address' %}" autocomplete="email" required id="id_login" class="form-control">
+                    {% if form.login.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.login.errors %}
+                        {{ error }}
+                        {% endfor %}
                     </div>
-                    
-                    <button type="submit" class="btn btn-primary w-100 mt-3">{% trans "Sign In" %}</button>
-                </form>
+                    {% endif %}
+                </div>
                 
-                <div class="separator">or</div>
+                <div class="form-group">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label for="id_password" class="form-label">{% trans "Password" %}</label>
+                        <a href="{% url 'account_reset_password' %}" class="link-animated small">{% trans "Forgot Password?" %}</a>
+                    </div>
+                    <input type="password" name="password" placeholder="{% trans 'Password' %}" autocomplete="current-password" required id="id_password" class="form-control">
+                    {% if form.password.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.password.errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
                 
+                <div class="form-group form-check">
+                    <input type="checkbox" name="remember" id="id_remember" class="form-check-input">
+                    <label for="id_remember" class="form-check-label">{% trans "Remember me" %}</label>
+                </div>
+                
+                {% if redirect_field_value %}
+                <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+                {% endif %}
+                
+                <div class="d-grid gap-2 mt-4">
+                    <button class="btn btn-primary" type="submit">{% trans "Sign In" %}</button>
+                </div>
+                
+                <div class="separator">
+                    <span>or</span>
+                </div>
+                
+                {% if socialaccount_providers %}
                 <div class="social-login">
-                    <a href="#" class="social-btn google">
+                    {% for provider in socialaccount_providers %}
+                    {% if provider.id == 'google' %}
+                    <a href="{% provider_login_url provider.id process='login' %}" class="social-btn google">
                         <i class="fab fa-google"></i>
                     </a>
-                    <a href="#" class="social-btn facebook">
+                    {% elif provider.id == 'facebook' %}
+                    <a href="{% provider_login_url provider.id process='login' %}" class="social-btn facebook">
                         <i class="fab fa-facebook-f"></i>
                     </a>
-                    <a href="#" class="social-btn twitter">
+                    {% elif provider.id == 'twitter' %}
+                    <a href="{% provider_login_url provider.id process='login' %}" class="social-btn twitter">
                         <i class="fab fa-twitter"></i>
                     </a>
+                    {% endif %}
+                    {% endfor %}
                 </div>
-                
-                <div class="auth-footer">
-                    <p class="mb-0">{% trans "Don't have an account?" %} <a href="{{ signup_url }}" class="link-animated">{% trans "Sign up" %}</a></p>
-                </div>
-            {% endif %}
+                {% endif %}
+            </form>
+            
+            <div class="auth-footer">
+                <p class="mb-0">
+                    {% trans "Don't have an account?" %} <a href="{{ signup_url }}" class="link-animated">{% trans "Sign Up" %}</a>
+                </p>
+            </div>
         </div>
     </div>
 </div>
