@@ -397,6 +397,30 @@ class TaskUpdate(models.Model):
     def __str__(self):
         return f"Update by {self.author} on {self.task}"
     
+    def save(self, *args, **kwargs):
+        """
+        Override save method to update task and project progress
+        """
+        super().save(*args, **kwargs)
+        
+        # Update task status if completion percentage is 100%
+        if self.completion_percentage == 100 and self.task.status != Task.Status.COMPLETED:
+            self.task.status = Task.Status.COMPLETED
+            self.task.completed_at = timezone.now()
+            self.task.save(update_fields=['status', 'completed_at'])
+        
+        # Update project progress
+        self.update_project_progress()
+    
+    def update_project_progress(self):
+        """Update project progress based on completed tasks"""
+        project = self.task.project
+        total_tasks = project.tasks.count()
+        if total_tasks > 0:
+            completed_tasks = project.tasks.filter(status=Task.Status.COMPLETED).count()
+            project.progress = int(completed_tasks / total_tasks * 100)
+            project.save(update_fields=['progress'])
+    
     class Meta:
         ordering = ['-created_at']
 

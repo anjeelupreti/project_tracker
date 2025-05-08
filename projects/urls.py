@@ -35,6 +35,7 @@ urlpatterns = [
     # Project Membership URLs
     path('<int:project_id>/members/add/', views.ProjectMembershipCreateView.as_view(), name='project_member_add'),
     path('<int:project_id>/members/<int:user_id>/remove/', views.ProjectMembershipDeleteView.as_view(), name='project_member_remove'),
+    path('<int:project_id>/members/edit-role/', views.ProjectMemberRoleEditView.as_view(), name='project_member_edit_role'),
     
     # Task URLs
     path('tasks/', views.TaskListView.as_view(), name='task_list'),

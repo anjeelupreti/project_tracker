@@ -165,7 +165,7 @@
         </div>
         <div class="card-body">
           {% if recent_activities %}
-            <div class="activity-timeline">
+            <div class="activity-timeline" style="max-height: 400px; overflow-y: auto;">
               {% for activity in recent_activities %}
                 <div class="activity-item">
                   <div class="d-flex justify-content-between">

@@ -266,47 +266,124 @@ class ProjectUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
 class ProjectMembershipCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
     """
-    View for adding members to a project
+    View for adding members to a project with searchable user list
     """
     def test_func(self):
-        project_id = self.kwargs.get('project_id')
-        project = get_object_or_404(Project, id=project_id)
+        project = get_object_or_404(Project, pk=self.kwargs['project_id'])
         user = self.request.user
-        return user.is_admin or user.is_superuser or project.lead == user
+        return (user.is_admin or user.is_superuser or 
+                project.lead == user)
+    
+    def get(self, request, *args, **kwargs):
+        project = get_object_or_404(Project, pk=kwargs['project_id'])
+        
+        # Get search parameters
+        search_query = request.GET.get('search', '')
+        department_filter = request.GET.get('department', '')
+        
+        # Base queryset - exclude users already in the project
+        existing_members = project.members.values_list('id', flat=True)
+        users = User.objects.exclude(id__in=existing_members)
+        
+        # Apply filters
+        if search_query:
+            users = users.filter(
+                Q(username__icontains=search_query) | 
+                Q(email__icontains=search_query) | 
+                Q(first_name__icontains=search_query) |
+                Q(last_name__icontains=search_query)
+            )
+        
+        if department_filter:
+            # Filter users by department if a department filter is specified
+            department_members = Department.objects.get(id=department_filter).members.values_list('id', flat=True)
+            users = users.filter(id__in=department_members)
+        
+        # Get list of departments for filtering
+        departments = Department.objects.all()
+        
+        context = {
+            'project': project,
+            'users': users,
+            'departments': departments,
+            'search_query': search_query,
+            'department_filter': department_filter
+        }
+        
+        return render(request, 'projects/project_add_members.html', context)
     
     def post(self, request, *args, **kwargs):
-        project_id = self.kwargs.get('project_id')
-        user_id = request.POST.get('user_id')
-        role = request.POST.get('role', '')
+        project = get_object_or_404(Project, pk=kwargs['project_id'])
         
-        project = get_object_or_404(Project, id=project_id)
-        user = get_object_or_404(User, id=user_id)
+        # Check if we're adding a single user or multiple users
+        if 'user_id' in request.POST:
+            # Single user add
+            try:
+                user_id = request.POST.get('user_id')
+                user = User.objects.get(id=user_id)
+                role = request.POST.get('role', '')
+                
+                # Create membership if it doesn't exist
+                membership, created = ProjectMembership.objects.get_or_create(
+                    project=project,
+                    user=user,
+                    defaults={'role': role, 'added_by': request.user}
+                )
+                
+                if created:
+                    # Log activity
+                    ActivityLog.objects.create(
+                        user=request.user,
+                        category=ActivityLog.Category.PROJECT,
+                        action_type=ActivityLog.ActionType.ASSIGN,
+                        description=f"Added {user.get_full_name() or user.email} to project: {project.name}",
+                        project=project,
+                        related_user=user
+                    )
+                    
+                    messages.success(request, f"{user.get_full_name() or user.email} has been added to the project.")
+                else:
+                    messages.info(request, f"{user.get_full_name() or user.email} is already a member of this project.")
+                    
+            except User.DoesNotExist:
+                messages.error(request, "User not found.")
+                
+            return redirect('projects:project_detail', pk=project.id)
         
-        # Check if user is already a member
-        if ProjectMembership.objects.filter(project=project, user=user).exists():
-            messages.warning(request, f"{user.get_full_name() or user.email} is already a member of this project.")
-            return redirect('projects:project_detail', pk=project_id)
+        elif 'user_ids[]' in request.POST:
+            # Bulk add users
+            user_ids = request.POST.getlist('user_ids[]')
+            role = request.POST.get('role', '')
+            
+            added_count = 0
+            for user_id in user_ids:
+                try:
+                    user = User.objects.get(id=user_id)
+                    membership, created = ProjectMembership.objects.get_or_create(
+                        project=project,
+                        user=user,
+                        defaults={'role': role, 'added_by': request.user}
+                    )
+                    
+                    if created:
+                        added_count += 1
+                        # Log activity
+                        ActivityLog.objects.create(
+                            user=request.user,
+                            category=ActivityLog.Category.PROJECT,
+                            action_type=ActivityLog.ActionType.ASSIGN,
+                            description=f"Added {user.get_full_name() or user.email} to project: {project.name}",
+                            project=project,
+                            related_user=user
+                        )
+                except User.DoesNotExist:
+                    continue
+            
+            messages.success(request, f"{added_count} members have been added to the project.")
+            return redirect('projects:project_detail', pk=project.id)
         
-        # Add user to project
-        membership = ProjectMembership.objects.create(
-            project=project,
-            user=user,
-            role=role,
-            added_by=request.user
-        )
-        
-        # Log activity
-        ActivityLog.objects.create(
-            user=request.user,
-            category=ActivityLog.Category.TEAM,
-            action_type=ActivityLog.ActionType.ASSIGN,
-            description=f"Added {user.get_full_name() or user.email} to project: {project.name} as {role}",
-            project=project,
-            related_user=user
-        )
-        
-        messages.success(request, f"{user.get_full_name() or user.email} has been added to the project.")
-        return redirect('projects:project_detail', pk=project_id)
+        messages.error(request, "No users were selected.")
+        return redirect('projects:project_detail', pk=project.id)
 
 class ProjectMembershipDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
     """
@@ -589,7 +666,10 @@ class TaskStatusUpdateView(LoginRequiredMixin, UserPassesTestMixin, View):
     def post(self, request, *args, **kwargs):
         try:
             task = get_object_or_404(Task, pk=kwargs.get('pk'))
-            data = json.loads(request.body)
+            
+            # Store body content as variable before parsing to prevent multiple reads
+            body_content = request.body.decode('utf-8')
+            data = json.loads(body_content)
             new_status = data.get('status')
             
             if new_status not in dict(Task.Status.choices):
@@ -605,6 +685,9 @@ class TaskStatusUpdateView(LoginRequiredMixin, UserPassesTestMixin, View):
                 task.completed_at = None
                 
             task.save()
+            
+            # Update project progress when task status changes
+            self.update_project_progress(task.project)
             
             # Log activity
             ActivityLog.objects.create(
@@ -622,6 +705,14 @@ class TaskStatusUpdateView(LoginRequiredMixin, UserPassesTestMixin, View):
             return JsonResponse({'success': False, 'error': 'Invalid JSON data'})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
+    
+    def update_project_progress(self, project):
+        """Update project progress based on completed tasks"""
+        total_tasks = project.tasks.count()
+        if total_tasks > 0:
+            completed_tasks = project.tasks.filter(status=Task.Status.COMPLETED).count()
+            project.progress = int(completed_tasks / total_tasks * 100)
+            project.save(update_fields=['progress'])
 
 class TaskAssignView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     """
@@ -1163,3 +1254,47 @@ class DepartmentMemberRemoveView(LoginRequiredMixin, UserPassesTestMixin, View):
         
         messages.success(request, f"{user_to_remove.get_full_name() or user_to_remove.email} has been removed from the department.")
         return redirect('projects:department_detail', pk=department_id)
+
+class ProjectMemberRoleEditView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    View for editing a project member's role
+    """
+    def test_func(self):
+        project_id = self.kwargs.get('project_id')
+        project = get_object_or_404(Project, id=project_id)
+        user = self.request.user
+        return user.is_admin or user.is_superuser or project.lead == user
+    
+    def post(self, request, *args, **kwargs):
+        project_id = self.kwargs.get('project_id')
+        user_id = request.POST.get('user_id')
+        role = request.POST.get('role')
+        
+        if not user_id or not role:
+            messages.error(request, "Both user and role are required.")
+            return redirect('projects:project_detail', pk=project_id)
+        
+        project = get_object_or_404(Project, id=project_id)
+        user = get_object_or_404(User, id=user_id)
+        
+        # Update the membership
+        try:
+            membership = ProjectMembership.objects.get(project=project, user=user)
+            membership.role = role
+            membership.save()
+            
+            # Log activity
+            ActivityLog.objects.create(
+                user=request.user,
+                category=ActivityLog.Category.TEAM,
+                action_type=ActivityLog.ActionType.UPDATE,
+                description=f"Updated role of {user.get_full_name() or user.email} to {role} in project: {project.name}",
+                project=project,
+                related_user=user
+            )
+            
+            messages.success(request, f"Role for {user.get_full_name() or user.email} has been updated to {role}.")
+        except ProjectMembership.DoesNotExist:
+            messages.error(request, f"{user.get_full_name() or user.email} is not a member of this project.")
+        
+        return redirect('projects:project_detail', pk=project_id)

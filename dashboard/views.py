@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.db.models import Count, Sum, Q, F, Case, When, Value, IntegerField
 from django.contrib import messages
 from datetime import timedelta
+import json
 
 from projects.models import Project, Task, Department, ActivityLog
 from accounts.models import User, DesignationRequest, LeaveRequest
@@ -43,11 +44,11 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         context['total_users'] = User.objects.count()
         
         # Get pending requests that need admin attention
-        pending_designation_requests = DesignationRequest.objects.filter(status='pending')
+        pending_designation_requests = DesignationRequest.objects.filter(status='pending').select_related('user')
         context['pending_designation_requests'] = pending_designation_requests.count()
         context['pending_designation_requests_list'] = pending_designation_requests.order_by('-date_requested')[:5]
         
-        pending_leave_requests = LeaveRequest.objects.filter(status='pending')
+        pending_leave_requests = LeaveRequest.objects.filter(status='pending').select_related('user')
         context['pending_leave_requests'] = pending_leave_requests.count()
         context['pending_leave_requests_list'] = pending_leave_requests.order_by('-date_requested')[:5]
         
@@ -55,17 +56,33 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         project_status_counts = Project.objects.values('status').annotate(
             count=Count('id')
         ).order_by()
+        
+        # Get human-readable status labels
+        status_mapping = dict(Project.Status.choices)
+        
+        # Convert the Django gettext_lazy proxies to regular strings
+        labels = []
+        data = []
+        for status in project_status_counts:
+            label = status_mapping.get(status['status'], status['status'])
+            # Convert __proxy__ objects to strings
+            if hasattr(label, '_proxy____args') or hasattr(label, '__str__'):
+                label = str(label)
+            labels.append(label)
+            data.append(status['count'])
+        
+        # Convert to JSON here to prevent template rendering issues
         context['project_status_data'] = {
-            'labels': [status['status'] for status in project_status_counts],
-            'data': [status['count'] for status in project_status_counts],
+            'labels': json.dumps(labels),
+            'data': json.dumps(data),
         }
         
-        # Recent activity log
+        # Recent activity log with safe user access
         context['recent_activities'] = ActivityLog.objects.select_related(
             'user', 'project', 'task'
         ).order_by('-timestamp')[:10]
         
-        # Overdue tasks and projects
+        # Overdue tasks and projects with safe user access
         today = timezone.now().date()
         context['overdue_tasks'] = Task.objects.filter(
             due_date__lt=today,

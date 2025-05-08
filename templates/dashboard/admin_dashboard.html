@@ -7,7 +7,7 @@
 <style>
     /* Add fixed max-width to container to prevent infinite growth */
     .dashboard-container {
-        max-width: 1600px;
+        max-width: 1800px;
         margin: 0 auto;
     }
     
@@ -16,6 +16,127 @@
         margin-right: 0;
         margin-left: 0;
         width: 100%;
+    }
+    
+    /* Enhanced dashboard cards */
+    .dashboard-card {
+        border-radius: 1rem;
+        border: none !important;
+        box-shadow: 0 0.35rem 1.25rem rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.75rem 1.75rem rgba(0, 0, 0, 0.12);
+    }
+    
+    .dashboard-card .card-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        font-weight: 600;
+        background: rgba(var(--bs-primary-rgb), 0.05);
+    }
+    
+    .dashboard-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    /* Improved stats icons */
+    .stats-icon {
+        width: 3.5rem;
+        height: 3.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 1rem;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Tables in dashboard */
+    .table thead th {
+        font-weight: 600;
+        border-top: none;
+        border-bottom-width: 1px;
+        padding: 1rem;
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+    
+    .table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+    
+    /* Activities timeline */
+    .activity-timeline {
+        position: relative;
+        padding-left: 1.5rem;
+    }
+    
+    .activity-timeline::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0.35rem;
+        width: 2px;
+        background-color: var(--bs-primary);
+        opacity: 0.2;
+    }
+    
+    .activity-item {
+        position: relative;
+        padding: 1rem 0;
+    }
+    
+    .activity-item::before {
+        content: '';
+        position: absolute;
+        top: 1.25rem;
+        left: -1.5rem;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: var(--bs-primary);
+        border: 2px solid var(--bs-body-bg);
+    }
+    
+    /* Overview cards */
+    .bg-primary, .bg-success, .bg-info, .bg-warning {
+        background: linear-gradient(135deg, var(--bs-primary), #0b5ed7) !important;
+        box-shadow: 0 0.5rem 1.5rem rgba(13, 110, 253, 0.25) !important;
+    }
+    
+    .bg-success {
+        background: linear-gradient(135deg, var(--bs-success), #157347) !important;
+        box-shadow: 0 0.5rem 1.5rem rgba(25, 135, 84, 0.25) !important;
+    }
+    
+    .bg-info {
+        background: linear-gradient(135deg, var(--bs-info), #0aa2c0) !important;
+        box-shadow: 0 0.5rem 1.5rem rgba(13, 202, 240, 0.25) !important;
+    }
+    
+    .bg-warning {
+        background: linear-gradient(135deg, var(--bs-warning), #d39e00) !important;
+        box-shadow: 0 0.5rem 1.5rem rgba(255, 193, 7, 0.25) !important;
+    }
+    
+    /* Button styling */
+    .btn {
+        border-radius: 0.75rem;
+        padding: 0.6rem 1.2rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.15);
     }
 </style>
 {% endblock %}
@@ -227,7 +348,7 @@
                         {% for activity in recent_activities|slice:":15" %}
                             <div class="activity-item mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
                                 <div class="d-flex justify-content-between">
-                                    <strong>{{ activity.user.get_full_name|default:activity.user.email }}</strong>
+                                    <strong>{% if activity.user %}{{ activity.user.get_full_name|default:activity.user.email }}{% else %}System{% endif %}</strong>
                                     <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
                                 </div>
                                 <div>{{ activity.description }}</div>
@@ -288,9 +409,9 @@
                                             <td>
                                                 <a href="{% url 'projects:project_detail' project.id %}">{{ project.name }}</a>
                                             </td>
-                                            <td>{{ project.department.name }}</td>
+                                            <td>{% if project.department %}{{ project.department.name }}{% else %}No Department{% endif %}</td>
                                             <td class="text-danger">{{ project.end_date }}</td>
-                                            <td>{{ project.lead.get_full_name|default:project.lead.email }}</td>
+                                            <td>{% if project.lead %}{{ project.lead.get_full_name|default:project.lead.email }}{% else %}Unassigned{% endif %}</td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
@@ -326,9 +447,9 @@
                                             <td>
                                                 <a href="{% url 'projects:task_detail' task.id %}">{{ task.title }}</a>
                                             </td>
-                                            <td>{{ task.project.name }}</td>
+                                            <td>{% if task.project %}{{ task.project.name }}{% else %}No Project{% endif %}</td>
                                             <td class="text-danger">{{ task.due_date }}</td>
-                                            <td>{{ task.assignee.get_full_name|default:task.assignee.email }}</td>
+                                            <td>{% if task.assignee %}{{ task.assignee.get_full_name|default:task.assignee.email }}{% else %}Unassigned{% endif %}</td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
@@ -348,34 +469,54 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize project status chart
-        const ctx = document.getElementById('projectStatusChart').getContext('2d');
-        const projectStatusChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: JSON.parse('{{ project_status_data.labels|safe }}'),
-                datasets: [{
-                    data: JSON.parse('{{ project_status_data.data|safe }}'),
-                    backgroundColor: [
-                        '#6c757d',  // PLANNED
-                        '#007bff',  // IN_PROGRESS
-                        '#28a745',  // COMPLETED
-                        '#ffc107',  // ON_HOLD
-                        '#dc3545'   // CANCELLED
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
+        // Parse JSON data safely
+        try {
+            const labels = JSON.parse('{{ project_status_data.labels|escapejs }}');
+            const data = JSON.parse('{{ project_status_data.data|escapejs }}');
+            
+            // Initialize project status chart
+            const ctx = document.getElementById('projectStatusChart').getContext('2d');
+            const projectStatusChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#6c757d',  // PLANNED
+                            '#007bff',  // IN_PROGRESS
+                            '#28a745',  // COMPLETED
+                            '#ffc107',  // ON_HOLD
+                            '#dc3545'   // CANCELLED
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true
                     }
                 }
-            }
-        });
+            });
+        } catch (e) {
+            console.error('Error initializing chart:', e);
+            // Display error message in the chart container
+            const chartContainer = document.getElementById('projectStatusChart').parentNode;
+            chartContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Error loading chart data. Please try refreshing the page.
+                </div>
+            `;
+        }
     });
 </script>
 {% endblock %} 

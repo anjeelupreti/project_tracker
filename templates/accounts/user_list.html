@@ -303,7 +303,43 @@ function toggleUserStatus(userId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                location.reload();
+                // Get the current row
+                const btn = document.querySelector(`.toggle-status-btn[data-user-id="${userId}"]`);
+                const row = btn.closest('tr');
+                
+                // Get the status badge
+                const statusBadge = row.querySelector('.badge');
+                
+                // Toggle status badge
+                if (statusBadge.textContent.trim() === 'Active') {
+                    statusBadge.textContent = 'Inactive';
+                    statusBadge.classList.remove('bg-success');
+                    statusBadge.classList.add('bg-danger');
+                    
+                    // Update button
+                    btn.classList.remove('btn-outline-danger');
+                    btn.classList.add('btn-outline-success');
+                    btn.setAttribute('data-action', 'activate');
+                    
+                    // Update icon
+                    btn.querySelector('i').classList.remove('fa-user-slash');
+                    btn.querySelector('i').classList.add('fa-user-check');
+                } else {
+                    statusBadge.textContent = 'Active';
+                    statusBadge.classList.remove('bg-danger');
+                    statusBadge.classList.add('bg-success');
+                    
+                    // Update button
+                    btn.classList.remove('btn-outline-success');
+                    btn.classList.add('btn-outline-danger');
+                    btn.setAttribute('data-action', 'deactivate');
+                    
+                    // Update icon
+                    btn.querySelector('i').classList.remove('fa-user-check');
+                    btn.querySelector('i').classList.add('fa-user-slash');
+                }
+                
+                showToast('Success', 'User status updated successfully.', 'success');
             } else {
                 showToast('Error', data.error || 'Failed to update user status.', 'error');
             }
