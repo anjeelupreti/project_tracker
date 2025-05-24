@@ -213,6 +213,7 @@ class Task(models.Model):
         choices=[(1, 'Low'), (2, 'Medium'), (3, 'High'), (4, 'Critical')],
         default=2
     )
+
     due_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

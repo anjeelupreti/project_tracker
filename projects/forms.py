@@ -129,7 +129,7 @@ class TaskForm(forms.ModelForm):
         model = Task
         fields = [
             'title', 'description', 'project', 'assignee', 'assignees', 'status',
-            'priority', 'due_date', 'estimated_hours'
+            'priority','due_date', 'estimated_hours'
         ]
         widgets = {
             'due_date': forms.DateInput(attrs={'type': 'date'}),

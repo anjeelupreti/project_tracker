@@ -30,14 +30,27 @@ staticfiles/
 
 # Virtual Environment
 venv/
-env/
+.env/
 ENV/
 
 
+core/__pycache__/
+core/migrations/
+accounts/migrations/
+accounts/__pycache__/
+dashboard/migrations/
+dashboard/__pycache__/
+projects/migrations/
+projects/__pycache__/
+projecttracker/migrations/
+projecttracker/__pycache__/
+projects/migrations/
+projects/__pycache__/
+media/
 
-__pycache__/
+
 *.pyc
-db.sqlite3
+db.sqlite3/
 
 # IDE
 .idea/
